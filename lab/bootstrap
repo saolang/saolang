@@ -1,0 +1,27 @@
+```sao
+
+//import sao
+//<sao.pp>//import preprocessor
+//<sao.lk>//linker
+//<sao.cl>//compiler
+
+<sao.*>//import * from sao module
+
+//preprocess src
+pp_stream = sao.pp(sao.stdin("sao.sao"));
+//compile
+cl_stream = sao.cl(pp_stream);
+//link
+lk_stream = sal.lk(cl_stream);
+//save
+sao.stdout(cl_stream, "sao.bin");
+
+//link-style call
+sao.q( sao.stdin("sao.sao") )
+   .then( sao.pp )
+   .then( sao.cl )
+   .then( sao.lk )
+   .then( sao.save, "sao.bin");
+
+
+```
