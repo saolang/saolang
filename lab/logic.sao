@@ -1,0 +1,57 @@
+//!@#$%^&*
+
+//!~^&
+
+//*
+
+//$
+
+//@#//continue
+//@~//break
+
+//<type> declare
+//@
+
+//-=_+\|:;/?.,`~
+
+//pairs
+//(){}[]""'<>
+
+//export default
+
+<c>
+<c.stdio>
+
+@(
+		()=>{//
+			@[stdio]//.. import
+			//out=@[stdio];
+
+			i=1;//let i=1;
+
+			n=33;
+
+			(i=1;i<n;++){
+				stdio.out("%d,%x",i,0x333);
+				//!(i%3) || @~ // if not mod 3 then break
+				!(i%3) || @# // if not mod 3 then continue
+			}
+			//
+			{
+				stdio.out("%d,%x",i,0x333);
+				i++;
+			}(i<66);
+
+			()?{//if()
+			}:()?{//elseif
+			}:{//else
+			}
+
+//switch case
+			(x){
+1:
+@~ //break;
+2:
+			}
+		}
+ );
