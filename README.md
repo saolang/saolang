@@ -27,23 +27,29 @@ A very SAO lang.
 
 # Feature
 
+core
+
+* ASM built-in support
+
+art
+
 * bootstrap - self-hosting
-* keep tiny - size does matter
+* keyword-less - there is no (natual language) keywords
 * FFI/DL - dynamically load libraries
 * import/export - file is module when compile
-* keyword-less - there is no (natual language) keywords
-* elegant - no mearning if not
+* keep tiny - size does matter
+* keep elegant - meaningless if not so
 
 inline+
 
 * JSON/BSON built-in support
-* ASM built-in support
 * hardware abstracted binary codes + vm interpretor
+* more inline support via sao-plugin, such as RegExp
 
 future
 
-* learn from golang for the threading/coroutine
-* sao-vm
+* from golang for the threading/coroutine
+* sao-vm like qemu
 
 
 
