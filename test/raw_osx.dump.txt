@@ -1,0 +1,28 @@
+
+raw_osx:	file format Mach-O 64-bit x86-64
+
+Disassembly of section __TEXT,__text:
+__text:
+    1fcf:	53 	pushq	%rbx
+    1fd0:	48 8d 3d 41 00 00 00 	leaq	65(%rip), %rdi
+    1fd7:	e8 02 00 00 00 	callq	2
+    1fdc:	5b 	popq	%rbx
+    1fdd:	c3 	retq
+
+_main:
+    1fcf:	53 	pushq	%rbx
+    1fd0:	48 8d 3d 41 00 00 00 	leaq	65(%rip), %rdi
+    1fd7:	e8 02 00 00 00 	callq	2
+    1fdc:	5b 	popq	%rbx
+    1fdd:	c3 	retq
+Disassembly of section __TEXT,__stubs:
+__stubs:
+    1fde:	ff 25 2c 00 00 00 	jmpq	*44(%rip)
+Disassembly of section __TEXT,__stub_helper:
+__stub_helper:
+    1fe4:	4c 8d 1d 1d 00 00 00 	leaq	29(%rip), %r11
+    1feb:	41 53 	pushq	%r11
+    1fed:	ff 25 0d 00 00 00 	jmpq	*13(%rip)
+    1ff3:	90 	nop
+    1ff4:	68 00 00 00 00 	pushq	$0
+    1ff9:	e9 e6 ff ff ff 	jmp	-26 <__stub_helper>

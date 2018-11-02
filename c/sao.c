@@ -1,3 +1,7 @@
 //sao in c
 
-//writing 1st sao with c
+//#include "sao_dl.h"
+
+int main(){
+	return 42;
+}

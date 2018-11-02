@@ -1,0 +1,10 @@
+
+raw_osx.o:	file format Mach-O 64-bit x86-64
+
+Disassembly of section __TEXT,__text:
+_main:
+       0:	53 	pushq	%rbx
+       1:	48 8d 3d 00 00 00 00 	leaq	(%rip), %rdi
+       8:	e8 00 00 00 00 	callq	0 <_main+0xD>
+       d:	5b 	popq	%rbx
+       e:	c3 	retq
