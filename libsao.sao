@@ -1,0 +1,9 @@
+sao_compile(SaoStateMachine s, c.int filetype){
+}
+
+sao_assemble(){
+}
+
+@{
+	sao_compile
+}

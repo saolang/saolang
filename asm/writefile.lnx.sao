@@ -1,0 +1,13 @@
+asm_writefile(c.int fd, c.void_ptr buf, c.size_t size){
+	@<<ASM.LNX
+		mov eax, 4
+		mov ebx, [ebp + 8]
+		mov ecx, [ebp + 12]
+		mov edx, [ebp + 16]
+		int 0x80
+		add eax, 0
+		jns .done
+		mov eax, -1 // should really return -1 on error. TBD??? set errno?
+		.done:
+		>>@
+}
