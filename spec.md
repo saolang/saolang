@@ -2,10 +2,9 @@
 @<<
 
 @>>
-
 ```
 
-```LIBC/as FFI
+```LIBC
 <c>
 <c.xxx>
 <c.math>
@@ -42,10 +41,9 @@ sao_new:
 ```JSON
 [x,y]=[1,2];
 {x,y}={};
-
 ```
 
-```FFI
+```DL/FFI
 <dlfcn>
 dlfcn.dlsym()
 ```

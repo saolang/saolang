@@ -1,5 +1,7 @@
 # SAO
 
+A very SAO lang.
+
 ```
                                                  .::-`                          
                yho..-:/++++:`         /sddddmmmmmNMMNNy`                        
@@ -22,3 +24,40 @@
                      +h+-`    sNMMMMmy/.`             :yNNs`                    
                                `:++:`                   .`                      
 ```
+
+# Feature
+
+* bootstrap - self-hosting
+* keep tiny - size does matter
+* FFI/DL - dynamically load libraries
+* import/export - file is module when compile
+* keyword-less - there is no (natual language) keywords
+* elegant - no mearning if not
+
+inline+
+
+* JSON/BSON built-in support
+* ASM built-in support
+* hardware abstracted binary codes + vm interpretor
+
+future
+
+* learn from golang for the threading/coroutine
+* sao-vm
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
