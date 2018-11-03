@@ -1415,6 +1415,9 @@ enum
     ,TOK_ASM_mfence
     ,TOK_ASM_sfence
     ,TOK_ASM_clflush
+,TOK_message
+,TOK_warning
+,TOK_error
 };
 static int gnu_ext;
 static int scc_ext;
@@ -2380,6 +2383,9 @@ static const char scc_keywords[] =
     "mfence" "\0"
     "sfence" "\0"
     "clflush" "\0"
+"message" "\0"
+"warning" "\0"
+"error" "\0"
 ;
 static const unsigned char tok_two_chars[] =
  {
@@ -3524,98 +3530,115 @@ static CachedInclude *search_cached_include(SCCState *s1, const char *filename, 
 }
 static void pragma_parse(SCCState *s1)
 {
-    next_nomacro();
-    if (tok == TOK_push_macro || tok == TOK_pop_macro) {
-        int t = tok, v;
-        Sym *s;
-        if (next(), tok != '(')
-            goto pragma_err;
-        if (next(), tok != 0xb9)
-            goto pragma_err;
-        v = tok_alloc(tokc.str.data, tokc.str.size - 1)->tok;
-        if (next(), tok != ')')
-            goto pragma_err;
-        if (t == TOK_push_macro) {
-            while (((void*)0) == (s = define_find(v)))
-                define_push(v, 0, ((void*)0), ((void*)0));
-            s->type.ref = s;
-        } else {
-            for (s = define_stack; s; s = s->prev)
-                if (s->v == v && s->type.ref == s) {
-                    s->type.ref = ((void*)0);
-                    break;
-                }
-        }
-        if (s)
-            table_ident[v - 256]->sym_define = s->d ? s : ((void*)0);
-        else
-            scc_warning("unbalanced #pragma pop_macro");
-        pp_debug_tok = t, pp_debug_symv = v;
-    } else if (tok == TOK_once) {
-        search_cached_include(s1, file->filename, 1)->once = pp_once;
-    } else if (s1->output_type == 5) {
-        unget_tok(' ');
-        unget_tok(TOK_PRAGMA);
-        unget_tok('#');
-        unget_tok(10);
-    } else if (tok == TOK_pack) {
-        next();
-        skip('(');
-        if (tok == TOK_ASM_pop) {
-            next();
-            if (s1->pack_stack_ptr <= s1->pack_stack) {
-            stk_error:
-                scc_error("out of pack stack");
-            }
-            s1->pack_stack_ptr--;
-        } else {
-            int val = 0;
-            if (tok != ')') {
-                if (tok == TOK_ASM_push) {
-                    next();
-                    if (s1->pack_stack_ptr >= s1->pack_stack + 8 - 1)
-                        goto stk_error;
-                    s1->pack_stack_ptr++;
-                    skip(',');
-                }
-                if (tok != 0xb5)
-                    goto pragma_err;
-                val = tokc.i;
-                if (val < 1 || val > 16 || (val & (val - 1)) != 0)
-                    goto pragma_err;
-                next();
-            }
-            *s1->pack_stack_ptr = val;
-        }
-        if (tok != ')')
-            goto pragma_err;
-    } else if (tok == TOK_comment) {
-        char *p; int t;
-        next();
-        skip('(');
-        t = tok;
-        next();
-        skip(',');
-        if (tok != 0xb9)
-            goto pragma_err;
-        p = scc_strdup((char *)tokc.str.data);
-        next();
-        if (tok != ')')
-            goto pragma_err;
-        if (t == TOK_lib) {
-            dynarray_add(&s1->pragma_libs, &s1->nb_pragma_libs, p);
-        } else {
-            if (t == TOK_option)
-                scc_set_options(s1, p);
-            scc_free(p);
-        }
-    } else if (s1->warn_unsupported) {
-        scc_warning("#pragma %s is ignored", get_tok_str(tok, &tokc));
-    }
-    return;
+	next_nomacro();
+	if (tok == TOK_push_macro || tok == TOK_pop_macro) {
+		int t = tok, v;
+		Sym *s;
+		if (next(), tok != '(')
+			goto pragma_err;
+		if (next(), tok != 0xb9)
+			goto pragma_err;
+		v = tok_alloc(tokc.str.data, tokc.str.size - 1)->tok;
+		if (next(), tok != ')')
+			goto pragma_err;
+		if (t == TOK_push_macro) {
+			while (((void*)0) == (s = define_find(v)))
+				define_push(v, 0, ((void*)0), ((void*)0));
+			s->type.ref = s;
+		} else {
+			for (s = define_stack; s; s = s->prev)
+				if (s->v == v && s->type.ref == s) {
+					s->type.ref = ((void*)0);
+					break;
+				}
+		}
+		if (s)
+			table_ident[v - 256]->sym_define = s->d ? s : ((void*)0);
+		else
+			scc_warning("unbalanced #pragma pop_macro");
+		pp_debug_tok = t, pp_debug_symv = v;
+	} else if (tok == TOK_once) {
+		search_cached_include(s1, file->filename, 1)->once = pp_once;
+	} else if (s1->output_type == 5) {
+		unget_tok(' ');
+		unget_tok(TOK_PRAGMA);
+		unget_tok('#');
+		unget_tok(10);
+	} else if (tok == TOK_pack) {
+		next();
+		skip('(');
+		if (tok == TOK_ASM_pop) {
+			next();
+			if (s1->pack_stack_ptr <= s1->pack_stack) {
+stk_error:
+				scc_error("out of pack stack");
+			}
+			s1->pack_stack_ptr--;
+		} else {
+			int val = 0;
+			if (tok != ')') {
+				if (tok == TOK_ASM_push) {
+					next();
+					if (s1->pack_stack_ptr >= s1->pack_stack + 8 - 1)
+						goto stk_error;
+					s1->pack_stack_ptr++;
+					skip(',');
+				}
+				if (tok != 0xb5)
+					goto pragma_err;
+				val = tokc.i;
+				if (val < 1 || val > 16 || (val & (val - 1)) != 0)
+					goto pragma_err;
+				next();
+			}
+			*s1->pack_stack_ptr = val;
+		}
+		if (tok != ')')
+			goto pragma_err;
+	} else if (tok == TOK_comment) {
+		char *p; int t;
+		next();
+		skip('(');
+		t = tok;
+		next();
+		skip(',');
+		if (tok != 0xb9)
+			goto pragma_err;
+		p = scc_strdup((char *)tokc.str.data);
+		next();
+		if (tok != ')')
+			goto pragma_err;
+		if (t == TOK_lib) {
+			dynarray_add(&s1->pragma_libs, &s1->nb_pragma_libs, p);
+		} else {
+			if (t == TOK_option)
+				scc_set_options(s1, p);
+			scc_free(p);
+		}
+	} else if (tok == TOK_message) {
+		char buf[1024], *q;
+		ch = file->buf_ptr[0];
+		skip_spaces();
+		q = buf;
+		while (ch != '\n' && ch != (-1)) {
+			if ((q - buf) < sizeof(buf) - 1)
+				*q++ = ch;
+			if (ch == '\\') {
+				if (handle_stray_noerror() == 0)
+					--q;
+			} else
+				inp();
+		}
+		*q = '\0';
+		scc_warning("#pragma message %s", buf);
+	} else if (s1->warn_unsupported) {
+		scc_warning("#pragma %s is ignored", get_tok_str(tok, &tokc));
+	} else {
+	}
+	return;
 pragma_err:
-    scc_error("malformed #pragma directive");
-    return;
+	scc_error("malformed #pragma directive");
+	return;
 }
 static void preprocess(int is_bof)
 {
@@ -14373,28 +14396,28 @@ again:
         break;
     next: ;
     }
-    if (pa->sym == 0) {
-        if (opcode >= TOK_ASM_clc && opcode <= TOK_ASM_emms) {
-            int b;
-            b = op0_codes[opcode - TOK_ASM_clc];
-            if (b & 0xff00)
-                g(b >> 8);
-            g(b);
-            return;
-        } else if (opcode <= TOK_ASM_subps) {
-            scc_error("bad operand with opcode '%s',opcode=%d",
-                  get_tok_str(opcode, ((void*)0)),opcode);
-        } else {
-	    TokenSym *ts = table_ident[opcode - 256];
-	    if (ts->len >= 6
-		&& ((char*(*)())scc_dlsym("strchr"))("wlq", ts->str[ts->len-1])
-		&& !((int(*)())scc_dlsym("memcmp"))(ts->str, "cmov", 4)) {
-		opcode = tok_alloc(ts->str, ts->len-1)->tok;
-		goto again;
-	    }
-            scc_error("unknown opcode '%s'", ts->str);
-        }
-    }
+		if (pa->sym == 0) {
+			if (opcode >= TOK_ASM_clc && opcode <= TOK_ASM_emms) {
+				int b;
+				b = op0_codes[opcode - TOK_ASM_clc];
+				if (b & 0xff00)
+					g(b >> 8);
+				g(b);
+				return;
+			} else if (opcode <= TOK_ASM_subps) {
+				scc_error("bad operand with opcode '%s',opcode=%d",
+						get_tok_str(opcode, ((void*)0)),opcode);
+			} else {
+				TokenSym *ts = table_ident[opcode - 256];
+				if (ts->len >= 6
+						&& ((char*(*)())scc_dlsym("strchr"))("wlq", ts->str[ts->len-1])
+						&& !((int(*)())scc_dlsym("memcmp"))(ts->str, "cmov", 4)) {
+					opcode = tok_alloc(ts->str, ts->len-1)->tok;
+					goto again;
+				}
+				scc_error("unknown opcode '%s'", ts->str);
+			}
+		}
     autosize = 5-1;
     if ((pa->instr_type & (0x01 | 0x1000)) == 0x01)
         autosize = 5-2;
