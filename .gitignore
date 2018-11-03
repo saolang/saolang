@@ -1,1 +1,6 @@
 *.bin
+scc/config.mak
+scc/config.texi
+*.o
+*.a
+*.bak
