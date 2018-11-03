@@ -1,9 +1,3 @@
-/*************************************************************/
-/*
- *  ARM dummy assembler for SCC
- *
- */
-
 #ifdef TARGET_DEFS_ONLY
 
 #define CONFIG_SCC_ASM
