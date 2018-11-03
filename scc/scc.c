@@ -7,7 +7,7 @@
 #include "scctools.c"
 
 static const char help[] =
-    "Sao C Compiler "SCC_VERSION" - 
+    "Sao C Compiler "SCC_VERSION" - \n"
     "Usage: scc [options...] [-o outfile] [-c] infile(s)...\n"
     "       scc [options...] -run infile [arguments...]\n"
     "General options:\n"
