@@ -423,7 +423,7 @@ clean:
 	rm -f scc$(EXESUF) scc_p$(EXESUF) *-scc$(EXESUF) scc.pod
 	rm -f  *~ *.o *.a *.so* *.out *.log lib*.def *.exe *.dll a.out tags TAGS
 	@$(MAKE) -C lib $@
-	@$(MAKE) -C tests $@
+#@$(MAKE) -C tests $@
 	cd ..
 	rm -f  *~ *.o *.a *.so* *.out *.log lib*.def *.exe *.dll a.out tags TAGS
 

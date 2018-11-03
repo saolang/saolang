@@ -6,3 +6,5 @@ scc/config.texi
 *.bak
 scc/build_Darwin_x86_64
 _clean/
+a.out
+scc/build_in_dkr_gcc_musl

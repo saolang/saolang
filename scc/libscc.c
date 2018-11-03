@@ -1016,11 +1016,11 @@ ST_FUNC int scc_add_file_internal(SCCState *s1, const char *filename, int flags)
         case AFF_BINTYPE_AR:
             ret = scc_load_archive(s1, fd, !(flags & AFF_WHOLE_ARCHIVE));
             break;
-#ifdef SCC_TARGET_COFF
-        case AFF_BINTYPE_C67:
-            ret = scc_load_coff(s1, fd);
-            break;
-#endif
+//#ifdef SCC_TARGET_COFF
+//        case AFF_BINTYPE_C67:
+//            ret = scc_load_coff(s1, fd);
+//            break;
+//#endif
         default:
 #ifdef SCC_TARGET_PE
             ret = pe_load_file(s1, filename, fd);
@@ -1326,10 +1326,10 @@ static int scc_set_linker(SCCState *s, const char *option)
                 s->output_format = SCC_OUTPUT_FORMAT_ELF;
             } else if (!SCC(strcmp,int)(p, "binary")) {
                 s->output_format = SCC_OUTPUT_FORMAT_BINARY;
-#ifdef SCC_TARGET_COFF
-            } else if (!SCC(strcmp,int)(p, "coff")) {
-                s->output_format = SCC_OUTPUT_FORMAT_COFF;
-#endif
+//#ifdef SCC_TARGET_COFF
+//            } else if (!SCC(strcmp,int)(p, "coff")) {
+//                s->output_format = SCC_OUTPUT_FORMAT_COFF;
+//#endif
             } else
                 goto err;
 

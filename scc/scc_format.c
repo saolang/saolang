@@ -2269,10 +2269,10 @@ ST_FUNC int scc_object_type(int fd, ElfW(Ehdr) *h)
     } else if (size >= 8) {
         if (0 == SCC(memcmp,int)(h, ARMAG, 8))
             return AFF_BINTYPE_AR;
-#ifdef SCC_TARGET_COFF
-        if (((struct filehdr*)h)->f_magic == COFF_C67_MAGIC)
-            return AFF_BINTYPE_C67;
-#endif
+//#ifdef SCC_TARGET_COFF
+//        if (((struct filehdr*)h)->f_magic == COFF_C67_MAGIC)
+//            return AFF_BINTYPE_C67;
+//#endif
     }
     return 0;
 }

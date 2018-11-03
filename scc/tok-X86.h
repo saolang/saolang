@@ -227,7 +227,7 @@
  DEF_BWLX(stos)
  DEF_BWLX(ssto)
 
- /* generic asm ops */
+//define OP0 first
 #define ALT(x)
 #define DEF_ASM_OP0(name, opcode) DEF_ASM(name)
 #define DEF_ASM_OP0L(name, opcode, group, instr_type)
@@ -240,6 +240,7 @@
 # include "asm-X86-32.h"
 #endif
 
+//define else
 #define ALT(x)
 #define DEF_ASM_OP0(name, opcode)
 #define DEF_ASM_OP0L(name, opcode, group, instr_type) DEF_ASM(name)

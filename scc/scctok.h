@@ -233,14 +233,14 @@ DEF(TOK___fixdfdi, "__fixdfdi")
 # endif
 #endif
 
-#if defined SCC_TARGET_C67
-DEF(TOK__divi, "_divi")
-DEF(TOK__divu, "_divu")
-DEF(TOK__divf, "_divf")
-DEF(TOK__divd, "_divd")
-DEF(TOK__remi, "_remi")
-DEF(TOK__remu, "_remu")
-#endif
+//#if defined SCC_TARGET_C67
+//DEF(TOK__divi, "_divi")
+//DEF(TOK__divu, "_divu")
+//DEF(TOK__divf, "_divf")
+//DEF(TOK__divd, "_divd")
+//DEF(TOK__remi, "_remi")
+//DEF(TOK__remu, "_remu")
+//#endif
 
 #if defined SCC_TARGET_I386
 DEF(TOK___fixsfdi, "__fixsfdi")
@@ -349,3 +349,7 @@ DEF_ASMDIR(section)            /* must be last directive */
 #if defined SCC_TARGET_I386 || defined SCC_TARGET_X86_64
 #include "tok-X86.h"
 #endif
+
+DEF(TOK_message, "message")
+DEF(TOK_warning, "warning")
+DEF(TOK_error, "error")

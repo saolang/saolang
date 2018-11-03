@@ -958,7 +958,7 @@ struct filespec {
 #define TOK_EOF       (-1)  /* end of file */
 #define TOK_LINEFEED  10    /* line feed */
 
-/* all identifiers and strings have token above that */
+// before this all identifiers and strings have token 
 #define TOK_IDENT 256
 
 #define DEF_ASM(x) DEF(TOK_ASM_ ## x, #x)
@@ -1047,7 +1047,9 @@ struct filespec {
 #endif /* defined SCC_TARGET_I386 || defined SCC_TARGET_X86_64 */
 
 //WARNING: the sequence does matter.
-enum scc_token {
+//@ref scc_keywords in pp.c
+enum //scc_token
+{
     TOK_LAST = TOK_IDENT - 1
 #define DEF(id, str) ,id
 #include "scctok.h"
@@ -1551,11 +1553,10 @@ ST_FUNC void gen_clear_cache(void);
 #endif
 
 /* ------------ scccoff.c ------------ */
-
-#ifdef SCC_TARGET_COFF
-ST_FUNC int scc_output_coff(SCCState *s1, FILE *f);
-ST_FUNC int scc_load_coff(SCCState * s1, int fd);
-#endif
+//#ifdef SCC_TARGET_COFF
+//ST_FUNC int scc_output_coff(SCCState *s1, FILE *f);
+//ST_FUNC int scc_load_coff(SCCState * s1, int fd);
+//#endif
 
 /* ------------ sccasm.c ------------ */
 ST_FUNC void asm_instr(void);

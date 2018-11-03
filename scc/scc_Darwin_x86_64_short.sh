@@ -37,5 +37,7 @@ echo ./build_Darwin_x86_64/scc -run -B build_Darwin_x86_64/ -I. examples/test_sc
 
 echo
 echo ./build_Darwin_x86_64/scc -B build_Darwin_x86_64/ -I. -E -P0 scc.c \> scc.osx.pp.c
-#./build_Darwin_x86_64/scc -B build_Darwin_x86_64/ -I. -E -P0 scc.c > scc.osx.pp.c
+./build_Darwin_x86_64/scc -B build_Darwin_x86_64/ -I. -E -P0 scc.c > scc.osx.pp.c
 
+# dev OSX ..
+./build_Darwin_x86_64/scc -I include_osx -I . -DMAKE_DEBUG -run scc.c -I. -Wunsupported -c examples/test_scc_h.c 

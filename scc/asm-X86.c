@@ -839,30 +839,30 @@ again:
         break;
     next: ;
     }
-    if (pa->sym == 0) {
-        if (opcode >= TOK_ASM_first && opcode <= TOK_ASM_last) {
-            int b;
-            b = op0_codes[opcode - TOK_ASM_first];
-            if (b & 0xff00) 
-                g(b >> 8);
-            g(b);
-            return;
-        } else if (opcode <= TOK_ASM_alllast) {
-            scc_error("bad operand with opcode '%s',opcode=%d",
-                  get_tok_str(opcode, NULL),opcode);
-        } else {
-	    /* Special case for cmovcc, we accept size suffixes but ignore
-	       them, but we don't want them to blow up our tables.  */
-	    TokenSym *ts = table_ident[opcode - TOK_IDENT];
-	    if (ts->len >= 6
-		&& SCC(strchr,char*)("wlq", ts->str[ts->len-1])
-		&& !SCC(memcmp,int)(ts->str, "cmov", 4)) {
-		opcode = tok_alloc(ts->str, ts->len-1)->tok;
-		goto again;
-	    }
-            scc_error("unknown opcode '%s'", ts->str);
-        }
-    }
+		if (pa->sym == 0) {
+			if (opcode >= TOK_ASM_first && opcode <= TOK_ASM_last) {
+				int b;
+				b = op0_codes[opcode - TOK_ASM_first];
+				if (b & 0xff00) 
+					g(b >> 8);
+				g(b);
+				return;
+			} else if (opcode <= TOK_ASM_alllast) {
+				scc_error("bad operand with opcode '%s',opcode=%d",
+						get_tok_str(opcode, NULL),opcode);
+			} else {
+				/* Special case for cmovcc, we accept size suffixes but ignore
+					 them, but we don't want them to blow up our tables.  */
+				TokenSym *ts = table_ident[opcode - TOK_IDENT];
+				if (ts->len >= 6
+						&& SCC(strchr,char*)("wlq", ts->str[ts->len-1])
+						&& !SCC(memcmp,int)(ts->str, "cmov", 4)) {
+					opcode = tok_alloc(ts->str, ts->len-1)->tok;
+					goto again;
+				}
+				scc_error("unknown opcode '%s'", ts->str);
+			}
+		}
     /* if the size is unknown, then evaluate it (OPC_B or OPC_WL case) */
     autosize = NBWLX-1;
 #ifdef SCC_TARGET_X86_64
