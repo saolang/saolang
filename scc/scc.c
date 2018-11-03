@@ -1,7 +1,7 @@
 /*
  *  SCC - Sao C Compiler
  * 
- *  Copyright (c) 2001-2004 Fabrice Bellard
+ *  
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,7 +27,7 @@
 #include "scctools.c"
 
 static const char help[] =
-    "Sao C Compiler "SCC_VERSION" - Copyright (C) 2001-2006 Fabrice Bellard\n"
+    "Sao C Compiler "SCC_VERSION" - 
     "Usage: scc [options...] [-o outfile] [-c] infile(s)...\n"
     "       scc [options...] -run infile [arguments...]\n"
     "General options:\n"

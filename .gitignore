@@ -5,3 +5,4 @@ scc/config.texi
 *.a
 *.bak
 scc/build_Darwin_x86_64
+_clean/

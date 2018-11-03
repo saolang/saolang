@@ -1,9 +1,9 @@
 /*
  *  x86-64 code generator for SCC
  *
- *  Copyright (c) 2008 Shinichiro Hamaji
+ *  
  *
- *  Based on i386-gen.c by Fabrice Bellard
+ *  Based on i386-gen.c by 
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

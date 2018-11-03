@@ -1,8 +1,8 @@
 /*
  *  COFF file handling for SCC
  * 
- *  Copyright (c) 2003, 2004 TK
- *  Copyright (c) 2004 Fabrice Bellard
+ *  
+ *  
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

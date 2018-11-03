@@ -11,7 +11,7 @@
  * This program is for making libscc1.a without ar
  *  create library  : scc -ar [rcsv] lib.a files\n"
  * usage: tiny_libmaker [lib] files...
- * Copyright (c) 2007 Timppa
+ * 
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -284,7 +284,7 @@ the_end:
  * tiny_impdef creates an export definition file (.def) from a dll
  * on MS-Windows. Usage: tiny_impdef library.dll [-o outputfile]"
  *
- *  Copyright (c) 2005,2007 grischka
+ *  
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -411,7 +411,7 @@ the_end:
 /*
  *  SCC - Sao C Compiler
  *
- *  Copyright (c) 2001-2004 Fabrice Bellard
+ *  
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

@@ -1,7 +1,7 @@
 /*
  *  SCC - Sao C Compiler
  * 
- *  Copyright (c) 2001-2004 Fabrice Bellard
+ *  
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -3859,7 +3859,7 @@ ST_FUNC int scc_preprocess(SCCState *s1)
                 | PARSE_FLAG_SPACES
                 | PARSE_FLAG_ACCEPT_STRAYS
                 ;
-    /* Credits to Fabrice Bellard's initial revision to demonstrate its
+    /* Credits to 's initial revision to demonstrate its
        capability to compile and run itself, provided all numbers are
        given as decimals. scc -E -P10 will do. */
     if (s1->Pflag == LINE_MACRO_OUTPUT_FORMAT_P10)

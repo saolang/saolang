@@ -1,6 +1,4 @@
 #!/bin/sh
-#
-# scc configure script (c) 2003 Fabrice Bellard
 
 # set temporary file name
 # if test ! -z "$TMPDIR" ; then
