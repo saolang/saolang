@@ -2,29 +2,23 @@
 
 //sao.$OS sao.sao [sao.$OS.bin]
 
+//import
+@={sao}
+
 //read src
+args = sao.args;
 
-//do pp
+_sao = sao(args)
 
-//do cl
+//	_sao
+//	.try( rst => @?(rst){
+//			"pp":_sao.pp()
+//			"cl":_sao.cl()
+//			"lk":_sao.lk();@~;
+//			}
+//	).catch( err =>{}
+//	).finally()
 
-//do lk
 
-//do output
-
-//{<<
-//}>>
-
-_{ASM-OSX
-	<<{
-		()?{
-		}:{
-		}
-
-		(;;){
-			@#;
-			@~;
-		}
-
-	}>>
-}_
+//_sao process command
+_sao.pp().cl().lk().output();
