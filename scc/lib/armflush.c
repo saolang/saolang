@@ -4,7 +4,7 @@
    intrinsic with gcc.  However scc in order to compile
    itself needs this function */
 
-#ifdef __TINYC__
+#ifdef __SAOCC__
 
 /* syscall wrapper */
 unsigned syscall(unsigned syscall_nr, ...);

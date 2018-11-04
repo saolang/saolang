@@ -424,7 +424,7 @@ unsigned long long __umoddi3(unsigned long long u, unsigned long long v)
 /* XXX: fix scc's code generator to do this instead */
 long long __ashrdi3(long long a, int b)
 {
-#ifdef __TINYC__
+#ifdef __SAOCC__
     DWunion u;
     u.ll = a;
     if (b >= 32) {
@@ -443,7 +443,7 @@ long long __ashrdi3(long long a, int b)
 /* XXX: fix scc's code generator to do this instead */
 unsigned long long __lshrdi3(unsigned long long a, int b)
 {
-#ifdef __TINYC__
+#ifdef __SAOCC__
     DWunion u;
     u.ll = a;
     if (b >= 32) {
@@ -462,7 +462,7 @@ unsigned long long __lshrdi3(unsigned long long a, int b)
 /* XXX: fix scc's code generator to do this instead */
 long long __ashldi3(long long a, int b)
 {
-#ifdef __TINYC__
+#ifdef __SAOCC__
     DWunion u;
     u.ll = a;
     if (b >= 32) {
