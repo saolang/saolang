@@ -1727,7 +1727,7 @@ ST_FUNC void preprocess(int is_bof)
 	int i, c, n, saved_parse_flags;
 	char buf[1024], *q;
 	Sym *s;
-	int tok_tmp;
+	int tok_tmp,len;
 
 	saved_parse_flags = parse_flags;
 	parse_flags = PARSE_FLAG_PREPROCESS
@@ -1787,7 +1787,6 @@ read_name:
 					inp();
 #endif
 			} else {
-				int len;
 				/* computed #include : concatenate everything up to linefeed,
 					 the result must be one of the two accepted forms.
 					 Don't convert pp-tokens to tokens here.  */
@@ -1993,7 +1992,6 @@ _line_num:
 			ch = file->buf_ptr[0];
 			/* XXX: incorrect if comments : use next_nomacro with a special mode */
 			skip_spaces();
-			int len;
 			/* computed #include : concatenate everything up to linefeed,
 				 the result must be one of the two accepted forms.
 				 Don't convert pp-tokens to tokens here.  */

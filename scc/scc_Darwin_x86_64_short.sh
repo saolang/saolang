@@ -12,6 +12,7 @@ make clean
 make makedebug
 make libscc.so
 make 
+make cross
 
 ls -al
 

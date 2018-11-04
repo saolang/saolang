@@ -441,7 +441,7 @@ typedef struct SCCState SCCState;
  int scc_run(SCCState *s, int argc, char **argv);
  int scc_relocate(SCCState *s1, void *ptr);
  void *scc_get_symbol(SCCState *s, const char *name);
-enum __stab_debug_code
+enum
 {
 N_GSYM=0x20,
 N_FNAME=0x22,
@@ -1719,10 +1719,6 @@ static void asm_compute_constraints(ASMOperand *operands, int nb_operands, int n
 static void subst_asm_operand(CString *add_str, SValue *sv, int modifier);
 static void asm_gen_code(ASMOperand *operands, int nb_operands, int nb_outputs, int is_output, uint8_t *clobber_regs, int out_reg);
 static void asm_clobber(uint8_t *clobber_regs, const char *str);
-static int rt_num_callers;
-static const char **rt_bound_error_msg;
-static void *rt_prog_main;
-static void scc_set_num_callers(int n);
 static void scc_run_free(SCCState *s1);
 static inline int scc_assert(char* R, char* F, int L){(scc_dlsym_("printf"))("%s %s %s",F,L,R);(scc_dlsym_("exit"))(-1);return -1;}
  void scc_error_internal_v(SCCState *s1, int is_warning, const char *fmt, va_list ap);
@@ -3646,6 +3642,7 @@ static void preprocess(int is_bof)
 	int i, c, n, saved_parse_flags;
 	char buf[1024], *q;
 	Sym *s;
+	int tok_tmp;
 	saved_parse_flags = parse_flags;
 	parse_flags = 0x0001
 		| 0x0002
@@ -3672,6 +3669,7 @@ redo:
 			break;
 		case TOK_INCLUDE:
 		case TOK_INCLUDE_NEXT:
+			tok_tmp = tok;
 			ch = file->buf_ptr[0];
 			skip_spaces();
 			if (ch == '<') {
@@ -3707,10 +3705,16 @@ read_name:
 				len = ((int(*)())scc_dlsym("strlen"))(buf);
 				if ((len < 2 || ((buf[0] != '"' || buf[len-1] != '"') &&
 								(buf[0] != '<' || buf[len-1] != '>'))))
+				{
 					scc_error("'#include' expects \"FILENAME\" or <FILENAME>");
+				}
 				c = buf[len-1];
 				(scc_dlsym_("memmove"))(buf, buf + 1, len - 2);
 				buf[len - 2] = '\0';
+			}
+			if(tok_tmp==TOK_WARNING){
+				scc_warning("#%d %s", tok_tmp, buf);
+				goto include_done;
 			}
 			if (s1->include_stack_ptr >= s1->include_stack + 32)
 				scc_error("#include recursion too deep");
@@ -3853,20 +3857,28 @@ _line_num:
 		case TOK_ERROR:
 		case TOK_WARNING:
 			c = tok;
+			tok_tmp = tok;
 			ch = file->buf_ptr[0];
 			skip_spaces();
-			q = buf;
-			while (ch != '\n' && ch != (-1)) {
-				if ((q - buf) < sizeof(buf) - 1)
-					*q++ = ch;
-				if (ch == '\\') {
-					if (handle_stray_noerror() == 0)
-						--q;
-				} else
-					inp();
+			int len;
+			parse_flags = (0x0001
+					| 0x0004
+					| (parse_flags & 0x0008));
+			next();
+			buf[0] = '\0';
+			while (tok != 10) {
+				pstrcat(buf, sizeof(buf), get_tok_str(tok, &tokc));
+				next();
 			}
-			*q = '\0';
-			if (c == TOK_ERROR){
+			len = ((int(*)())scc_dlsym("strlen"))(buf);
+			c = buf[len-1];
+			(scc_dlsym_("memmove"))(buf, buf + 1, len - 2);
+			buf[len - 2] = '\0';
+			if(tok_tmp==TOK_WARNING){
+				scc_warning("#%d %s", tok_tmp, buf);
+				goto include_done;
+			}
+			if (tok_tmp == TOK_ERROR){
 				scc_error("#error %s", buf);
 			}else{
 				scc_warning("#warning %s", buf);
@@ -10783,385 +10795,6 @@ static void decl(int l)
 {
     decl0(l, 0, ((void*)0));
 }
-typedef long time_t;
-typedef struct { union { int __i[14]; volatile int __vi[14]; unsigned long __s[7]; } __u; } pthread_attr_t;
-typedef unsigned long size_t;
-typedef long clock_t;
-struct timespec { time_t tv_sec; long tv_nsec; };
-typedef int pid_t;
-typedef unsigned uid_t;
-typedef struct __pthread * pthread_t;
-typedef struct __sigset_t { unsigned long __bits[128/sizeof(long)]; } sigset_t;
-typedef struct sigaltstack stack_t;
-enum { REG_R8 = 0 };
-enum { REG_R9 = 1 };
-enum { REG_R10 = 2 };
-enum { REG_R11 = 3 };
-enum { REG_R12 = 4 };
-enum { REG_R13 = 5 };
-enum { REG_R14 = 6 };
-enum { REG_R15 = 7 };
-enum { REG_RDI = 8 };
-enum { REG_RSI = 9 };
-enum { REG_RBP = 10 };
-enum { REG_RBX = 11 };
-enum { REG_RDX = 12 };
-enum { REG_RAX = 13 };
-enum { REG_RCX = 14 };
-enum { REG_RSP = 15 };
-enum { REG_RIP = 16 };
-enum { REG_EFL = 17 };
-enum { REG_CSGSFS = 18 };
-enum { REG_ERR = 19 };
-enum { REG_TRAPNO = 20 };
-enum { REG_OLDMASK = 21 };
-enum { REG_CR2 = 22 };
-typedef long long greg_t, gregset_t[23];
-typedef struct _fpstate {
-	unsigned short cwd, swd, ftw, fop;
-	unsigned long long rip, rdp;
-	unsigned mxcsr, mxcr_mask;
-	struct {
-		unsigned short significand[4], exponent, padding[3];
-	} _st[8];
-	struct {
-		unsigned element[4];
-	} _xmm[16];
-	unsigned padding[24];
-} *fpregset_t;
-struct sigcontext {
-	unsigned long r8, r9, r10, r11, r12, r13, r14, r15;
-	unsigned long rdi, rsi, rbp, rbx, rdx, rax, rcx, rsp, rip, eflags;
-	unsigned short cs, gs, fs, __pad0;
-	unsigned long err, trapno, oldmask, cr2;
-	struct _fpstate *fpstate;
-	unsigned long __reserved1[8];
-};
-typedef struct {
-	gregset_t gregs;
-	fpregset_t fpregs;
-	unsigned long long __reserved1[8];
-} mcontext_t;
-struct sigaltstack {
-	void *ss_sp;
-	int ss_flags;
-	size_t ss_size;
-};
-typedef struct ucontext {
-	unsigned long uc_flags;
-	struct ucontext *uc_link;
-	stack_t uc_stack;
-	mcontext_t uc_mcontext;
-	sigset_t uc_sigmask;
-	unsigned long __fpregs_mem[64];
-} ucontext_t;
-union sigval {
-	int sival_int;
-	void *sival_ptr;
-};
-typedef struct {
-	int si_signo, si_errno, si_code;
-	union {
-		char __pad[128 - 2*sizeof(int) - sizeof(long)];
-		struct {
-			union {
-				struct {
-					pid_t si_pid;
-					uid_t si_uid;
-				} __piduid;
-				struct {
-					int si_timerid;
-					int si_overrun;
-				} __timer;
-			} __first;
-			union {
-				union sigval si_value;
-				struct {
-					int si_status;
-					clock_t si_utime, si_stime;
-				} __sigchld;
-			} __second;
-		} __si_common;
-		struct {
-			void *si_addr;
-			short si_addr_lsb;
-			union {
-				struct {
-					void *si_lower;
-					void *si_upper;
-				} __addr_bnd;
-				unsigned si_pkey;
-			} __first;
-		} __sigfault;
-		struct {
-			long si_band;
-			int si_fd;
-		} __sigpoll;
-		struct {
-			void *si_call_addr;
-			int si_syscall;
-			unsigned si_arch;
-		} __sigsys;
-	} __si_fields;
-} siginfo_t;
-struct sigaction {
-	union {
-		void (*sa_handler)(int);
-		void (*sa_sigaction)(int, siginfo_t *, void *);
-	} __sa_handler;
-	sigset_t sa_mask;
-	int sa_flags;
-	void (*sa_restorer)(void);
-};
-struct sigevent {
-	union sigval sigev_value;
-	int sigev_signo;
-	int sigev_notify;
-	void (*sigev_notify_function)(union sigval);
-	pthread_attr_t *sigev_notify_attributes;
-	char __pad[56-3*sizeof(long)];
-};
-int __libc_current_sigrtmin(void);
-int __libc_current_sigrtmax(void);
-int kill(pid_t, int);
-int sigemptyset(sigset_t *);
-int sigfillset(sigset_t *);
-int sigaddset(sigset_t *, int);
-int sigdelset(sigset_t *, int);
-int sigismember(const sigset_t *, int);
-int sigprocmask(int, const sigset_t *restrict, sigset_t *restrict);
-int sigsuspend(const sigset_t *);
-int sigaction(int, const struct sigaction *restrict, struct sigaction *restrict);
-int sigpending(sigset_t *);
-int sigwait(const sigset_t *restrict, int *restrict);
-int sigwaitinfo(const sigset_t *restrict, siginfo_t *restrict);
-int sigtimedwait(const sigset_t *restrict, siginfo_t *restrict, const struct timespec *restrict);
-int sigqueue(pid_t, int, const union sigval);
-int pthread_sigmask(int, const sigset_t *restrict, sigset_t *restrict);
-int pthread_kill(pthread_t, int);
-void psiginfo(const siginfo_t *, const char *);
-void psignal(int, const char *);
-int killpg(pid_t, int);
-int sigaltstack(const stack_t *restrict, stack_t *restrict);
-int sighold(int);
-int sigignore(int);
-int siginterrupt(int, int);
-int sigpause(int);
-int sigrelse(int);
-void (*sigset(int, void (*)(int)))(int);
-typedef void (*sig_t)(int);
-typedef void (*sighandler_t)(int);
-void (*bsd_signal(int, void (*)(int)))(int);
-int sigisemptyset(const sigset_t *);
-int sigorset (sigset_t *, const sigset_t *, const sigset_t *);
-int sigandset(sigset_t *, const sigset_t *, const sigset_t *);
-typedef int sig_atomic_t;
-void (*signal(int, void (*)(int)))(int);
-int raise(int);
-struct ucontext;
-int  getcontext(struct ucontext *);
-void makecontext(struct ucontext *, void (*)(void), int, ...);
-int  setcontext(const struct ucontext *);
-int  swapcontext(struct ucontext *, const struct ucontext *);
-static int rt_num_callers = 6;
-static const char **rt_bound_error_msg;
-static void *rt_prog_main;
-static int rt_get_caller_pc(Elf64_Addr *paddr, ucontext_t *uc, int level);
-static void set_exception_handler(void);
-static void scc_set_num_callers(int n)
-{
-    rt_num_callers = n;
-}
-static Elf64_Addr rt_printline(Elf64_Addr wanted_pc, const char *msg)
-{
-    char func_name[128], last_func_name[128];
-    Elf64_Addr func_addr, last_pc, pc;
-    const char *incl_files[32];
-    int incl_index, len, last_line_num, i;
-    const char *str, *p;
-    Stab_Sym *stab_sym = ((void*)0), *stab_sym_end, *sym;
-    int stab_len = 0;
-    char *stab_str = ((void*)0);
-    if (stab_section) {
-        stab_len = stab_section->data_offset;
-        stab_sym = (Stab_Sym *)stab_section->data;
-        stab_str = (char *) stabstr_section->data;
-    }
-    func_name[0] = '\0';
-    func_addr = 0;
-    incl_index = 0;
-    last_func_name[0] = '\0';
-    last_pc = (Elf64_Addr)-1;
-    last_line_num = 1;
-    if (!stab_sym)
-        goto no_stabs;
-    stab_sym_end = (Stab_Sym*)((char*)stab_sym + stab_len);
-    for (sym = stab_sym + 1; sym < stab_sym_end; ++sym) {
-        switch(sym->n_type) {
-        case N_FUN:
-            if (sym->n_strx == 0) {
-                pc = sym->n_value + func_addr;
-                if (wanted_pc >= last_pc && wanted_pc < pc)
-                    goto found;
-                func_name[0] = '\0';
-                func_addr = 0;
-            } else {
-                str = stab_str + sym->n_strx;
-                p = (scc_dlsym_("strchr"))(str, ':');
-                if (!p) {
-                    pstrcpy(func_name, sizeof(func_name), str);
-                } else {
-                    len = p - str;
-                    if (len > sizeof(func_name) - 1)
-                        len = sizeof(func_name) - 1;
-                    (scc_dlsym_("memcpy"))(func_name, str, len);
-                    func_name[len] = '\0';
-                }
-                func_addr = sym->n_value;
-            }
-            break;
-        case N_SLINE:
-            pc = sym->n_value + func_addr;
-            if (wanted_pc >= last_pc && wanted_pc < pc)
-                goto found;
-            last_pc = pc;
-            last_line_num = sym->n_desc;
-            (scc_dlsym_("strcpy"))(last_func_name, func_name);
-            break;
-        case N_BINCL:
-            str = stab_str + sym->n_strx;
-        add_incl:
-            if (incl_index < 32) {
-                incl_files[incl_index++] = str;
-            }
-            break;
-        case N_EINCL:
-            if (incl_index > 1)
-                incl_index--;
-            break;
-        case N_SO:
-            if (sym->n_strx == 0) {
-                incl_index = 0;
-            } else {
-                str = stab_str + sym->n_strx;
-                len = ((int(*)())scc_dlsym("strlen"))(str);
-                if (len > 0 && str[len - 1] != '/')
-                    goto add_incl;
-            }
-            break;
-        }
-    }
-no_stabs:
-    incl_index = 0;
-    if (symtab_section)
-    {
-        Elf64_Sym *sym, *sym_end;
-        int type;
-        sym_end = (Elf64_Sym *)(symtab_section->data + symtab_section->data_offset);
-        for(sym = (Elf64_Sym *)symtab_section->data + 1;
-            sym < sym_end;
-            sym++) {
-            type = ((sym->st_info) & 0xf);
-            if (type == 2 || type == 10) {
-                if (wanted_pc >= sym->st_value &&
-                    wanted_pc < sym->st_value + sym->st_size) {
-                    pstrcpy(last_func_name, sizeof(last_func_name),
-                            (char *) symtab_section->link->data + sym->st_name);
-                    func_addr = sym->st_value;
-                    goto found;
-                }
-            }
-        }
-    }
-    (scc_dlsym_("fprintf"))(scc_std(3), "%s %p ???\n", msg, (void*)wanted_pc);
-    (scc_dlsym_("fflush"))(scc_std(3));
-    return 0;
- found:
-    i = incl_index;
-    if (i > 0)
-        (scc_dlsym_("fprintf"))(scc_std(3), "%s:%d: ", incl_files[--i], last_line_num);
-    (scc_dlsym_("fprintf"))(scc_std(3), "%s %p", msg, (void*)wanted_pc);
-    if (last_func_name[0] != '\0')
-        (scc_dlsym_("fprintf"))(scc_std(3), " %s()", last_func_name);
-    if (--i >= 0) {
-        (scc_dlsym_("fprintf"))(scc_std(3), " (included from ");
-        for (;;) {
-            (scc_dlsym_("fprintf"))(scc_std(3), "%s", incl_files[i]);
-            if (--i < 0)
-                break;
-            (scc_dlsym_("fprintf"))(scc_std(3), ", ");
-        }
-        (scc_dlsym_("fprintf"))(scc_std(3), ")");
-    }
-    (scc_dlsym_("fprintf"))(scc_std(3), "\n");
-    (scc_dlsym_("fflush"))(scc_std(3));
-    return func_addr;
-}
-static void sig_error(int signum, siginfo_t *siginf, void *puc)
-{
-    ucontext_t *uc = puc;
-    switch(signum) {
-    case 8:
-        switch(siginf->si_code) {
-        case 1:
-        case 3:
-            { Elf64_Addr pc; int i; (scc_dlsym_("fprintf"))(scc_std(3), "Runtime error: "); (scc_dlsym_("vfprintf"))(scc_std(3), "division by zero"); (scc_dlsym_("fprintf"))(scc_std(3), "\n"); for(i=0;i<rt_num_callers;i++) { if (rt_get_caller_pc(&pc, uc, i) < 0) break; pc = rt_printline(pc, i ? "by" : "at"); if (pc == (Elf64_Addr)rt_prog_main && pc) break; }};
-            break;
-        default:
-            { Elf64_Addr pc; int i; (scc_dlsym_("fprintf"))(scc_std(3), "Runtime error: "); (scc_dlsym_("vfprintf"))(scc_std(3), "floating point exception"); (scc_dlsym_("fprintf"))(scc_std(3), "\n"); for(i=0;i<rt_num_callers;i++) { if (rt_get_caller_pc(&pc, uc, i) < 0) break; pc = rt_printline(pc, i ? "by" : "at"); if (pc == (Elf64_Addr)rt_prog_main && pc) break; }};
-            break;
-        }
-        break;
-    case 7:
-    case 11:
-        if (rt_bound_error_msg && *rt_bound_error_msg){
-            { Elf64_Addr pc; int i; (scc_dlsym_("fprintf"))(scc_std(3), "Runtime error: "); (scc_dlsym_("vfprintf"))(scc_std(3), *rt_bound_error_msg); (scc_dlsym_("fprintf"))(scc_std(3), "\n"); for(i=0;i<rt_num_callers;i++) { if (rt_get_caller_pc(&pc, uc, i) < 0) break; pc = rt_printline(pc, i ? "by" : "at"); if (pc == (Elf64_Addr)rt_prog_main && pc) break; }};
-				}else{
-            { Elf64_Addr pc; int i; (scc_dlsym_("fprintf"))(scc_std(3), "Runtime error: "); (scc_dlsym_("vfprintf"))(scc_std(3), "dereferencing invalid pointer"); (scc_dlsym_("fprintf"))(scc_std(3), "\n"); for(i=0;i<rt_num_callers;i++) { if (rt_get_caller_pc(&pc, uc, i) < 0) break; pc = rt_printline(pc, i ? "by" : "at"); if (pc == (Elf64_Addr)rt_prog_main && pc) break; }};
-				}
-        break;
-    case 4:
-        { Elf64_Addr pc; int i; (scc_dlsym_("fprintf"))(scc_std(3), "Runtime error: "); (scc_dlsym_("vfprintf"))(scc_std(3), "illegal instruction"); (scc_dlsym_("fprintf"))(scc_std(3), "\n"); for(i=0;i<rt_num_callers;i++) { if (rt_get_caller_pc(&pc, uc, i) < 0) break; pc = rt_printline(pc, i ? "by" : "at"); if (pc == (Elf64_Addr)rt_prog_main && pc) break; }};
-        break;
-    case 6:
-        { Elf64_Addr pc; int i; (scc_dlsym_("fprintf"))(scc_std(3), "Runtime error: "); (scc_dlsym_("vfprintf"))(scc_std(3), "abort() called"); (scc_dlsym_("fprintf"))(scc_std(3), "\n"); for(i=0;i<rt_num_callers;i++) { if (rt_get_caller_pc(&pc, uc, i) < 0) break; pc = rt_printline(pc, i ? "by" : "at"); if (pc == (Elf64_Addr)rt_prog_main && pc) break; }};
-        break;
-    default:
-        { Elf64_Addr pc; int i; (scc_dlsym_("fprintf"))(scc_std(3), "Runtime error: "); (scc_dlsym_("vfprintf"))(scc_std(3), "caught signal %d", signum); (scc_dlsym_("fprintf"))(scc_std(3), "\n"); for(i=0;i<rt_num_callers;i++) { if (rt_get_caller_pc(&pc, uc, i) < 0) break; pc = rt_printline(pc, i ? "by" : "at"); if (pc == (Elf64_Addr)rt_prog_main && pc) break; }};
-        break;
-    }
-    (scc_dlsym_("exit"))(255);
-}
-static void set_exception_handler(void)
-{
-    struct sigaction sigact;
-    sigact.sa_flags = 4 | 0x80000000;
-    sigact.__sa_handler.sa_sigaction = sig_error;
-    (scc_dlsym_("sigemptyset"))(&sigact.sa_mask);
-    (scc_dlsym_("sigaction"))(8, &sigact, ((void*)0));
-    (scc_dlsym_("sigaction"))(4, &sigact, ((void*)0));
-    (scc_dlsym_("sigaction"))(11, &sigact, ((void*)0));
-    (scc_dlsym_("sigaction"))(7, &sigact, ((void*)0));
-    (scc_dlsym_("sigaction"))(6, &sigact, ((void*)0));
-}
-static int rt_get_caller_pc(Elf64_Addr *paddr, ucontext_t *uc, int level)
-{
-    Elf64_Addr fp;
-    int i;
-    if (level == 0) {
-        *paddr = uc->uc_mcontext.gregs[REG_RIP];
-        return 0;
-    } else {
-        fp = uc->uc_mcontext.gregs[REG_RBP];
-        for(i=1;i<level;i++) {
-            if (fp <= 0x1000)
-                return -1;
-            fp = ((Elf64_Addr *)fp)[0];
-        }
-        *paddr = ((Elf64_Addr *)fp)[1];
-        return 0;
-    }
-}
 static void set_pages_executable(void *ptr, unsigned long length);
 static int scc_relocate_ex(SCCState *s1, void *ptr, Elf64_Addr ptr_diff);
  int scc_relocate(SCCState *s1, void *ptr)
@@ -11195,10 +10828,6 @@ static void scc_run_free(SCCState *s1)
     if (scc_relocate(s1, (void*)1) < 0)
         return -1;
     prog_main = scc_get_symbol_err(s1, s1->runtime_main);
-    if (s1->do_debug) {
-        set_exception_handler();
-        rt_prog_main = prog_main;
-    }
 		scc_errno(0);
     return (*prog_main)(argc, argv);
 }
@@ -18567,7 +18196,6 @@ static const SCCOption scc_options[] = {
     { "B", SCC_OPTION_B, 0x0001 },
     { "l", SCC_OPTION_l, 0x0001 | 0x0002 },
     { "bench", SCC_OPTION_bench, 0 },
-    { "bt", SCC_OPTION_bt, 0x0001 },
     { "g", SCC_OPTION_g, 0x0001 | 0x0002 },
     { "c", SCC_OPTION_c, 0 },
     { "dumpversion", SCC_OPTION_dumpversion, 0},
@@ -18782,9 +18410,6 @@ reparse:
             break;
         case SCC_OPTION_bench:
             s->do_bench = 1;
-            break;
-        case SCC_OPTION_bt:
-            scc_set_num_callers(((int(*)())scc_dlsym("atoi"))(optarg));
             break;
         case SCC_OPTION_g:
             s->do_debug = 1;
@@ -19266,7 +18891,6 @@ static const char help[] =
     "  -Wl,-opt[=val]  set linker option (see scc -hh)\n"
     "Debugger:\n"
     "  -g          generate runtime debug info\n"
-    "  -bt N       show N callers in stack traces\n"
     "Misc. options:\n"
     "  -x[c|a|b|n] specify type of the next infile (C,ASM,BIN,NONE)\n"
     "  -nostdinc   do not use standard system include paths\n"

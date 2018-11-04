@@ -11,6 +11,7 @@ cd build_in_dkr_gcc_musl &&
 make clean &&
 make libscc.so &&
 make &&
+make cross &&
 echo test1 &&
 ./scc -I.. -B. -run ../examples/ex3.c 33
 "
