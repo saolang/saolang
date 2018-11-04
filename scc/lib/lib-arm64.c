@@ -1,14 +1,3 @@
-/*
- *  SCC runtime library for arm64.
- *
- *  Copyright (c) 2015 Edmund Grimley Evans
- *
- * Copying and distribution of this file, with or without modification,
- * are permitted in any medium without royalty provided the copyright
- * notice and this notice are preserved.  This file is offered as-is,
- * without any warranty.
- */
-
 #ifdef __SAOCC__
 typedef signed char int8_t;
 typedef unsigned char uint8_t;

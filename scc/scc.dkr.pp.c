@@ -3642,7 +3642,7 @@ static void preprocess(int is_bof)
 	int i, c, n, saved_parse_flags;
 	char buf[1024], *q;
 	Sym *s;
-	int tok_tmp;
+	int tok_tmp,len;
 	saved_parse_flags = parse_flags;
 	parse_flags = 0x0001
 		| 0x0002
@@ -3692,7 +3692,6 @@ read_name:
 				*q = '\0';
 				minp();
 			} else {
-				int len;
 				parse_flags = (0x0001
 						| 0x0004
 						| (parse_flags & 0x0008));
@@ -3860,7 +3859,6 @@ _line_num:
 			tok_tmp = tok;
 			ch = file->buf_ptr[0];
 			skip_spaces();
-			int len;
 			parse_flags = (0x0001
 					| 0x0004
 					| (parse_flags & 0x0008));
