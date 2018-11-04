@@ -311,6 +311,17 @@ static void gadd_sp(int val)
     }
 }
 
+#if defined SCC_TARGET_PE
+static void gen_static_call(int v)
+{
+    Sym *sym;
+
+    sym = external_global_sym(v, &func_old_type, 0);
+    oad(0xe8, -4);
+    greloc(cur_text_section, sym, ind-4, R_386_PC32);
+}
+#endif
+
 /* 'is_jmp' is '1' if it is a jump */
 static void gcall_or_jmp(int is_jmp)
 {
@@ -993,65 +1004,6 @@ ST_FUNC void ggoto(void)
     gcall_or_jmp(1);
     vtop--;
 }
-
-/* generate a bounded pointer addition */
-ST_FUNC void gen_bounded_ptr_add(void)
-{
-	/* prepare fast i386 function call (args in eax and edx) */
-	gv2(RC_EAX, RC_EDX);
-	/* save all temporary registers */
-	vtop -= 2;
-	save_regs(0);
-	/* do a fast function call */
-	gen_static_call(TOK___bound_ptr_add);
-	/* returned pointer is in eax */
-	vtop++;
-	vtop->r = TREG_EAX | VT_BOUNDED;
-	/* address of bounding function call point */
-	vtop->c.i = (cur_text_section->reloc->data_offset - sizeof(Elf32_Rel));
-}
-
-/* patch pointer addition in vtop so that pointer dereferencing is
-	 also tested */
-ST_FUNC void gen_bounded_ptr_deref(void)
-{
-	addr_t func;
-	int  size, align;
-	Elf32_Rel *rel;
-	Sym *sym;
-
-	size = 0;
-	/* XXX: put that code in generic part of scc */
-	if (!is_float(vtop->type.t)) {
-		if (vtop->r & VT_LVAL_BYTE)
-			size = 1;
-		else if (vtop->r & VT_LVAL_SHORT)
-			size = 2;
-	}
-	if (!size)
-		size = type_size(&vtop->type, &align);
-	switch(size) {
-		case  1: func = TOK___bound_ptr_indir1; break;
-		case  2: func = TOK___bound_ptr_indir2; break;
-		case  4: func = TOK___bound_ptr_indir4; break;
-		case  8: func = TOK___bound_ptr_indir8; break;
-		case 12: func = TOK___bound_ptr_indir12; break;
-		case 16: func = TOK___bound_ptr_indir16; break;
-		default:
-						 scc_error("unhandled size when dereferencing bounded pointer");
-						 func = 0;
-						 break;
-	}
-
-	/* patch relocation */
-	/* XXX: find a better solution ? */
-	rel = (Elf32_Rel *)(cur_text_section->reloc->data + vtop->c.i);
-	sym = external_global_sym(func, &func_old_type, 0);
-	if (!sym->c)
-		put_extern_sym(sym, NULL, 0, 0);
-	rel->r_info = ELF32_R_INFO(sym->c, ELF32_R_TYPE(rel->r_info));
-}
-#endif//}
 
 /* Save the stack pointer onto the stack */
 ST_FUNC void gen_vla_sp_save(int addr) {
