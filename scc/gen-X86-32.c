@@ -69,11 +69,6 @@ ST_DATA const int reg_classes[NB_REGS] = {
 
 static unsigned long func_sub_sp_offset;
 static int func_ret_sub;
-#ifdef CONFIG_SCC_BCHECK
-static addr_t func_bound_offset;
-static unsigned long func_bound_ind;
-#endif
-
 /* XXX: make it faster ? */
 ST_FUNC void g(int c)
 {
@@ -315,17 +310,6 @@ static void gadd_sp(int val)
         oad(0xc481, val); /* add $xxx, %esp */
     }
 }
-
-#if defined CONFIG_SCC_BCHECK || defined SCC_TARGET_PE
-static void gen_static_call(int v)
-{
-    Sym *sym;
-
-    sym = external_global_sym(v, &func_old_type, 0);
-    oad(0xe8, -4);
-    greloc(cur_text_section, sym, ind-4, R_386_PC32);
-}
-#endif
 
 /* 'is_jmp' is '1' if it is a jump */
 static void gcall_or_jmp(int is_jmp)
@@ -574,52 +558,12 @@ ST_FUNC void gfunc_prolog(CType *func_type)
         func_ret_sub = 4;
 #endif
 
-#ifdef CONFIG_SCC_BCHECK
-    /* leave some room for bound checking code */
-    if (scc_state->do_bounds_check) {
-        func_bound_offset = lbounds_section->data_offset;
-        func_bound_ind = ind;
-        oad(0xb8, 0); /* lbound section pointer */
-        oad(0xb8, 0); /* call to function */
-    }
-#endif
 }
 
 /* generate function epilog */
 ST_FUNC void gfunc_epilog(void)
 {
     addr_t v, saved_ind;
-
-#ifdef CONFIG_SCC_BCHECK
-    if (scc_state->do_bounds_check
-     && func_bound_offset != lbounds_section->data_offset) {
-        addr_t saved_ind;
-        addr_t *bounds_ptr;
-        Sym *sym_data;
-
-        /* add end of table info */
-        bounds_ptr = section_ptr_add(lbounds_section, sizeof(addr_t));
-        *bounds_ptr = 0;
-
-        /* generate bound local allocation */
-        saved_ind = ind;
-        ind = func_bound_ind;
-        sym_data = get_sym_ref(&char_pointer_type, lbounds_section, 
-                               func_bound_offset, lbounds_section->data_offset);
-        greloc(cur_text_section, sym_data,
-               ind + 1, R_386_32);
-        oad(0xb8, 0); /* mov %eax, xxx */
-        gen_static_call(TOK___bound_local_new);
-        ind = saved_ind;
-
-        /* generate bound check local freeing */
-        o(0x5250); /* save returned value, if any */
-        greloc(cur_text_section, sym_data, ind + 1, R_386_32);
-        oad(0xb8, 0); /* mov %eax, xxx */
-        gen_static_call(TOK___bound_local_delete);
-        o(0x585a); /* restore returned value, if any */
-    }
-#endif
 
     /* align local size to word & save local variables */
     v = (-loc + 3) & -4;
@@ -1050,67 +994,64 @@ ST_FUNC void ggoto(void)
     vtop--;
 }
 
-/* bound check support functions */
-#ifdef CONFIG_SCC_BCHECK
-
 /* generate a bounded pointer addition */
 ST_FUNC void gen_bounded_ptr_add(void)
 {
-    /* prepare fast i386 function call (args in eax and edx) */
-    gv2(RC_EAX, RC_EDX);
-    /* save all temporary registers */
-    vtop -= 2;
-    save_regs(0);
-    /* do a fast function call */
-    gen_static_call(TOK___bound_ptr_add);
-    /* returned pointer is in eax */
-    vtop++;
-    vtop->r = TREG_EAX | VT_BOUNDED;
-    /* address of bounding function call point */
-    vtop->c.i = (cur_text_section->reloc->data_offset - sizeof(Elf32_Rel));
+	/* prepare fast i386 function call (args in eax and edx) */
+	gv2(RC_EAX, RC_EDX);
+	/* save all temporary registers */
+	vtop -= 2;
+	save_regs(0);
+	/* do a fast function call */
+	gen_static_call(TOK___bound_ptr_add);
+	/* returned pointer is in eax */
+	vtop++;
+	vtop->r = TREG_EAX | VT_BOUNDED;
+	/* address of bounding function call point */
+	vtop->c.i = (cur_text_section->reloc->data_offset - sizeof(Elf32_Rel));
 }
 
 /* patch pointer addition in vtop so that pointer dereferencing is
-   also tested */
+	 also tested */
 ST_FUNC void gen_bounded_ptr_deref(void)
 {
-    addr_t func;
-    int  size, align;
-    Elf32_Rel *rel;
-    Sym *sym;
+	addr_t func;
+	int  size, align;
+	Elf32_Rel *rel;
+	Sym *sym;
 
-    size = 0;
-    /* XXX: put that code in generic part of scc */
-    if (!is_float(vtop->type.t)) {
-        if (vtop->r & VT_LVAL_BYTE)
-            size = 1;
-        else if (vtop->r & VT_LVAL_SHORT)
-            size = 2;
-    }
-    if (!size)
-        size = type_size(&vtop->type, &align);
-    switch(size) {
-    case  1: func = TOK___bound_ptr_indir1; break;
-    case  2: func = TOK___bound_ptr_indir2; break;
-    case  4: func = TOK___bound_ptr_indir4; break;
-    case  8: func = TOK___bound_ptr_indir8; break;
-    case 12: func = TOK___bound_ptr_indir12; break;
-    case 16: func = TOK___bound_ptr_indir16; break;
-    default:
-        scc_error("unhandled size when dereferencing bounded pointer");
-        func = 0;
-        break;
-    }
+	size = 0;
+	/* XXX: put that code in generic part of scc */
+	if (!is_float(vtop->type.t)) {
+		if (vtop->r & VT_LVAL_BYTE)
+			size = 1;
+		else if (vtop->r & VT_LVAL_SHORT)
+			size = 2;
+	}
+	if (!size)
+		size = type_size(&vtop->type, &align);
+	switch(size) {
+		case  1: func = TOK___bound_ptr_indir1; break;
+		case  2: func = TOK___bound_ptr_indir2; break;
+		case  4: func = TOK___bound_ptr_indir4; break;
+		case  8: func = TOK___bound_ptr_indir8; break;
+		case 12: func = TOK___bound_ptr_indir12; break;
+		case 16: func = TOK___bound_ptr_indir16; break;
+		default:
+						 scc_error("unhandled size when dereferencing bounded pointer");
+						 func = 0;
+						 break;
+	}
 
-    /* patch relocation */
-    /* XXX: find a better solution ? */
-    rel = (Elf32_Rel *)(cur_text_section->reloc->data + vtop->c.i);
-    sym = external_global_sym(func, &func_old_type, 0);
-    if (!sym->c)
-        put_extern_sym(sym, NULL, 0, 0);
-    rel->r_info = ELF32_R_INFO(sym->c, ELF32_R_TYPE(rel->r_info));
+	/* patch relocation */
+	/* XXX: find a better solution ? */
+	rel = (Elf32_Rel *)(cur_text_section->reloc->data + vtop->c.i);
+	sym = external_global_sym(func, &func_old_type, 0);
+	if (!sym->c)
+		put_extern_sym(sym, NULL, 0, 0);
+	rel->r_info = ELF32_R_INFO(sym->c, ELF32_R_TYPE(rel->r_info));
 }
-#endif
+#endif//}
 
 /* Save the stack pointer onto the stack */
 ST_FUNC void gen_vla_sp_save(int addr) {

@@ -19,4 +19,5 @@
 | -- | -- |
 | BYTE PTR、WORD PTR、DWORD PTR | -b -w -l |
 | -h -o -b | 0x- 0- 0b- |
+| segreg:[base+index*scale+disp] | %segreg:disp(base,index,scale) |
 

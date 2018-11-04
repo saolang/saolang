@@ -1,1 +1,1 @@
-#include "tcc_stdarg.h"
+#include "scc_stdarg.h"

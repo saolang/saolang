@@ -1727,6 +1727,7 @@ ST_FUNC void preprocess(int is_bof)
 	int i, c, n, saved_parse_flags;
 	char buf[1024], *q;
 	Sym *s;
+	int tok_tmp;
 
 	saved_parse_flags = parse_flags;
 	parse_flags = PARSE_FLAG_PREPROCESS
@@ -1756,6 +1757,7 @@ redo:
 			break;
 		case TOK_INCLUDE:
 		case TOK_INCLUDE_NEXT:
+			tok_tmp = tok;
 			ch = file->buf_ptr[0];
 			/* XXX: incorrect if comments : use next_nomacro with a special mode */
 			skip_spaces();
@@ -1802,14 +1804,22 @@ read_name:
 				/* check syntax and remove '<>|""' */
 				if ((len < 2 || ((buf[0] != '"' || buf[len-1] != '"') &&
 								(buf[0] != '<' || buf[len-1] != '>'))))
+				{
 					scc_error("'#include' expects \"FILENAME\" or <FILENAME>");
+				}
 				c = buf[len-1];
 				SCC(memmove)(buf, buf + 1, len - 2);
 				buf[len - 2] = '\0';
 			}
 
+			if(tok_tmp==TOK_WARNING){
+				scc_warning("#%d %s", tok_tmp, buf);
+				goto include_done;
+			}
+			
 			if (s1->include_stack_ptr >= s1->include_stack + INCLUDE_STACK_SIZE)
 				scc_error("#include recursion too deep");
+
 			/* store current file in stack, but increment stack later below */
 			*s1->include_stack_ptr = file;
 			i = tok == TOK_INCLUDE_NEXT ? file->include_next_index : 0;
@@ -1871,7 +1881,6 @@ read_name:
 				ch = file->buf_ptr[0];
 				goto the_end;
 			}
-			//SCC(printf)("wjc.tmp.buf=(%s)",buf);
 			scc_error("preprocess(): include file '%s' not found", buf);
 include_done:
 			break;
@@ -1980,20 +1989,33 @@ _line_num:
 		case TOK_ERROR:
 		case TOK_WARNING:
 			c = tok;
+			tok_tmp = tok;
 			ch = file->buf_ptr[0];
+			/* XXX: incorrect if comments : use next_nomacro with a special mode */
 			skip_spaces();
-			q = buf;
-			while (ch != '\n' && ch != CH_EOF) {
-				if ((q - buf) < sizeof(buf) - 1)
-					*q++ = ch;
-				if (ch == '\\') {
-					if (handle_stray_noerror() == 0)
-						--q;
-				} else
-					inp();
+			int len;
+			/* computed #include : concatenate everything up to linefeed,
+				 the result must be one of the two accepted forms.
+				 Don't convert pp-tokens to tokens here.  */
+			parse_flags = (PARSE_FLAG_PREPROCESS
+					| PARSE_FLAG_LINEFEED
+					| (parse_flags & PARSE_FLAG_ASM_FILE));
+			next();
+			buf[0] = '\0';
+			while (tok != TOK_LINEFEED) {
+				pstrcat(buf, sizeof(buf), get_tok_str(tok, &tokc));
+				next();
 			}
-			*q = '\0';
-			if (c == TOK_ERROR){
+			len = SCC(strlen,int)(buf);
+			c = buf[len-1];
+			SCC(memmove)(buf, buf + 1, len - 2);
+			buf[len - 2] = '\0';
+
+			if(tok_tmp==TOK_WARNING){
+				scc_warning("#%d %s", tok_tmp, buf);
+				goto include_done;
+			}
+			if (tok_tmp == TOK_ERROR){
 				scc_error("#error %s", buf);
 			}else{
 				scc_warning("#warning %s", buf);

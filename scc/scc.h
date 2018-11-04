@@ -94,13 +94,8 @@
 #if defined SCC_IS_NATIVE && !defined CONFIG_SCCBOOT
 //TODO WIN32 some problem for the headers...
 #ifndef _WIN32
-# define CONFIG_SCC_BACKTRACE
+//# define CONFIG_SCC_BACKTRACE
 #endif
-# if (defined SCC_TARGET_I386 || defined SCC_TARGET_X86_64) \
-  && !defined SCC_UCLIBC && !defined SCC_MUSL
-//TODO ..!!
-//# define CONFIG_SCC_BCHECK /* enable bound checking code */
-# endif
 #endif
 
 /* ------------ path configuration ------------ */
@@ -227,12 +222,11 @@
 #include "libscc.h"
 
 //@ref for sccpp && sccgen
-//#include "stab.h"
-enum __stab_debug_code
+enum //__stab_debug_code
 {
 N_GSYM=0x20,
 N_FNAME=0x22,
-N_FUN=0x24,
+N_FUN=0x24,//
 N_STSYM=0x26,
 N_LCSYM=0x28,
 N_MAIN=0x2a,
@@ -243,7 +237,7 @@ N_OBJ=0x38,
 N_OPT=0x3c,
 N_RSYM=0x40,
 N_M2C=0x42,
-N_SLINE=0x44,
+N_SLINE=0x44,//
 N_DSLINE=0x46,
 N_BSLINE=0x48,
 N_BROWS=0x48,
@@ -252,12 +246,12 @@ N_EHDECL=0x50,
 N_MOD2=0x50,
 N_CATCH=0x54,
 N_SSYM=0x60,
-N_SO=0x64,
+N_SO=0x64,//
 N_LSYM=0x80,
-N_BINCL=0x82,
+N_BINCL=0x82,//
 N_SOL=0x84,
 N_PSYM=0xa0,
-N_EINCL=0xa2,
+N_EINCL=0xa2,//
 N_ENTRY=0xa4,
 N_LBRAC=0xc0,
 N_EXCL=0xc2,
@@ -655,10 +649,6 @@ struct SCCState {
 
     /* compile with debug symbol (and use them if error during execution) */
     int do_debug;
-#ifdef CONFIG_SCC_BCHECK
-    /* compile with built-in memory and bounds checker */
-    int do_bounds_check;
-#endif
 #ifdef SCC_TARGET_ARM
     enum float_abi float_abi; /* float ABI of the generated code*/
 #endif
@@ -1324,9 +1314,6 @@ ST_FUNC void expr_prod(void);
 ST_FUNC void expr_sum(void);
 ST_FUNC void gexpr(void);
 ST_FUNC int expr_const(void);
-#if defined CONFIG_SCC_BCHECK || defined SCC_TARGET_C67
-ST_FUNC Sym *get_sym_ref(CType *type, Section *sec, unsigned long offset, unsigned long size);
-#endif
 #if defined SCC_TARGET_X86_64 && !defined SCC_TARGET_PE
 ST_FUNC int classify_x86_64_va_arg(CType *ty);
 #endif
@@ -1352,12 +1339,6 @@ ST_DATA Section *common_section;
 ST_DATA Section *cur_text_section; /* current section where function code is generated */
 #ifdef CONFIG_SCC_ASM
 ST_DATA Section *last_text_section; /* to handle .previous asm directive */
-#endif
-#ifdef CONFIG_SCC_BCHECK
-/* bound check related sections */
-ST_DATA Section *bounds_section; /* contains global data bound description */
-ST_DATA Section *lbounds_section; /* contains local data bound description */
-ST_FUNC void scc_format_bounds_new(SCCState *s);
 #endif
 /* symbol sections */
 ST_DATA Section *symtab_section;
@@ -1511,11 +1492,6 @@ ST_FUNC void gen_le16(int c);
 ST_FUNC void gen_le32(int c);
 ST_FUNC void gen_addr32(int r, Sym *sym, int c);
 ST_FUNC void gen_addrpc32(int r, Sym *sym, int c);
-#endif
-
-#ifdef CONFIG_SCC_BCHECK
-ST_FUNC void gen_bounded_ptr_add(void);
-ST_FUNC void gen_bounded_ptr_deref(void);
 #endif
 
 /* ------------ gen-X86-?.c ------------ */

@@ -911,14 +911,6 @@ LIBSCCAPI int scc_set_output_type(SCCState *s, int output_type)
         scc_add_sysinclude_path(s, CONFIG_SCC_SYSINCLUDEPATHS);
     }
 
-#ifdef CONFIG_SCC_BCHECK
-    if (s->do_bounds_check) {
-        /* if bound checking, then add corresponding sections */
-        scc_format_bounds_new(s);
-        /* define symbol */
-        scc_define_symbol(s, "__BOUNDS_CHECKING_ON", NULL);
-    }
-#endif
     if (s->do_debug) {
         /* add debug sections */
         scc_format_stab_new(s);
@@ -1481,9 +1473,6 @@ static const SCCOption scc_options[] = {
 #ifdef CONFIG_SCC_BACKTRACE
     { "bt", SCC_OPTION_bt, SCC_OPTION_HAS_ARG },
 #endif
-#ifdef CONFIG_SCC_BCHECK
-    { "b", SCC_OPTION_b, 0 },
-#endif
     { "g", SCC_OPTION_g, SCC_OPTION_HAS_ARG | SCC_OPTION_NOSEP },
     { "c", SCC_OPTION_c, 0 },
     { "dumpversion", SCC_OPTION_dumpversion, 0},
@@ -1729,12 +1718,6 @@ reparse:
 #ifdef CONFIG_SCC_BACKTRACE
         case SCC_OPTION_bt:
             scc_set_num_callers(SCC(atoi,int)(optarg));
-            break;
-#endif
-#ifdef CONFIG_SCC_BCHECK
-        case SCC_OPTION_b:
-            s->do_bounds_check = 1;
-            s->do_debug = 1;
             break;
 #endif
         case SCC_OPTION_g:

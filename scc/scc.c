@@ -7,10 +7,10 @@
 #include "scctools.c"
 
 static const char help[] =
-    "Sao C Compiler "SCC_VERSION" - \n"
-    "Usage: scc [options...] [-o outfile] [-c] infile(s)...\n"
-    "       scc [options...] -run infile [arguments...]\n"
-    "General options:\n"
+    "Sao CC "SCC_VERSION" - \n"
+    "   scc [options...] [-o outfile] [-c] infile(s)...\n"
+    "   scc [options...] -run infile [arguments...]\n"
+    "General:\n"
     "  -c          compile only - generate an object file\n"
     "  -o outfile  set output filename\n"
     "  -run        run compiled source\n"
@@ -22,12 +22,12 @@ static const char help[] =
     "  -bench      show compilation statistics\n"
     "  -           use stdin pipe as infile\n"
     "  @listfile   read arguments from listfile\n"
-    "Preprocessor options:\n"
+    "Preprocessor:\n"
     "  -Idir       add include path 'dir'\n"
     "  -Dsym[=val] define 'sym' with value 'val'\n"
     "  -Usym       undefine 'sym'\n"
     "  -E          preprocess only\n"
-    "Linker options:\n"
+    "Linker:\n"
     "  -Ldir       add library path 'dir'\n"
     "  -llib       link with dynamic or static library 'lib'\n"
     "  -r          generate (relocatable) object file\n"
@@ -35,11 +35,8 @@ static const char help[] =
     "  -rdynamic   export all global symbols to dynamic linker\n"
     "  -soname     set name for shared library to be used at runtime\n"
     "  -Wl,-opt[=val]  set linker option (see scc -hh)\n"
-    "Debugger options:\n"
+    "Debugger:\n"
     "  -g          generate runtime debug info\n"
-#ifdef CONFIG_SCC_BCHECK
-    "  -b          compile with built-in memory and bounds checker (implies -g)\n"
-#endif
 #ifdef CONFIG_SCC_BACKTRACE
     "  -bt N       show N callers in stack traces\n"
 #endif

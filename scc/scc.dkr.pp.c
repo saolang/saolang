@@ -6769,9 +6769,7 @@ redo:
                 vpushll(u);
             }
             gen_op('*');
-            {
-                gen_opic(op);
-            }
+						gen_opic(op);
             vtop->type = type1;
         }
     } else if (is_float(bt1) || is_float(bt2)) {
@@ -10390,142 +10388,142 @@ static void decl_initializer(CType *type, Section *sec, unsigned long c,
 static void decl_initializer_alloc(CType *type, AttributeDef *ad, int r,
                                    int has_init, int v, int scope)
 {
-    int size, align, addr;
-    TokenString *init_str = ((void*)0);
-    Section *sec;
-    Sym *flexible_array;
-    Sym *sym = ((void*)0);
-    int saved_nocode_wanted = nocode_wanted;
-    if (v && (r & 0x003f) == 0x0030)
-        nocode_wanted |= 0x80000000;
-    flexible_array = ((void*)0);
-    if ((type->t & 0x000f) == 7) {
-        Sym *field = type->ref->next;
-        if (field) {
-            while (field->next)
-                field = field->next;
-            if (field->type.t & 0x0040 && field->type.ref->c < 0)
-                flexible_array = field;
-        }
-    }
-    size = type_size(type, &align);
-    if (size < 0 || (flexible_array && has_init)) {
-        if (!has_init)
-            scc_error("unknown type size");
-        if (has_init == 2) {
-	    init_str = tok_str_alloc();
-            while (tok == 0xb9 || tok == 0xba) {
-                tok_str_add_tok(init_str);
-                next();
-            }
-	    tok_str_add(init_str, -1);
-	    tok_str_add(init_str, 0);
-        } else {
-	    skip_or_save_block(&init_str);
-        }
-        unget_tok(0);
-        begin_macro(init_str, 1);
-        next();
-        decl_initializer(type, ((void*)0), 0, 1, 1);
-        macro_ptr = init_str->str;
-        next();
-        size = type_size(type, &align);
-        if (size < 0)
-            scc_error("unknown type size");
-    }
-    if (flexible_array &&
-	flexible_array->type.ref->c > 0)
-        size += flexible_array->type.ref->c
-	        * pointed_size(&flexible_array->type);
-    if (ad->a.aligned) {
-	int speca = 1 << (ad->a.aligned - 1);
-        if (speca > align)
-            align = speca;
-    } else if (ad->a.packed) {
-        align = 1;
-    }
-    if (!v && (nocode_wanted > 0))
-        size = 0, align = 1;
-    if ((r & 0x003f) == 0x0032) {
-        sec = ((void*)0);
-        loc = (loc - size) & -align;
-        addr = loc;
-        if (v) {
-	    if (ad->asm_label) {
-		int reg = asm_parse_regvar(ad->asm_label);
-		if (reg >= 0)
-		    r = (r & ~0x003f) | reg;
-	    }
-            sym = sym_push(v, type, r, addr);
-            sym->a = ad->a;
-        } else {
-            vset(type, r, addr);
-        }
-    } else {
-        if (v && scope == 0x0030) {
-            sym = sym_find(v);
-            if (sym) {
-                patch_storage(sym, ad, type);
-                if (!has_init && sym->c && elfsym(sym)->st_shndx != 0)
-                    goto no_alloc;
-            }
-        }
-        sec = ad->section;
-        if (!sec) {
-            if (has_init)
-                sec = data_section;
-            else if (scc_state->nocommon)
-                sec = bss_section;
-        }
-        if (sec) {
-	    addr = section_add(sec, size, align);
-        } else {
-            addr = align;
-	    sec = common_section;
-        }
-        if (v) {
-            if (!sym) {
-                sym = sym_push(v, type, r | 0x0200, 0);
-                patch_storage(sym, ad, ((void*)0));
-            }
-            sym->sym_scope = 0;
-	    put_extern_sym(sym, sec, addr, size);
-        } else {
-            sym = get_sym_ref(type, sec, addr, size);
-	    vpushsym(type, sym);
-	    vtop->r |= r;
-        }
-    }
-    if (type->t & 0x0400) {
-        int a;
-        if ((nocode_wanted > 0))
-            goto no_alloc;
-        if (vlas_in_scope == 0) {
-            if (vla_sp_root_loc == -1)
-                vla_sp_root_loc = (loc -= 8);
-            gen_vla_sp_save(vla_sp_root_loc);
-        }
-        vla_runtime_type_size(type, &a);
-        gen_vla_alloc(type, a);
-        gen_vla_sp_save(addr);
-        vla_sp_loc = addr;
-        vlas_in_scope++;
-    } else if (has_init) {
-	size_t oldreloc_offset = 0;
-	if (sec && sec->reloc)
-	  oldreloc_offset = sec->reloc->data_offset;
-        decl_initializer(type, sec, addr, 1, 0);
-	if (sec && sec->reloc)
-	  squeeze_multi_relocs(sec, oldreloc_offset);
-        if (flexible_array)
-            flexible_array->type.ref->c = -1;
-    }
- no_alloc:
-    if (init_str) {
-        end_macro();
-        next();
-    }
-    nocode_wanted = saved_nocode_wanted;
+	int size, align, addr;
+	TokenString *init_str = ((void*)0);
+	Section *sec;
+	Sym *flexible_array;
+	Sym *sym = ((void*)0);
+	int saved_nocode_wanted = nocode_wanted;
+	if (v && (r & 0x003f) == 0x0030)
+		nocode_wanted |= 0x80000000;
+	flexible_array = ((void*)0);
+	if ((type->t & 0x000f) == 7) {
+		Sym *field = type->ref->next;
+		if (field) {
+			while (field->next)
+				field = field->next;
+			if (field->type.t & 0x0040 && field->type.ref->c < 0)
+				flexible_array = field;
+		}
+	}
+	size = type_size(type, &align);
+	if (size < 0 || (flexible_array && has_init)) {
+		if (!has_init)
+			scc_error("unknown type size");
+		if (has_init == 2) {
+			init_str = tok_str_alloc();
+			while (tok == 0xb9 || tok == 0xba) {
+				tok_str_add_tok(init_str);
+				next();
+			}
+			tok_str_add(init_str, -1);
+			tok_str_add(init_str, 0);
+		} else {
+			skip_or_save_block(&init_str);
+		}
+		unget_tok(0);
+		begin_macro(init_str, 1);
+		next();
+		decl_initializer(type, ((void*)0), 0, 1, 1);
+		macro_ptr = init_str->str;
+		next();
+		size = type_size(type, &align);
+		if (size < 0)
+			scc_error("unknown type size");
+	}
+	if (flexible_array &&
+			flexible_array->type.ref->c > 0)
+		size += flexible_array->type.ref->c
+			* pointed_size(&flexible_array->type);
+	if (ad->a.aligned) {
+		int speca = 1 << (ad->a.aligned - 1);
+		if (speca > align)
+			align = speca;
+	} else if (ad->a.packed) {
+		align = 1;
+	}
+	if (!v && (nocode_wanted > 0))
+		size = 0, align = 1;
+	if ((r & 0x003f) == 0x0032) {
+		sec = ((void*)0);
+		loc = (loc - size) & -align;
+		addr = loc;
+		if (v) {
+			if (ad->asm_label) {
+				int reg = asm_parse_regvar(ad->asm_label);
+				if (reg >= 0)
+					r = (r & ~0x003f) | reg;
+			}
+			sym = sym_push(v, type, r, addr);
+			sym->a = ad->a;
+		} else {
+			vset(type, r, addr);
+		}
+	} else {
+		if (v && scope == 0x0030) {
+			sym = sym_find(v);
+			if (sym) {
+				patch_storage(sym, ad, type);
+				if (!has_init && sym->c && elfsym(sym)->st_shndx != 0)
+					goto no_alloc;
+			}
+		}
+		sec = ad->section;
+		if (!sec) {
+			if (has_init)
+				sec = data_section;
+			else if (scc_state->nocommon)
+				sec = bss_section;
+		}
+		if (sec) {
+			addr = section_add(sec, size, align);
+		} else {
+			addr = align;
+			sec = common_section;
+		}
+		if (v) {
+			if (!sym) {
+				sym = sym_push(v, type, r | 0x0200, 0);
+				patch_storage(sym, ad, ((void*)0));
+			}
+			sym->sym_scope = 0;
+			put_extern_sym(sym, sec, addr, size);
+		} else {
+			sym = get_sym_ref(type, sec, addr, size);
+			vpushsym(type, sym);
+			vtop->r |= r;
+		}
+	}
+	if (type->t & 0x0400) {
+		int a;
+		if ((nocode_wanted > 0))
+			goto no_alloc;
+		if (vlas_in_scope == 0) {
+			if (vla_sp_root_loc == -1)
+				vla_sp_root_loc = (loc -= 8);
+			gen_vla_sp_save(vla_sp_root_loc);
+		}
+		vla_runtime_type_size(type, &a);
+		gen_vla_alloc(type, a);
+		gen_vla_sp_save(addr);
+		vla_sp_loc = addr;
+		vlas_in_scope++;
+	} else if (has_init) {
+		size_t oldreloc_offset = 0;
+		if (sec && sec->reloc)
+			oldreloc_offset = sec->reloc->data_offset;
+		decl_initializer(type, sec, addr, 1, 0);
+		if (sec && sec->reloc)
+			squeeze_multi_relocs(sec, oldreloc_offset);
+		if (flexible_array)
+			flexible_array->type.ref->c = -1;
+	}
+no_alloc:
+	if (init_str) {
+		end_macro();
+		next();
+	}
+	nocode_wanted = saved_nocode_wanted;
 }
 static void gen_function(Sym *sym)
 {
@@ -11745,7 +11743,7 @@ static X86_64_Mode classify_x86_64_inner(CType *ty)
             mode = classify_x86_64_merge(mode, classify_x86_64_inner(&f->type));
         return mode;
     }
-    ((0)?(void)0:scc_assert("0","gen-X86-64.c",1105));
+    ((0)?(void)0:scc_assert("0","gen-X86-64.c",1021));
     return 0;
 }
 static X86_64_Mode classify_x86_64_arg(CType *ty, CType *ret, int *psize, int *palign, int *reg_count)
@@ -11899,7 +11897,7 @@ void gfunc_call(int nb_args)
 		break;
 	    case 8:
 	    case 9:
-		((mode == x86_64_mode_sse)?(void)0:scc_assert("mode == x86_64_mode_sse","gen-X86-64.c",1301));
+		((mode == x86_64_mode_sse)?(void)0:scc_assert("mode == x86_64_mode_sse","gen-X86-64.c",1217));
 		r = gv(0x0002);
 		o(0x50);
 		o(0xd60f66);
@@ -11907,7 +11905,7 @@ void gfunc_call(int nb_args)
 		o(0x24);
 		break;
 	    default:
-		((mode == x86_64_mode_integer)?(void)0:scc_assert("mode == x86_64_mode_integer","gen-X86-64.c",1311));
+		((mode == x86_64_mode_integer)?(void)0:scc_assert("mode == x86_64_mode_integer","gen-X86-64.c",1227));
 		r = gv(0x0001);
 		orex(0,r,0,0x50 + ((r) & 7));
 		break;
@@ -11918,8 +11916,8 @@ void gfunc_call(int nb_args)
 	onstack++;
     }
     save_regs(0);
-    ((gen_reg <= 6)?(void)0:scc_assert("gen_reg <= REGN","gen-X86-64.c",1332));
-    ((sse_reg <= 8)?(void)0:scc_assert("sse_reg <= 8","gen-X86-64.c",1333));
+    ((gen_reg <= 6)?(void)0:scc_assert("gen_reg <= REGN","gen-X86-64.c",1248));
+    ((sse_reg <= 8)?(void)0:scc_assert("sse_reg <= 8","gen-X86-64.c",1249));
     for(i = 0; i < nb_args; i++) {
         mode = classify_x86_64_arg(&vtop->type, &type, &size, &align, &reg_count);
         vtop->type = type;
@@ -11934,7 +11932,7 @@ void gfunc_call(int nb_args)
                     o(0xc1 + ((sse_reg+1) << 3));
                 }
             } else {
-                ((reg_count == 1)?(void)0:scc_assert("reg_count == 1","gen-X86-64.c",1351));
+                ((reg_count == 1)?(void)0:scc_assert("reg_count == 1","gen-X86-64.c",1267));
                 --sse_reg;
                 gv(0x1000 << sse_reg);
             }
@@ -11953,8 +11951,8 @@ void gfunc_call(int nb_args)
         }
         vtop--;
     }
-    ((gen_reg == 0)?(void)0:scc_assert("gen_reg == 0","gen-X86-64.c",1373));
-    ((sse_reg == 0)?(void)0:scc_assert("sse_reg == 0","gen-X86-64.c",1374));
+    ((gen_reg == 0)?(void)0:scc_assert("gen_reg == 0","gen-X86-64.c",1289));
+    ((sse_reg == 0)?(void)0:scc_assert("sse_reg == 0","gen-X86-64.c",1290));
     save_regs(0);
     if (nb_reg_args > 2) {
         o(0xd2894c);
@@ -12423,7 +12421,7 @@ void gen_opf(int op)
                 gv(0x0002);
                 vswap();
             }
-            ((!(vtop[-1].r & 0x0100))?(void)0:scc_assert("!(vtop[-1].r & VT_LVAL)","gen-X86-64.c",1974));
+            ((!(vtop[-1].r & 0x0100))?(void)0:scc_assert("!(vtop[-1].r & VT_LVAL)","gen-X86-64.c",1849));
             if ((vtop->type.t & 0x000f) == 9)
                 o(0x66);
             if (op == 0x94 || op == 0x95)
@@ -12439,7 +12437,7 @@ void gen_opf(int op)
             vtop->r = 0x0033;
             vtop->c.i = op | 0x100;
         } else {
-            (((vtop->type.t & 0x000f) != 10)?(void)0:scc_assert("(vtop->type.t & VT_BTYPE) != VT_LDOUBLE","gen-X86-64.c",1993));
+            (((vtop->type.t & 0x000f) != 10)?(void)0:scc_assert("(vtop->type.t & VT_BTYPE) != VT_LDOUBLE","gen-X86-64.c",1868));
             switch(op) {
             default:
             case '+':
@@ -12457,7 +12455,7 @@ void gen_opf(int op)
             }
             ft = vtop->type.t;
             fc = vtop->c.i;
-            (((ft & 0x000f) != 10)?(void)0:scc_assert("(ft & VT_BTYPE) != VT_LDOUBLE","gen-X86-64.c",2011));
+            (((ft & 0x000f) != 10)?(void)0:scc_assert("(ft & VT_BTYPE) != VT_LDOUBLE","gen-X86-64.c",1886));
             r = vtop->r;
             if ((vtop->r & 0x003f) == 0x0031) {
                 SValue v1;
@@ -12468,9 +12466,9 @@ void gen_opf(int op)
                 load(r, &v1);
                 fc = 0;
             }
-            ((!(vtop[-1].r & 0x0100))?(void)0:scc_assert("!(vtop[-1].r & VT_LVAL)","gen-X86-64.c",2025));
+            ((!(vtop[-1].r & 0x0100))?(void)0:scc_assert("!(vtop[-1].r & VT_LVAL)","gen-X86-64.c",1900));
             if (swapped) {
-                ((vtop->r & 0x0100)?(void)0:scc_assert("vtop->r & VT_LVAL","gen-X86-64.c",2027));
+                ((vtop->r & 0x0100)?(void)0:scc_assert("vtop->r & VT_LVAL","gen-X86-64.c",1902));
                 gv(0x0002);
                 vswap();
             }
@@ -12601,7 +12599,7 @@ void gen_cvt_ftoi(int t)
     } else if (bt == 9) {
         o(0xf2);
     } else {
-        ((0)?(void)0:scc_assert("0","gen-X86-64.c",2180));
+        ((0)?(void)0:scc_assert("0","gen-X86-64.c",2055));
     }
     orex(size == 8, r, 0, 0x2c0f);
     o(0xc0 + ((vtop->r) & 7) + ((r) & 7)*8);
@@ -19238,10 +19236,10 @@ static void gen_makedeps(SCCState *s, const char *target, const char *filename)
     (scc_dlsym_("fclose"))(depout);
 }
 static const char help[] =
-    "Sao C Compiler ""SCC-0927-001"" - \n"
-    "Usage: scc [options...] [-o outfile] [-c] infile(s)...\n"
-    "       scc [options...] -run infile [arguments...]\n"
-    "General options:\n"
+    "Sao CC ""SCC-0927-001"" - \n"
+    "   scc [options...] [-o outfile] [-c] infile(s)...\n"
+    "   scc [options...] -run infile [arguments...]\n"
+    "General:\n"
     "  -c          compile only - generate an object file\n"
     "  -o outfile  set output filename\n"
     "  -run        run compiled source\n"
@@ -19253,12 +19251,12 @@ static const char help[] =
     "  -bench      show compilation statistics\n"
     "  -           use stdin pipe as infile\n"
     "  @listfile   read arguments from listfile\n"
-    "Preprocessor options:\n"
+    "Preprocessor:\n"
     "  -Idir       add include path 'dir'\n"
     "  -Dsym[=val] define 'sym' with value 'val'\n"
     "  -Usym       undefine 'sym'\n"
     "  -E          preprocess only\n"
-    "Linker options:\n"
+    "Linker:\n"
     "  -Ldir       add library path 'dir'\n"
     "  -llib       link with dynamic or static library 'lib'\n"
     "  -r          generate (relocatable) object file\n"
@@ -19266,7 +19264,7 @@ static const char help[] =
     "  -rdynamic   export all global symbols to dynamic linker\n"
     "  -soname     set name for shared library to be used at runtime\n"
     "  -Wl,-opt[=val]  set linker option (see scc -hh)\n"
-    "Debugger options:\n"
+    "Debugger:\n"
     "  -g          generate runtime debug info\n"
     "  -bt N       show N callers in stack traces\n"
     "Misc. options:\n"

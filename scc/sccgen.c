@@ -319,39 +319,9 @@ ST_FUNC void put_extern_sym2(Sym *sym, int sh_num,
     ElfSym *esym;
     const char *name;
     char buf1[256];
-#ifdef CONFIG_SCC_BCHECK
-    char buf[32];
-#endif
 
     if (!sym->c) {
         name = get_tok_str(sym->v, NULL);
-#ifdef CONFIG_SCC_BCHECK
-        if (scc_state->do_bounds_check) {
-            /* XXX: avoid doing that for statics ? */
-            /* if bound checking is activated, we change some function
-               names by adding the "__bound" prefix */
-            switch(sym->v) {
-#ifdef SCC_TARGET_PE
-            /* XXX: we rely only on malloc hooks */
-            case TOK_malloc:
-            case TOK_free:
-            case TOK_realloc:
-            case TOK_memalign:
-            case TOK_calloc:
-#endif
-            case TOK_memcpy:
-            case TOK_memmove:
-            case TOK_memset:
-            case TOK_strlen:
-            case TOK_strcpy:
-            case TOK_alloca:
-                SCC(strcpy)(buf, "__bound_");
-                SCC(strcat)(buf, name);
-                name = buf;
-                break;
-            }
-        }
-#endif
         t = sym->type.t;
         if ((t & VT_BTYPE) == VT_FUNC) {
             sym_type = STT_FUNC;
@@ -1104,34 +1074,6 @@ ST_FUNC void gaddrof(void)
 
 }
 
-#ifdef CONFIG_SCC_BCHECK
-/* generate lvalue bound code */
-static void gbound(void)
-{
-    int lval_type;
-    CType type1;
-
-    vtop->r &= ~VT_MUSTBOUND;
-    /* if lvalue, then use checking code before dereferencing */
-    if (vtop->r & VT_LVAL) {
-        /* if not VT_BOUNDED value, then make one */
-        if (!(vtop->r & VT_BOUNDED)) {
-            lval_type = vtop->r & (VT_LVAL_TYPE | VT_LVAL);
-            /* must save type because we must set it to int to get pointer */
-            type1 = vtop->type;
-            vtop->type.t = VT_PTR;
-            gaddrof();
-            vpushi(0);
-            gen_bounded_ptr_add();
-            vtop->r |= lval_type;
-            vtop->type = type1;
-        }
-        /* then check for dereferencing */
-        gen_bounded_ptr_deref();
-    }
-}
-#endif
-
 static void incr_bf_adr(int o)
 {
     vtop->type = char_pointer_type;
@@ -1284,11 +1226,6 @@ ST_FUNC int gv(int rc)
 	    init_putv(&vtop->type, data_section, offset);
 	    vtop->r |= VT_LVAL;
         }
-#ifdef CONFIG_SCC_BCHECK
-        if (vtop->r & VT_MUSTBOUND) 
-            gbound();
-#endif
-
         r = vtop->r & VT_VALMASK;
         rc2 = (rc & RC_FLOAT) ? RC_FLOAT : RC_INT;
 #ifndef SCC_TARGET_ARM64
@@ -2225,38 +2162,7 @@ redo:
 #endif
             }
             gen_op('*');
-						//TODO remove ....
-///#if 0
-////* #ifdef CONFIG_SCC_BCHECK
-///    The main reason to removing this code:
-///	int main ()
-///	{
-///	    int v[10];
-///	    int i = 10;
-///	    int j = 9;
-///	    fprintf(SCCSTD(err), "v+i-j  = %p\n", v+i-j);
-///	    fprintf(SCCSTD(err), "v+(i-j)  = %p\n", v+(i-j));
-///	}
-///    When this code is on. then the output looks like 
-///	v+i-j = 0xfffffffe
-///	v+(i-j) = 0xbff84000
-///    */
-///            /* if evaluating constant expression, no code should be
-///               generated, so no bound check */
-///            if (scc_state->do_bounds_check && !const_wanted) {
-///                /* if bounded pointers, we generate a special code to
-///                   test bounds */
-///                if (op == '-') {
-///                    vpushi(0);
-///                    vswap();
-///                    gen_op('-');
-///                }
-///                gen_bounded_ptr_add();
-///            } else
-///#endif
-            {
-                gen_opic(op);
-            }
+						gen_opic(op);
             /* put again type if gen_opic() swaped operands */
             vtop->type = type1;
         }
@@ -3172,14 +3078,6 @@ ST_FUNC void vstore(void)
     } else if (dbt == VT_VOID) {
         --vtop;
     } else {
-#ifdef CONFIG_SCC_BCHECK
-            /* bound check case */
-            if (vtop[-1].r & VT_MUSTBOUND) {
-                vswap();
-                gbound();
-                vswap();
-            }
-#endif
             rc = RC_INT;
             if (is_float(ft)) {
                 rc = RC_FLOAT;
@@ -4517,10 +4415,6 @@ ST_FUNC void indir(void)
         && (vtop->type.t & VT_BTYPE) != VT_FUNC) {
         vtop->r |= lvalue_type(vtop->type.t);
         /* if bound checking, the referenced pointer must be checked */
-#ifdef CONFIG_SCC_BCHECK
-        if (scc_state->do_bounds_check)
-            vtop->r |= VT_MUSTBOUND;
-#endif
     }
 }
 
@@ -5161,11 +5055,6 @@ special_math_val:
             /* an array is never an lvalue */
             if (!(vtop->type.t & VT_ARRAY)) {
                 vtop->r |= lvalue_type(vtop->type.t);
-#ifdef CONFIG_SCC_BCHECK
-                /* if bound checking, the referenced pointer must be checked */
-                if (scc_state->do_bounds_check && (vtop->r & VT_VALMASK) != VT_LOCAL)
-                    vtop->r |= VT_MUSTBOUND;
-#endif
             }
             next();
         } else if (tok == '[') {
@@ -6847,240 +6736,194 @@ static void decl_initializer(CType *type, Section *sec, unsigned long c,
 static void decl_initializer_alloc(CType *type, AttributeDef *ad, int r, 
                                    int has_init, int v, int scope)
 {
-    int size, align, addr;
-    TokenString *init_str = NULL;
+	int size, align, addr;
+	TokenString *init_str = NULL;
 
-    Section *sec;
-    Sym *flexible_array;
-    Sym *sym = NULL;
-    int saved_nocode_wanted = nocode_wanted;
-#ifdef CONFIG_SCC_BCHECK
-    int bcheck;
-#endif
+	Section *sec;
+	Sym *flexible_array;
+	Sym *sym = NULL;
+	int saved_nocode_wanted = nocode_wanted;
+	/* Always allocate static or global variables */
+	if (v && (r & VT_VALMASK) == VT_CONST)
+		nocode_wanted |= 0x80000000;
 
-    /* Always allocate static or global variables */
-    if (v && (r & VT_VALMASK) == VT_CONST)
-        nocode_wanted |= 0x80000000;
+	flexible_array = NULL;
+	if ((type->t & VT_BTYPE) == VT_STRUCT) {
+		Sym *field = type->ref->next;
+		if (field) {
+			while (field->next)
+				field = field->next;
+			if (field->type.t & VT_ARRAY && field->type.ref->c < 0)
+				flexible_array = field;
+		}
+	}
 
-#ifdef CONFIG_SCC_BCHECK
-    bcheck = scc_state->do_bounds_check && !NODATA_WANTED;
-#endif
+	size = type_size(type, &align);
+	/* If unknown size, we must evaluate it before
+		 evaluating initializers because
+		 initializers can generate global data too
+		 (e.g. string pointers or ISOC99 compound
+		 literals). It also simplifies local
+		 initializers handling */
+	if (size < 0 || (flexible_array && has_init)) {
+		if (!has_init) 
+			scc_error("unknown type size");
+		/* get all init string */
+		if (has_init == 2) {
+			init_str = tok_str_alloc();
+			/* only get strings */
+			while (tok == TOK_STR || tok == TOK_LSTR) {
+				tok_str_add_tok(init_str);
+				next();
+			}
+			tok_str_add(init_str, -1);
+			tok_str_add(init_str, 0);
+		} else {
+			skip_or_save_block(&init_str);
+		}
+		unget_tok(0);
 
-    flexible_array = NULL;
-    if ((type->t & VT_BTYPE) == VT_STRUCT) {
-        Sym *field = type->ref->next;
-        if (field) {
-            while (field->next)
-                field = field->next;
-            if (field->type.t & VT_ARRAY && field->type.ref->c < 0)
-                flexible_array = field;
-        }
-    }
+		/* compute size */
+		begin_macro(init_str, 1);
+		next();
+		decl_initializer(type, NULL, 0, 1, 1);
+		/* prepare second initializer parsing */
+		macro_ptr = init_str->str;
+		next();
 
-    size = type_size(type, &align);
-    /* If unknown size, we must evaluate it before
-       evaluating initializers because
-       initializers can generate global data too
-       (e.g. string pointers or ISOC99 compound
-       literals). It also simplifies local
-       initializers handling */
-    if (size < 0 || (flexible_array && has_init)) {
-        if (!has_init) 
-            scc_error("unknown type size");
-        /* get all init string */
-        if (has_init == 2) {
-	    init_str = tok_str_alloc();
-            /* only get strings */
-            while (tok == TOK_STR || tok == TOK_LSTR) {
-                tok_str_add_tok(init_str);
-                next();
-            }
-	    tok_str_add(init_str, -1);
-	    tok_str_add(init_str, 0);
-        } else {
-	    skip_or_save_block(&init_str);
-        }
-        unget_tok(0);
+		/* if still unknown size, error */
+		size = type_size(type, &align);
+		if (size < 0) 
+			scc_error("unknown type size");
+	}
+	/* If there's a flex member and it was used in the initializer
+		 adjust size.  */
+	if (flexible_array &&
+			flexible_array->type.ref->c > 0)
+		size += flexible_array->type.ref->c
+			* pointed_size(&flexible_array->type);
+	/* take into account specified alignment if bigger */
+	if (ad->a.aligned) {
+		int speca = 1 << (ad->a.aligned - 1);
+		if (speca > align)
+			align = speca;
+	} else if (ad->a.packed) {
+		align = 1;
+	}
 
-        /* compute size */
-        begin_macro(init_str, 1);
-        next();
-        decl_initializer(type, NULL, 0, 1, 1);
-        /* prepare second initializer parsing */
-        macro_ptr = init_str->str;
-        next();
-        
-        /* if still unknown size, error */
-        size = type_size(type, &align);
-        if (size < 0) 
-            scc_error("unknown type size");
-    }
-    /* If there's a flex member and it was used in the initializer
-       adjust size.  */
-    if (flexible_array &&
-	flexible_array->type.ref->c > 0)
-        size += flexible_array->type.ref->c
-	        * pointed_size(&flexible_array->type);
-    /* take into account specified alignment if bigger */
-    if (ad->a.aligned) {
-	int speca = 1 << (ad->a.aligned - 1);
-        if (speca > align)
-            align = speca;
-    } else if (ad->a.packed) {
-        align = 1;
-    }
+	if (!v && NODATA_WANTED)
+		size = 0, align = 1;
 
-    if (!v && NODATA_WANTED)
-        size = 0, align = 1;
-
-    if ((r & VT_VALMASK) == VT_LOCAL) {
-        sec = NULL;
-#ifdef CONFIG_SCC_BCHECK
-        if (bcheck && (type->t & VT_ARRAY)) {
-            loc--;
-        }
-#endif
-        loc = (loc - size) & -align;
-        addr = loc;
-#ifdef CONFIG_SCC_BCHECK
-        /* handles bounds */
-        /* XXX: currently, since we do only one pass, we cannot track
-           '&' operators, so we add only arrays */
-        if (bcheck && (type->t & VT_ARRAY)) {
-            addr_t *bounds_ptr;
-            /* add padding between regions */
-            loc--;
-            /* then add local bound info */
-            bounds_ptr = section_ptr_add(lbounds_section, 2 * sizeof(addr_t));
-            bounds_ptr[0] = addr;
-            bounds_ptr[1] = size;
-        }
-#endif
-        if (v) {
-            /* local variable */
+	if ((r & VT_VALMASK) == VT_LOCAL) {
+		sec = NULL;
+		loc = (loc - size) & -align;
+		addr = loc;
+		if (v) {
+			/* local variable */
 #ifdef CONFIG_SCC_ASM
-	    if (ad->asm_label) {
-		int reg = asm_parse_regvar(ad->asm_label);
-		if (reg >= 0)
-		    r = (r & ~VT_VALMASK) | reg;
-	    }
+			if (ad->asm_label) {
+				int reg = asm_parse_regvar(ad->asm_label);
+				if (reg >= 0)
+					r = (r & ~VT_VALMASK) | reg;
+			}
 #endif
-            sym = sym_push(v, type, r, addr);
-            sym->a = ad->a;
-        } else {
-            /* push local reference */
-            vset(type, r, addr);
-        }
-    } else {
-        if (v && scope == VT_CONST) {
-            /* see if the symbol was already defined */
-            sym = sym_find(v);
-            if (sym) {
-                patch_storage(sym, ad, type);
-                /* we accept several definitions of the same global variable. */
-                if (!has_init && sym->c && elfsym(sym)->st_shndx != SHN_UNDEF)
-                    goto no_alloc;
-            }
-        }
+			sym = sym_push(v, type, r, addr);
+			sym->a = ad->a;
+		} else {
+			/* push local reference */
+			vset(type, r, addr);
+		}
+	} else {
+		if (v && scope == VT_CONST) {
+			/* see if the symbol was already defined */
+			sym = sym_find(v);
+			if (sym) {
+				patch_storage(sym, ad, type);
+				/* we accept several definitions of the same global variable. */
+				if (!has_init && sym->c && elfsym(sym)->st_shndx != SHN_UNDEF)
+					goto no_alloc;
+			}
+		}
 
-        /* allocate symbol in corresponding section */
-        sec = ad->section;
-        if (!sec) {
-            if (has_init)
-                sec = data_section;
-            else if (scc_state->nocommon)
-                sec = bss_section;
-        }
+		/* allocate symbol in corresponding section */
+		sec = ad->section;
+		if (!sec) {
+			if (has_init)
+				sec = data_section;
+			else if (scc_state->nocommon)
+				sec = bss_section;
+		}
 
-        if (sec) {
-	    addr = section_add(sec, size, align);
-#ifdef CONFIG_SCC_BCHECK
-            /* add padding if bound check */
-            if (bcheck)
-                section_add(sec, 1, 1);
-#endif
-        } else {
-            addr = align; /* SHN_COMMON is special, symbol value is align */
-	    sec = common_section;
-        }
+		if (sec) {
+			addr = section_add(sec, size, align);
+		} else {
+			addr = align; /* SHN_COMMON is special, symbol value is align */
+			sec = common_section;
+		}
 
-        if (v) {
-            if (!sym) {
-                sym = sym_push(v, type, r | VT_SYM, 0);
-                patch_storage(sym, ad, NULL);
-            }
-            /* Local statics have a scope until now (for
-               warnings), remove it here.  */
-            sym->sym_scope = 0;
-            /* update symbol definition */
-	    put_extern_sym(sym, sec, addr, size);
-        } else {
-            /* push global reference */
-            sym = get_sym_ref(type, sec, addr, size);
-	    vpushsym(type, sym);
-	    vtop->r |= r;
-        }
+		if (v) {
+			if (!sym) {
+				sym = sym_push(v, type, r | VT_SYM, 0);
+				patch_storage(sym, ad, NULL);
+			}
+			/* Local statics have a scope until now (for
+				 warnings), remove it here.  */
+			sym->sym_scope = 0;
+			/* update symbol definition */
+			put_extern_sym(sym, sec, addr, size);
+		} else {
+			/* push global reference */
+			sym = get_sym_ref(type, sec, addr, size);
+			vpushsym(type, sym);
+			vtop->r |= r;
+		}
+	}
 
-#ifdef CONFIG_SCC_BCHECK
-        /* handles bounds now because the symbol must be defined
-           before for the relocation */
-        if (bcheck) {
-            addr_t *bounds_ptr;
+	if (type->t & VT_VLA) {
+		int a;
 
-            greloca(bounds_section, sym, bounds_section->data_offset, R_DATA_PTR, 0);
-            /* then add global bound info */
-            bounds_ptr = section_ptr_add(bounds_section, 2 * sizeof(addr_t));
-            bounds_ptr[0] = 0; /* relocated */
-            bounds_ptr[1] = size;
-        }
-#endif
-    }
+		if (NODATA_WANTED)
+			goto no_alloc;
 
-    if (type->t & VT_VLA) {
-        int a;
+		/* save current stack pointer */
+		if (vlas_in_scope == 0) {
+			if (vla_sp_root_loc == -1)
+				vla_sp_root_loc = (loc -= PTR_SIZE);
+			gen_vla_sp_save(vla_sp_root_loc);
+		}
 
-        if (NODATA_WANTED)
-            goto no_alloc;
-
-        /* save current stack pointer */
-        if (vlas_in_scope == 0) {
-            if (vla_sp_root_loc == -1)
-                vla_sp_root_loc = (loc -= PTR_SIZE);
-            gen_vla_sp_save(vla_sp_root_loc);
-        }
-
-        vla_runtime_type_size(type, &a);
-        gen_vla_alloc(type, a);
+		vla_runtime_type_size(type, &a);
+		gen_vla_alloc(type, a);
 #if defined SCC_TARGET_PE && defined SCC_TARGET_X86_64
-        /* on _WIN64, because of the function args scratch area, the
-           result of alloca differs from RSP and is returned in RAX.  */
-        gen_vla_result(addr), addr = (loc -= PTR_SIZE);
+		/* on _WIN64, because of the function args scratch area, the
+			 result of alloca differs from RSP and is returned in RAX.  */
+		gen_vla_result(addr), addr = (loc -= PTR_SIZE);
 #endif
-        gen_vla_sp_save(addr);
-        vla_sp_loc = addr;
-        vlas_in_scope++;
+		gen_vla_sp_save(addr);
+		vla_sp_loc = addr;
+		vlas_in_scope++;
 
-    } else if (has_init) {
-	size_t oldreloc_offset = 0;
-	if (sec && sec->reloc)
-	  oldreloc_offset = sec->reloc->data_offset;
-        decl_initializer(type, sec, addr, 1, 0);
-	if (sec && sec->reloc)
-	  squeeze_multi_relocs(sec, oldreloc_offset);
-        /* patch flexible array member size back to -1, */
-        /* for possible subsequent similar declarations */
-        if (flexible_array)
-            flexible_array->type.ref->c = -1;
-    }
+	} else if (has_init) {
+		size_t oldreloc_offset = 0;
+		if (sec && sec->reloc)
+			oldreloc_offset = sec->reloc->data_offset;
+		decl_initializer(type, sec, addr, 1, 0);
+		if (sec && sec->reloc)
+			squeeze_multi_relocs(sec, oldreloc_offset);
+		/* patch flexible array member size back to -1, */
+		/* for possible subsequent similar declarations */
+		if (flexible_array)
+			flexible_array->type.ref->c = -1;
+	}
 
- no_alloc:
-    /* restore parse state if needed */
-    if (init_str) {
-        end_macro();
-        next();
-    }
+no_alloc:
+	/* restore parse state if needed */
+	if (init_str) {
+		end_macro();
+		next();
+	}
 
-    nocode_wanted = saved_nocode_wanted;
+	nocode_wanted = saved_nocode_wanted;
 }//decl_initializer_alloc()
 
 /* parse a function defined by symbol 'sym' and generate its code in

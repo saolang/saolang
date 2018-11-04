@@ -99,38 +99,6 @@ LIBSCCAPI int scc_run(SCCState *s1, int argc, char **argv)
     //errno = 0; /* clean errno value */
 		scc_errno(0);
 
-#ifdef CONFIG_SCC_BCHECK
-    if (s1->do_bounds_check) {
-        void (*bound_init)(void);
-        void (*bound_exit)(void);
-        void (*bound_new_region)(void *p, addr_t size);
-        int  (*bound_delete_region)(void *p);
-        int i, ret;
-
-        /* set error function */
-        rt_bound_error_msg = scc_get_symbol_err(s1, "__bound_error_msg");
-        /* XXX: use .init section so that it also work in binary ? */
-        bound_init = scc_get_symbol_err(s1, "__bound_init");
-        bound_exit = scc_get_symbol_err(s1, "__bound_exit");
-        bound_new_region = scc_get_symbol_err(s1, "__bound_new_region");
-        bound_delete_region = scc_get_symbol_err(s1, "__bound_delete_region");
-
-        bound_init();
-        /* mark argv area as valid */
-        bound_new_region(argv, argc*sizeof(argv[0]));
-        for (i=0; i<argc; ++i)
-            bound_new_region(argv[i], SCC(strlen,int)(argv[i]) + 1);
-
-        ret = (*prog_main)(argc, argv);
-
-        /* unmark argv area */
-        for (i=0; i<argc; ++i)
-            bound_delete_region(argv[i]);
-        bound_delete_region(argv);
-        bound_exit();
-        return ret;
-    }
-#endif
     return (*prog_main)(argc, argv);
 }
 

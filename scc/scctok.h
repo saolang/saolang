@@ -281,28 +281,15 @@ DEF(TOK___gttf2, "__gttf2")
 DEF(TOK___getf2, "__getf2")
 #endif
 
-/* bound checking symbols */
-#ifdef CONFIG_SCC_BCHECK
-DEF(TOK___bound_ptr_add, "__bound_ptr_add")
-DEF(TOK___bound_ptr_indir1, "__bound_ptr_indir1")
-DEF(TOK___bound_ptr_indir2, "__bound_ptr_indir2")
-DEF(TOK___bound_ptr_indir4, "__bound_ptr_indir4")
-DEF(TOK___bound_ptr_indir8, "__bound_ptr_indir8")
-DEF(TOK___bound_ptr_indir12, "__bound_ptr_indir12")
-DEF(TOK___bound_ptr_indir16, "__bound_ptr_indir16")
-DEF(TOK___bound_main_arg, "__bound_main_arg")
-DEF(TOK___bound_local_new, "__bound_local_new")
-DEF(TOK___bound_local_delete, "__bound_local_delete")
-# ifdef SCC_TARGET_PE
-DEF(TOK_malloc, "malloc")
-DEF(TOK_free, "free")
-DEF(TOK_realloc, "realloc")
-DEF(TOK_memalign, "memalign")
-DEF(TOK_calloc, "calloc")
-# endif
-DEF(TOK_strlen, "strlen")
-DEF(TOK_strcpy, "strcpy")
-#endif
+//# ifdef SCC_TARGET_PE
+//DEF(TOK_malloc, "malloc")
+//DEF(TOK_free, "free")
+//DEF(TOK_realloc, "realloc")
+//DEF(TOK_memalign, "memalign")
+//DEF(TOK_calloc, "calloc")
+//# endif
+//DEF(TOK_strlen, "strlen")
+//DEF(TOK_strcpy, "strcpy")
 
 /* Tiny Assembler */
 	DEF_ASMDIR(byte)              /* must be first directive */
