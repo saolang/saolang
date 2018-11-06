@@ -1116,24 +1116,28 @@ ST_FUNC int scc_open(SCCState *s1, const char *filename);
 ST_FUNC void scc_close(void);
 
 ST_FUNC int scc_add_file_internal(SCCState *s1, const char *filename, int flags);
+
 /* flags: */
-#define AFF_PRINT_ERROR     0x10 /* print error if file not found */
-#define AFF_REFERENCED_DLL  0x20 /* load a referenced dll from another dll */
-#define AFF_TYPE_BIN        0x40 /* file to add is binary */
-#define AFF_WHOLE_ARCHIVE   0x80 /* load all objects from archive */
+#define AFF_PRINT_ERROR     0x100 // if file not found
+#define AFF_REFERENCED_DLL  0x200 // load a referenced dll from another dll
+#define AFF_TYPE_BIN        0x400 // 
+#define AFF_WHOLE_ARCHIVE   0x800 // load all objects from archive
+
 /* s->filetype: */
 #define AFF_TYPE_NONE   0
-#define AFF_TYPE_C      1
-#define AFF_TYPE_ASM    2
-#define AFF_TYPE_ASMPP  4
-#define AFF_TYPE_LIB    8
-#define AFF_TYPE_MASK   (15 | AFF_TYPE_BIN)
-/* values from scc_object_type(...) */
+#define AFF_TYPE_C      0x1  //.c || .i => \b0001
+#define AFF_TYPE_ASM    0x2  //.s => \b0010
+#define AFF_TYPE_ASMPP  0x4  //.S => \b0100
+#define AFF_TYPE_LIB    0x8  // => \b1000
+	//@ref scc_object_type() and scc_add_file_internal()
+#define AFF_TYPE_SAO    0x10 //.sao
+#define AFF_TYPE_MASK   (0xFF | AFF_TYPE_BIN) 
+
+//@ref scc_object_type()
 #define AFF_BINTYPE_REL 1
 #define AFF_BINTYPE_DYN 2
 #define AFF_BINTYPE_AR  3
 #define AFF_BINTYPE_C67 4
-
 
 ST_FUNC int scc_add_crt(SCCState *s, const char *filename);
 ST_FUNC int scc_add_dll(SCCState *s, const char *filename, int flags);

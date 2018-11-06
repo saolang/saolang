@@ -568,52 +568,52 @@ ST_FUNC int scc_open(SCCState *s1, const char *filename)
 /* compile the file opened in 'file'. Return non zero if errors. */
 static int scc_compile(SCCState *s1, int filetype)
 {
-    Sym *define_start;
-    int is_asm;
+	Sym *define_start;
+	int is_asm;
 
-    define_start = define_stack;
-    is_asm = !!(filetype & (AFF_TYPE_ASM|AFF_TYPE_ASMPP));
-    scc_format_begin_file(s1);
+	define_start = define_stack;
+	is_asm = !!(filetype & (AFF_TYPE_ASM|AFF_TYPE_ASMPP));
+	scc_format_begin_file(s1);
 
-    if (SCC(setjmp,int)(s1->error_jmp_buf) == 0) {
-        s1->nb_errors = 0;
-        s1->error_set_jmp_enabled = 1;
+	if (SCC(setjmp,int)(s1->error_jmp_buf) == 0) {
+		s1->nb_errors = 0;
+		s1->error_set_jmp_enabled = 1;
 
-        preprocess_start(s1, is_asm);
-        if (s1->output_type == SCC_OUTPUT_PREPROCESS) {
-            scc_preprocess(s1);
-        } else if (is_asm) {
+		preprocess_start(s1, is_asm);
+		if (s1->output_type == SCC_OUTPUT_PREPROCESS) {
+			scc_preprocess(s1);
+		} else if (is_asm) {
 #ifdef CONFIG_SCC_ASM
-            scc_assemble(s1, !!(filetype & AFF_TYPE_ASMPP));
+			scc_assemble(s1, !!(filetype & AFF_TYPE_ASMPP));
 #else
-            scc_error_noabort("asm not supported");//TODO add not supported %s,for_what
+			scc_error_noabort("asm not supported");//TODO add not supported %s,for_what
 #endif
-        } else {
-            sccgen_compile(s1);
-        }
-    }
-    s1->error_set_jmp_enabled = 0;
+		} else {
+			sccgen_compile(s1);
+		}
+	}
+	s1->error_set_jmp_enabled = 0;
 
-    preprocess_end(s1);
-    free_inline_functions(s1);
-    /* reset define stack, but keep -D and built-ins */
-    free_defines(define_start);
-    sym_pop(&global_stack, NULL, 0);
-    sym_pop(&local_stack, NULL, 0);
-    scc_format_end_file(s1);
-    return s1->nb_errors != 0 ? -1 : 0;
+	preprocess_end(s1);
+	free_inline_functions(s1);
+	/* reset define stack, but keep -D and built-ins */
+	free_defines(define_start);
+	sym_pop(&global_stack, NULL, 0);
+	sym_pop(&local_stack, NULL, 0);
+	scc_format_end_file(s1);
+	return s1->nb_errors != 0 ? -1 : 0;
 }
 
 LIBSCCAPI int scc_compile_string(SCCState *s, const char *str)
 {
-    int len, ret;
+	int len, ret;
 
-    len = SCC(strlen,int)(str);
-    scc_open_buf(s, "<string>", len);
-    SCC(memcpy)(file->buffer, str, len);
-    ret = scc_compile(s, s->filetype);
-    scc_close();
-    return ret;
+	len = SCC(strlen,int)(str);
+	scc_open_buf(s, "<string>", len);
+	SCC(memcpy)(file->buffer, str, len);
+	ret = scc_compile(s, s->filetype);
+	scc_close();
+	return ret;
 }
 
 /* define a preprocessor symbol. A value can also be provided with the '=' operator */
@@ -953,101 +953,103 @@ LIBSCCAPI int scc_add_sysinclude_path(SCCState *s, const char *pathname)
 
 ST_FUNC int scc_add_file_internal(SCCState *s1, const char *filename, int flags)
 {
-    int ret;
+	int ret;
 
-    /* open the file */
-    ret = scc_open(s1, filename);
-    if (ret < 0) {
-        if (flags & AFF_PRINT_ERROR)
-            scc_error_noabort("scc_add_file_internal() file '%s' not found", filename);
-        return ret;
-    }
+	/* open the file */
+	ret = scc_open(s1, filename);
+	if (ret < 0) {
+		if (flags & AFF_PRINT_ERROR)
+			scc_error_noabort("scc_add_file_internal() file '%s' not found", filename);
+		return ret;
+	}
 
-    /* update target deps */
-    dynarray_add(&s1->target_deps, &s1->nb_target_deps,
-            scc_strdup(filename));
+	/* update target deps */
+	dynarray_add(&s1->target_deps, &s1->nb_target_deps,
+			scc_strdup(filename));
 
-    if (flags & AFF_TYPE_BIN) {
-        ElfW(Ehdr) ehdr;
-        int fd, obj_type;
+	if (flags & AFF_TYPE_BIN) {
+		ElfW(Ehdr) ehdr;
+		int fd, obj_type;
 
-        fd = file->fd;
-        obj_type = scc_object_type(fd, &ehdr);
-        SCC(lseek)(fd, 0, SEEK_SET);
+		fd = file->fd;
+		obj_type = scc_object_type(fd, &ehdr);
+		SCC(lseek)(fd, 0, SEEK_SET);
 
 #ifdef SCC_TARGET_MACHO
-        if (0 == obj_type && 0 == SCC(strcmp,int)(scc_fileextension(filename), ".dylib"))
-            obj_type = AFF_BINTYPE_DYN;
+		if (0 == obj_type && 0 == SCC(strcmp,int)(scc_fileextension(filename), ".dylib"))
+			obj_type = AFF_BINTYPE_DYN;
 #endif
 
-        switch (obj_type) {
-        case AFF_BINTYPE_REL:
-            ret = scc_load_object_file(s1, fd, 0);
-            break;
+		switch (obj_type) {
+			case AFF_BINTYPE_REL:
+				ret = scc_load_object_file(s1, fd, 0);
+				break;
 #ifndef SCC_TARGET_PE
-				case AFF_BINTYPE_DYN://NOTES: mostly .dylib from above, .so from scc_object_type()
-            if (s1->output_type == SCC_OUTPUT_MEMORY) {
-                ret = 0;
+			case AFF_BINTYPE_DYN://NOTES: mostly .dylib from above, .so from scc_object_type()
+				if (s1->output_type == SCC_OUTPUT_MEMORY) {
+					ret = 0;
 #ifdef SCC_IS_NATIVE
-								//using libdl directly for sccrun...
-                if (NULL == scc_dlopen(filename))
-                    ret = -1;
+					//using libdl directly for sccrun...
+					if (NULL == scc_dlopen(filename))
+						ret = -1;
 #endif
-						} else {
-							//scc_load_dylib or support MACHO ...
-							//ret = scc_load_dylib(s1, fd, filename, (flags & AFF_REFERENCED_DLL) != 0);
-							//@ref scc-$FORMAT
-							ret = scc_load_dll(s1, fd, filename, (flags & AFF_REFERENCED_DLL) != 0);
-						}
-            break;
+				} else {
+					//scc_load_dylib or support MACHO ...
+					//ret = scc_load_dylib(s1, fd, filename, (flags & AFF_REFERENCED_DLL) != 0);
+					//@ref scc-$FORMAT
+					ret = scc_load_dll(s1, fd, filename, (flags & AFF_REFERENCED_DLL) != 0);
+				}
+				break;
 #endif
-        case AFF_BINTYPE_AR:
-            ret = scc_load_archive(s1, fd, !(flags & AFF_WHOLE_ARCHIVE));
-            break;
-//#ifdef SCC_TARGET_COFF
-//        case AFF_BINTYPE_C67:
-//            ret = scc_load_coff(s1, fd);
-//            break;
-//#endif
-        default:
+			case AFF_BINTYPE_AR:
+				ret = scc_load_archive(s1, fd, !(flags & AFF_WHOLE_ARCHIVE));
+				break;
+				//#ifdef SCC_TARGET_COFF
+				//        case AFF_BINTYPE_C67:
+				//            ret = scc_load_coff(s1, fd);
+				//            break;
+				//#endif
+			default:
 #ifdef SCC_TARGET_PE
-            ret = pe_load_file(s1, filename, fd);
+				ret = pe_load_file(s1, filename, fd);
 #else
-            /* as GNU ld, consider it is an ld script if not recognized */
-            ret = scc_load_ldscript(s1);
+				/* as GNU ld, consider it is an ld script if not recognized */
+				ret = scc_load_ldscript(s1);
 #endif
-            if (ret < 0)
-                scc_error_noabort("unrecognized file type");
-            break;
-        }
-    } else {
-        ret = scc_compile(s1, flags);
-    }
-    scc_close();
-    return ret;
+				if (ret < 0)
+					scc_error_noabort("unrecognized file type");
+				break;
+		}
+	} else {
+		ret = scc_compile(s1, flags);
+	}
+	scc_close();
+	return ret;
 }
 
 LIBSCCAPI int scc_add_file(SCCState *s, const char *filename)
 {
-    int filetype = s->filetype;
-    if (0 == (filetype & AFF_TYPE_MASK)) {
-        /* use a file extension to detect a filetype */
-        const char *ext = scc_fileextension(filename);
-        if (ext[0]) {
-            ext++;
-            if (!SCC(strcmp,int)(ext, "S"))
-                filetype = AFF_TYPE_ASMPP;
-            else if (!SCC(strcmp,int)(ext, "s"))
-                filetype = AFF_TYPE_ASM;
-            else if (!PATHCMP(ext, "c") || !PATHCMP(ext, "i"))
-                filetype = AFF_TYPE_C;
-            else
-                filetype |= AFF_TYPE_BIN;
-        } else {
-            filetype = AFF_TYPE_C;
-        }
-    }
-    return scc_add_file_internal(s, filename, filetype | AFF_PRINT_ERROR);
+	int filetype = s->filetype;
+	if (0 == (filetype & AFF_TYPE_MASK)) {
+		//if not indicated by the caller, then try guessing from file extension
+		const char *ext = scc_fileextension(filename);
+		if (ext[0]) {
+			ext++;
+			if (!SCC(strcmp,int)(ext, "S"))
+				filetype = AFF_TYPE_ASMPP;
+			else if (!SCC(strcmp,int)(ext, "s"))
+				filetype = AFF_TYPE_ASM;
+			else if (!PATHCMP(ext, "c") || !PATHCMP(ext, "i"))//The .i files are also called as "Pure C files
+				filetype = AFF_TYPE_C;
+			else if (!SCC(strcmp,int)(ext, "sao"))
+				filetype = AFF_TYPE_SAO;
+			else
+				filetype |= AFF_TYPE_BIN;
+		} else { //default as c
+			filetype = AFF_TYPE_C;
+		}
+	}
+	return scc_add_file_internal(s, filename, filetype | AFF_PRINT_ERROR);
 }
 
 LIBSCCAPI int scc_add_library_path(SCCState *s, const char *pathname)
@@ -1693,14 +1695,14 @@ reparse:
         case SCC_OPTION_U:
             scc_undefine_symbol(s, optarg);
             break;
-        case SCC_OPTION_L:
+        case SCC_OPTION_L://-L
             scc_add_library_path(s, optarg);
             break;
         case SCC_OPTION_B:
             /* set scc utilities path (mainly for scc development) */
             scc_set_lib_path(s, optarg);
             break;
-        case SCC_OPTION_l:
+        case SCC_OPTION_l://-l??
             args_parser_add_file(s, optarg, AFF_TYPE_LIB | (s->filetype & ~AFF_TYPE_MASK));
             s->nb_libraries++;
             break;
@@ -1856,10 +1858,12 @@ reparse:
                 x = AFF_TYPE_ASMPP;
             else if (*optarg == 'b')
                 x = AFF_TYPE_BIN;
+            else if (*optarg == 's')
+                x = AFF_TYPE_SAO;
             else if (*optarg == 'n')
                 x = AFF_TYPE_NONE;
             else
-                scc_warning("unsupported language '%s'", optarg);
+                scc_warning("unsupported language -x '%s'", optarg);
             s->filetype = x | (s->filetype & ~AFF_TYPE_MASK);
             break;
         case SCC_OPTION_O:

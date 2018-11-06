@@ -15700,17 +15700,17 @@ typedef struct SectionMergeInfo {
 } SectionMergeInfo;
 static int scc_object_type(int fd, Elf64_Ehdr *h)
 {
-    int size = ((int(*)())scc_dlsym("read"))(fd, h, sizeof *h);
-    if (size == sizeof *h && 0 == ((int(*)())scc_dlsym("memcmp"))(h, "\177ELF", 4)) {
-        if (h->e_type == 1)
-            return 1;
-        if (h->e_type == 3)
-            return 2;
-    } else if (size >= 8) {
-        if (0 == ((int(*)())scc_dlsym("memcmp"))(h, "!<arch>\012", 8))
-            return 3;
-    }
-    return 0;
+	int size = ((int(*)())scc_dlsym("read"))(fd, h, sizeof *h);
+	if (size == sizeof *h && 0 == ((int(*)())scc_dlsym("memcmp"))(h, "\177ELF", 4)) {
+		if (h->e_type == 1)
+			return 1;
+		if (h->e_type == 3)
+			return 2;
+	} else if (size >= 8) {
+		if (0 == ((int(*)())scc_dlsym("memcmp"))(h, "!<arch>\012", 8))
+			return 3;
+	}
+	return 0;
 }
 static int scc_load_object_file(SCCState *s1,
                                 int fd, unsigned long file_offset)
@@ -16106,7 +16106,7 @@ static int scc_load_dll(SCCState *s1, int fd, const char *filename, int level)
                 if (!((int(*)())scc_dlsym("strcmp"))(name, dllref->name))
                     goto already_loaded;
             }
-            if (scc_add_dll(s1, name, 0x20) < 0) {
+            if (scc_add_dll(s1, name, 0x200) < 0) {
                 scc_error_noabort("referenced dll '%s' not found", name);
                 ret = -1;
                 goto the_end;
@@ -16237,13 +16237,13 @@ static int ld_next(SCCState *s1, char *name, int name_size)
 }
 static int ld_add_file(SCCState *s1, const char filename[])
 {
-    if (filename[0] == '/') {
-        if (""[0] == '\0'
-            && scc_add_file_internal(s1, filename, 0x40) == 0)
-            return 0;
-        filename = scc_basename(filename);
-    }
-    return scc_add_dll(s1, filename, 0);
+	if (filename[0] == '/') {
+		if (""[0] == '\0'
+				&& scc_add_file_internal(s1, filename, 0x400) == 0)
+			return 0;
+		filename = scc_basename(filename);
+	}
+	return scc_add_dll(s1, filename, 0);
 }
 static inline int new_undef_syms(void)
 {
@@ -17394,8 +17394,7 @@ static char *pstrcpy(char *buf, int buf_size, const char *s)
         q_end = buf + buf_size - 1;
         while (q < q_end) {
             c = *s++;
-            if (c == '\0')
-                break;
+            if (c == '\0') break;
             *q++ = c;
         }
         *q = '\0';
@@ -17438,7 +17437,7 @@ static char *pstrncpy(char *out, const char *in, size_t num)
     void *ptr;
     ptr = (scc_dlsym_("malloc"))(size);
     if (!ptr && size)
-        scc_error("memory full (malloc)");
+        scc_error("memory full (malloc(%ld))",size);
     return ptr;
 }
  void *scc_mallocz(unsigned long size)
@@ -17643,41 +17642,41 @@ static int scc_open(SCCState *s1, const char *filename)
 }
 static int scc_compile(SCCState *s1, int filetype)
 {
-    Sym *define_start;
-    int is_asm;
-    define_start = define_stack;
-    is_asm = !!(filetype & (2|4));
-    scc_format_begin_file(s1);
-    if (((int(*)())scc_dlsym("setjmp"))(s1->error_jmp_buf) == 0) {
-        s1->nb_errors = 0;
-        s1->error_set_jmp_enabled = 1;
-        preprocess_start(s1, is_asm);
-        if (s1->output_type == 5) {
-            scc_preprocess(s1);
-        } else if (is_asm) {
-            scc_assemble(s1, !!(filetype & 4));
-        } else {
-            sccgen_compile(s1);
-        }
-    }
-    s1->error_set_jmp_enabled = 0;
-    preprocess_end(s1);
-    free_inline_functions(s1);
-    free_defines(define_start);
-    sym_pop(&global_stack, ((void*)0), 0);
-    sym_pop(&local_stack, ((void*)0), 0);
-    scc_format_end_file(s1);
-    return s1->nb_errors != 0 ? -1 : 0;
+	Sym *define_start;
+	int is_asm;
+	define_start = define_stack;
+	is_asm = !!(filetype & (0x2|0x4));
+	scc_format_begin_file(s1);
+	if (((int(*)())scc_dlsym("setjmp"))(s1->error_jmp_buf) == 0) {
+		s1->nb_errors = 0;
+		s1->error_set_jmp_enabled = 1;
+		preprocess_start(s1, is_asm);
+		if (s1->output_type == 5) {
+			scc_preprocess(s1);
+		} else if (is_asm) {
+			scc_assemble(s1, !!(filetype & 0x4));
+		} else {
+			sccgen_compile(s1);
+		}
+	}
+	s1->error_set_jmp_enabled = 0;
+	preprocess_end(s1);
+	free_inline_functions(s1);
+	free_defines(define_start);
+	sym_pop(&global_stack, ((void*)0), 0);
+	sym_pop(&local_stack, ((void*)0), 0);
+	scc_format_end_file(s1);
+	return s1->nb_errors != 0 ? -1 : 0;
 }
  int scc_compile_string(SCCState *s, const char *str)
 {
-    int len, ret;
-    len = ((int(*)())scc_dlsym("strlen"))(str);
-    scc_open_buf(s, "<string>", len);
-    (scc_dlsym_("memcpy"))(file->buffer, str, len);
-    ret = scc_compile(s, s->filetype);
-    scc_close();
-    return ret;
+	int len, ret;
+	len = ((int(*)())scc_dlsym("strlen"))(str);
+	scc_open_buf(s, "<string>", len);
+	(scc_dlsym_("memcpy"))(file->buffer, str, len);
+	ret = scc_compile(s, s->filetype);
+	scc_close();
+	return ret;
 }
  void scc_define_symbol(SCCState *s1, const char *sym, const char *value)
 {
@@ -17822,69 +17821,71 @@ static void scc_cleanup(void)
 }
 static int scc_add_file_internal(SCCState *s1, const char *filename, int flags)
 {
-    int ret;
-    ret = scc_open(s1, filename);
-    if (ret < 0) {
-        if (flags & 0x10)
-            scc_error_noabort("scc_add_file_internal() file '%s' not found", filename);
-        return ret;
-    }
-    dynarray_add(&s1->target_deps, &s1->nb_target_deps,
-            scc_strdup(filename));
-    if (flags & 0x40) {
-        Elf64_Ehdr ehdr;
-        int fd, obj_type;
-        fd = file->fd;
-        obj_type = scc_object_type(fd, &ehdr);
-        (scc_dlsym_("lseek"))(fd, 0, 0);
-        switch (obj_type) {
-        case 1:
-            ret = scc_load_object_file(s1, fd, 0);
-            break;
-				case 2:
-            if (s1->output_type == 1) {
-                ret = 0;
-                if (((void*)0) == scc_dlopen(filename))
-                    ret = -1;
-						} else {
-							ret = scc_load_dll(s1, fd, filename, (flags & 0x20) != 0);
-						}
-            break;
-        case 3:
-            ret = scc_load_archive(s1, fd, !(flags & 0x80));
-            break;
-        default:
-            ret = scc_load_ldscript(s1);
-            if (ret < 0)
-                scc_error_noabort("unrecognized file type");
-            break;
-        }
-    } else {
-        ret = scc_compile(s1, flags);
-    }
-    scc_close();
-    return ret;
+	int ret;
+	ret = scc_open(s1, filename);
+	if (ret < 0) {
+		if (flags & 0x100)
+			scc_error_noabort("scc_add_file_internal() file '%s' not found", filename);
+		return ret;
+	}
+	dynarray_add(&s1->target_deps, &s1->nb_target_deps,
+			scc_strdup(filename));
+	if (flags & 0x400) {
+		Elf64_Ehdr ehdr;
+		int fd, obj_type;
+		fd = file->fd;
+		obj_type = scc_object_type(fd, &ehdr);
+		(scc_dlsym_("lseek"))(fd, 0, 0);
+		switch (obj_type) {
+			case 1:
+				ret = scc_load_object_file(s1, fd, 0);
+				break;
+			case 2:
+				if (s1->output_type == 1) {
+					ret = 0;
+					if (((void*)0) == scc_dlopen(filename))
+						ret = -1;
+				} else {
+					ret = scc_load_dll(s1, fd, filename, (flags & 0x200) != 0);
+				}
+				break;
+			case 3:
+				ret = scc_load_archive(s1, fd, !(flags & 0x800));
+				break;
+			default:
+				ret = scc_load_ldscript(s1);
+				if (ret < 0)
+					scc_error_noabort("unrecognized file type");
+				break;
+		}
+	} else {
+		ret = scc_compile(s1, flags);
+	}
+	scc_close();
+	return ret;
 }
  int scc_add_file(SCCState *s, const char *filename)
 {
-    int filetype = s->filetype;
-    if (0 == (filetype & (15 | 0x40))) {
-        const char *ext = scc_fileextension(filename);
-        if (ext[0]) {
-            ext++;
-            if (!((int(*)())scc_dlsym("strcmp"))(ext, "S"))
-                filetype = 4;
-            else if (!((int(*)())scc_dlsym("strcmp"))(ext, "s"))
-                filetype = 2;
-            else if (!((int(*)())scc_dlsym("strcmp"))(ext, "c") || !((int(*)())scc_dlsym("strcmp"))(ext, "i"))
-                filetype = 1;
-            else
-                filetype |= 0x40;
-        } else {
-            filetype = 1;
-        }
-    }
-    return scc_add_file_internal(s, filename, filetype | 0x10);
+	int filetype = s->filetype;
+	if (0 == (filetype & (0xFF | 0x400))) {
+		const char *ext = scc_fileextension(filename);
+		if (ext[0]) {
+			ext++;
+			if (!((int(*)())scc_dlsym("strcmp"))(ext, "S"))
+				filetype = 0x4;
+			else if (!((int(*)())scc_dlsym("strcmp"))(ext, "s"))
+				filetype = 0x2;
+			else if (!((int(*)())scc_dlsym("strcmp"))(ext, "c") || !((int(*)())scc_dlsym("strcmp"))(ext, "i"))
+				filetype = 0x1;
+			else if (!((int(*)())scc_dlsym("strcmp"))(ext, "sao"))
+				filetype = 0x10;
+			else
+				filetype |= 0x400;
+		} else {
+			filetype = 0x1;
+		}
+	}
+	return scc_add_file_internal(s, filename, filetype | 0x100);
 }
  int scc_add_library_path(SCCState *s, const char *pathname)
 {
@@ -17898,7 +17899,7 @@ static int scc_add_library_internal(SCCState *s, const char *fmt,
     int i;
     for(i = 0; i < nb_paths; i++) {
         (scc_dlsym_("snprintf"))(buf, sizeof(buf), fmt, paths[i], filename);
-        if (scc_add_file_internal(s, buf, flags | 0x40) == 0)
+        if (scc_add_file_internal(s, buf, flags | 0x400) == 0)
             return 0;
     }
     return -1;
@@ -17919,7 +17920,7 @@ static int scc_add_crt(SCCState *s, const char *filename)
 {
     const char *libs[] = { "%s/lib%s.so", "%s/lib%s.a", ((void*)0) };
     const char **pp = s->static_link ? libs + 1 : libs;
-    int flags = s->filetype & 0x80;
+    int flags = s->filetype & 0x800;
     while (*pp) {
         if (0 == scc_add_library_internal(s, *pp,
             libraryname, flags, s->library_paths, s->nb_library_paths))
@@ -18105,9 +18106,9 @@ static int scc_set_linker(SCCState *s, const char *option)
             copy_linker_arg(&s->soname, p, 0);
         } else if (ret = link_option(option, "?whole-archive", &p), ret) {
             if (ret > 0)
-                s->filetype |= 0x80;
+                s->filetype |= 0x800;
             else
-                s->filetype &= ~0x80;
+                s->filetype &= ~0x800;
         } else if (p) {
             return 0;
         } else {
@@ -18397,7 +18398,7 @@ reparse:
             scc_set_lib_path(s, optarg);
             break;
         case SCC_OPTION_l:
-            args_parser_add_file(s, optarg, 8 | (s->filetype & ~(15 | 0x40)));
+            args_parser_add_file(s, optarg, 0x8 | (s->filetype & ~(0xFF | 0x400)));
             s->nb_libraries++;
             break;
         case SCC_OPTION_pthread:
@@ -18524,16 +18525,18 @@ reparse:
         case SCC_OPTION_x:
             x = 0;
             if (*optarg == 'c')
-                x = 1;
+                x = 0x1;
             else if (*optarg == 'a')
-                x = 4;
+                x = 0x4;
             else if (*optarg == 'b')
-                x = 0x40;
+                x = 0x400;
+            else if (*optarg == 's')
+                x = 0x10;
             else if (*optarg == 'n')
                 x = 0;
             else
-                scc_warning("unsupported language '%s'", optarg);
-            s->filetype = x | (s->filetype & ~(15 | 0x40));
+                scc_warning("unsupported language -x '%s'", optarg);
+            s->filetype = x | (s->filetype & ~(0xFF | 0x400));
             break;
         case SCC_OPTION_O:
             last_o = ((int(*)())scc_dlsym("atoi"))(optarg);
@@ -18888,7 +18891,7 @@ static const char help[] =
     "Debugger:\n"
     "  -g          generate runtime debug info\n"
     "Misc. options:\n"
-    "  -x[c|a|b|n] specify type of the next infile (C,ASM,BIN,NONE)\n"
+    "  -x[c|a|b|s|n] specify type of the next infile (C,ASM,BIN,SAO,NONE)\n"
     "  -nostdinc   do not use standard system include paths\n"
     "  -nostdlib   do not link with standard crt and libraries\n"
     "  -Bdir       set scc's private include/library dir\n"
@@ -19008,108 +19011,108 @@ static unsigned getclock_ms(void)
 }
 int main(int argc0, char **argv0)
 {
-    SCCState *s;
-    int ret, opt, n = 0, t = 0;
-    unsigned start_time = 0;
-    const char *first_file;
-    int argc; char **argv;
-    FILE *ppfp = scc_std(2);
+	SCCState *s;
+	int ret, opt, n = 0, t = 0;
+	unsigned start_time = 0;
+	const char *first_file;
+	int argc; char **argv;
+	FILE *ppfp = scc_std(2);
 redo:
-    argc = argc0, argv = argv0;
-    s = scc_new();
-    opt = scc_parse_args(s, &argc, &argv, 1);
-    if ((n | t) == 0) {
-        if (opt == 1)
-            return (scc_dlsym_("printf"))(help), 1;
-        if (opt == 2)
-            return (scc_dlsym_("printf"))(help2), 1;
-        if (opt == 32 || opt == 64)
-            scc_tool_cross(s, argv, opt);
-        if (s->verbose)
-            (scc_dlsym_("printf"))(version);
-        if (opt == 5)
-            return scc_tool_ar(s, argc, argv);
-        if (opt == 3)
-            return 0;
-        if (opt == 4) {
-            set_environment(s);
-            scc_set_output_type(s, 1);
-            print_search_dirs(s);
-            return 0;
-        }
-        n = s->nb_files;
-        if (n == 0)
-            scc_error("no input files\n");
-        if (s->output_type == 5) {
-            if (s->outfile) {
-                ppfp = (scc_dlsym_("fopen"))(s->outfile, "w");
-                if (!ppfp)
-                    scc_error("PREPROCESS: could not write '%s'", s->outfile);
-            }
-        } else if (s->output_type == 4 && !s->option_r) {
-            if (s->nb_libraries)
-                scc_error("cannot specify libraries with -c");
-            if (n > 1 && s->outfile)
-                scc_error("cannot specify output file with -c many files");
-        } else {
-            if (s->option_pthread) {
-                scc_set_options(s, "-lpthread");
+	argc = argc0, argv = argv0;
+	s = scc_new();
+	opt = scc_parse_args(s, &argc, &argv, 1);
+	if ((n | t) == 0) {
+		if (opt == 1)
+			return (scc_dlsym_("printf"))(help), 1;
+		if (opt == 2)
+			return (scc_dlsym_("printf"))(help2), 1;
+		if (opt == 32 || opt == 64)
+			scc_tool_cross(s, argv, opt);
+		if (s->verbose)
+			(scc_dlsym_("printf"))(version);
+		if (opt == 5)
+			return scc_tool_ar(s, argc, argv);
+		if (opt == 3)
+			return 0;
+		if (opt == 4) {
+			set_environment(s);
+			scc_set_output_type(s, 1);
+			print_search_dirs(s);
+			return 0;
+		}
 		n = s->nb_files;
-	    }
-        }
-        if (s->do_bench)
-            start_time = getclock_ms();
-    }
-    set_environment(s);
-    if (s->output_type == 0)
-        s->output_type = 2;
-    scc_set_output_type(s, s->output_type);
-    s->ppfp = ppfp;
-    if ((s->output_type == 1
-      || s->output_type == 5) && (s->dflag & 16))
-        s->dflag |= t ? 32 : 0, s->run_test = ++t, n = s->nb_files;
-    for (first_file = ((void*)0), ret = 0;;) {
-        struct filespec *f = s->files[s->nb_files - n];
-        s->filetype = f->type;
-        if (f->type & 8) {
-            if (scc_add_library_err(s, f->name) < 0)
-                ret = 1;
-        } else {
-            if (1 == s->verbose)
-                (scc_dlsym_("printf"))("-> %s\n", f->name);
-            if (!first_file)
-                first_file = f->name;
-            if (scc_add_file(s, f->name) < 0)
-                ret = 1;
-        }
-        if (--n == 0 || ret
-            || (s->output_type == 4 && !s->option_r))
-            break;
-    }
-    if (s->run_test) {
-        t = 0;
-    } else if (s->output_type == 5) {
-        ;
-    } else if (0 == ret) {
-        if (s->output_type == 1) {
-            ret = scc_run(s, argc, argv);
-        } else {
-            if (!s->outfile)
-                s->outfile = default_outputfile(s, first_file);
-            if (scc_output_file(s, s->outfile))
-                ret = 1;
-            else if (s->gen_deps)
-                gen_makedeps(s, s->outfile, s->deps_outfile);
-        }
-    }
-    if (s->do_bench && (n | t | ret) == 0)
-        scc_print_stats(s, getclock_ms() - start_time);
-    scc_delete(s);
-    if (ret == 0 && n)
-        goto redo;
-    if (t)
-        goto redo;
-    if (ppfp && ppfp != scc_std(2))
-        (scc_dlsym_("fclose"))(ppfp);
-    return ret;
+		if (n == 0)
+			scc_error("no input files\n");
+		if (s->output_type == 5) {
+			if (s->outfile) {
+				ppfp = (scc_dlsym_("fopen"))(s->outfile, "w");
+				if (!ppfp)
+					scc_error("PREPROCESS: could not write '%s'", s->outfile);
+			}
+		} else if (s->output_type == 4 && !s->option_r) {
+			if (s->nb_libraries)
+				scc_error("cannot specify libraries with -c");
+			if (n > 1 && s->outfile)
+				scc_error("cannot specify output file with -c many files");
+		} else {
+			if (s->option_pthread) {
+				scc_set_options(s, "-lpthread");
+				n = s->nb_files;
+			}
+		}
+		if (s->do_bench)
+			start_time = getclock_ms();
+	}
+	set_environment(s);
+	if (s->output_type == 0)
+		s->output_type = 2;
+	scc_set_output_type(s, s->output_type);
+	s->ppfp = ppfp;
+	if ((s->output_type == 1
+				|| s->output_type == 5) && (s->dflag & 16))
+		s->dflag |= t ? 32 : 0, s->run_test = ++t, n = s->nb_files;
+	for (first_file = ((void*)0), ret = 0;;) {
+		struct filespec *f = s->files[s->nb_files - n];
+		s->filetype = f->type;
+		if (f->type & 0x8) {
+			if (scc_add_library_err(s, f->name) < 0)
+				ret = 1;
+		} else {
+			if (1 == s->verbose)
+				(scc_dlsym_("printf"))("-> %s\n", f->name);
+			if (!first_file)
+				first_file = f->name;
+			if (scc_add_file(s, f->name) < 0)
+				ret = 1;
+		}
+		if (--n == 0 || ret
+				|| (s->output_type == 4 && !s->option_r))
+			break;
+	}
+	if (s->run_test) {
+		t = 0;
+	} else if (s->output_type == 5) {
+		;
+	} else if (0 == ret) {
+		if (s->output_type == 1) {
+			ret = scc_run(s, argc, argv);
+		} else {
+			if (!s->outfile)
+				s->outfile = default_outputfile(s, first_file);
+			if (scc_output_file(s, s->outfile))
+				ret = 1;
+			else if (s->gen_deps)
+				gen_makedeps(s, s->outfile, s->deps_outfile);
+		}
+	}
+	if (s->do_bench && (n | t | ret) == 0)
+		scc_print_stats(s, getclock_ms() - start_time);
+	scc_delete(s);
+	if (ret == 0 && n)
+		goto redo;
+	if (t)
+		goto redo;
+	if (ppfp && ppfp != scc_std(2))
+		(scc_dlsym_("fclose"))(ppfp);
+	return ret;
 }

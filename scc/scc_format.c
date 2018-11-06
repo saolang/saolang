@@ -2215,23 +2215,29 @@ typedef struct SectionMergeInfo {
     uint8_t link_once;         /* true if link once section */
 } SectionMergeInfo;
 
+//TODO obj type
 ST_FUNC int scc_object_type(int fd, ElfW(Ehdr) *h)
 {
-    int size = SCC(read,int)(fd, h, sizeof *h);
-    if (size == sizeof *h && 0 == SCC(memcmp,int)(h, ELFMAG, 4)) {
-        if (h->e_type == ET_REL)
-            return AFF_BINTYPE_REL;
-        if (h->e_type == ET_DYN)
-            return AFF_BINTYPE_DYN;
-    } else if (size >= 8) {
-        if (0 == SCC(memcmp,int)(h, ARMAG, 8))
-            return AFF_BINTYPE_AR;
-//#ifdef SCC_TARGET_COFF
-//        if (((struct filehdr*)h)->f_magic == COFF_C67_MAGIC)
-//            return AFF_BINTYPE_C67;
-//#endif
-    }
-    return 0;
+	int size = SCC(read,int)(fd, h, sizeof *h);
+
+	//probe the e_type from ELF header...
+	if (size == sizeof *h && 0 == SCC(memcmp,int)(h, ELFMAG, 4)) {
+		if (h->e_type == ET_REL)
+			return AFF_BINTYPE_REL;
+
+		if (h->e_type == ET_DYN)
+			return AFF_BINTYPE_DYN;
+
+	} else if (size >= 8) {
+		if (0 == SCC(memcmp,int)(h, ARMAG, 8))
+			return AFF_BINTYPE_AR;
+		//#ifdef SCC_TARGET_COFF
+		//        if (((struct filehdr*)h)->f_magic == COFF_C67_MAGIC)
+		//            return AFF_BINTYPE_C67;
+		//#endif
+	}
+
+	return 0;
 }
 
 /* load an object file and merge it with current files */
@@ -2885,13 +2891,13 @@ static int ld_next(SCCState *s1, char *name, int name_size)
 
 static int ld_add_file(SCCState *s1, const char filename[])
 {
-    if (filename[0] == '/') {
-        if (CONFIG_SYSROOT[0] == '\0'
-            && scc_add_file_internal(s1, filename, AFF_TYPE_BIN) == 0)
-            return 0;
-        filename = scc_basename(filename);
-    }
-    return scc_add_dll(s1, filename, 0);
+	if (filename[0] == '/') {
+		if (CONFIG_SYSROOT[0] == '\0'
+				&& scc_add_file_internal(s1, filename, AFF_TYPE_BIN) == 0)
+			return 0;
+		filename = scc_basename(filename);
+	}
+	return scc_add_dll(s1, filename, 0);
 }
 
 static inline int new_undef_syms(void)
