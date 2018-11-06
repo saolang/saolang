@@ -50,7 +50,8 @@ future
 * multi-processing/multi-threading/coroutines
 * hardware abstracted binary codes + vm interpretor
 * sao-vm like qemu
-
+* promise/q     - inner promise pattern support
+* await/async
 
 
 

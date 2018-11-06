@@ -1449,7 +1449,7 @@ static void sym_pop(Sym **ptop, Sym *b, int keep);
 static inline Sym *struct_find(int v);
 static inline Sym *sym_find(int v);
 static Sym *global_identifier_push(int v, int t, int c);
-static void scc_open_bf(SCCState *s1, const char *filename, int initlen);
+static void scc_open_buf(SCCState *s1, const char *filename, int initlen);
 static int scc_open(SCCState *s1, const char *filename);
 static void scc_close(void);
 static int scc_add_file_internal(SCCState *s1, const char *filename, int flags);
@@ -4857,7 +4857,7 @@ static int paste_tokens(int t1, CValue *v1, int t2, CValue *v2)
     if (t2 != 0xcb)
         cstr_cat(&cstr, get_tok_str(t2, v2), -1);
     cstr_ccat(&cstr, '\0');
-    scc_open_bf(scc_state, ":paste:", cstr.size);
+    scc_open_buf(scc_state, ":paste:", cstr.size);
     (scc_dlsym_("memcpy"))(file->buffer, cstr.data, cstr.size);
     tok_flags = 0;
     for (;;) {
@@ -5251,7 +5251,7 @@ static void preprocess_start(SCCState *s1, int is_asm)
 	}
 	if (cstr.size) {
 		*s1->include_stack_ptr++ = file;
-		scc_open_bf(s1, "<command line>", cstr.size);
+		scc_open_buf(s1, "<command line>", cstr.size);
 		(scc_dlsym_("memcpy"))(file->buffer, cstr.data, cstr.size);
 	}
 	cstr_free(&cstr);
@@ -17166,7 +17166,7 @@ static void scc_assemble_inline(SCCState *s1, char *str, int len, int global)
 {
     const int *saved_macro_ptr = macro_ptr;
     int dotid = set_idnum('.', 2);
-    scc_open_bf(s1, ":asm:", len);
+    scc_open_buf(s1, ":asm:", len);
     (scc_dlsym_("memcpy"))(file->buffer, str, len);
     macro_ptr = ((void*)0);
     scc_assemble_internal(s1, 0, global);
@@ -17596,7 +17596,7 @@ static inline void strcat_printf(char *buf, int buf_size, const char *fmt, ...)
     s->error_opaque = error_opaque;
     s->error_func = error_func;
 }
-static void scc_open_bf(SCCState *s1, const char *filename, int initlen)
+static void scc_open_buf(SCCState *s1, const char *filename, int initlen)
 {
     BufferedFile *bf;
     int buflen = initlen ? initlen : 8192;
@@ -17637,7 +17637,7 @@ static int scc_open(SCCState *s1, const char *filename)
                (int)(s1->include_stack_ptr - s1->include_stack), "", filename);
     if (fd < 0)
         return -1;
-    scc_open_bf(s1, filename, 0);
+    scc_open_buf(s1, filename, 0);
     file->fd = fd;
     return fd;
 }
@@ -17673,7 +17673,7 @@ static int scc_compile(SCCState *s1, int filetype)
 {
     int len, ret;
     len = ((int(*)())scc_dlsym("strlen"))(str);
-    scc_open_bf(s, "<string>", len);
+    scc_open_buf(s, "<string>", len);
     (scc_dlsym_("memcpy"))(file->buffer, str, len);
     ret = scc_compile(s, s->filetype);
     scc_close();
@@ -17686,7 +17686,7 @@ static int scc_compile(SCCState *s1, int filetype)
         value = "1";
     len1 = ((int(*)())scc_dlsym("strlen"))(sym);
     len2 = ((int(*)())scc_dlsym("strlen"))(value);
-    scc_open_bf(s1, "<define>", len1 + len2 + 1);
+    scc_open_buf(s1, "<define>", len1 + len2 + 1);
     (scc_dlsym_("memcpy"))(file->buffer, sym, len1);
     file->buffer[len1] = ' ';
     (scc_dlsym_("memcpy"))(file->buffer + len1 + 1, value, len2);

@@ -1666,6 +1666,9 @@ stk_error:
 			goto pragma_err;
 
 	} else if (tok == TOK_comment) {
+		//#pragma comment is a compiler directive which indicates Visual C++ to leave a comment in the generated object file. The comment can then be read by the linker when it processes object files.
+		//#pragma comment(lib, libname) tells the linker to add the 'libname' library to the list of library dependencies, as if you had added it in the project properties at Linker->Input->Additional dependencies
+		//https://msdn.microsoft.com/en-us/library/d9x1s805.aspx
 		char *p; int t;
 		next();
 		skip('(');
@@ -1815,7 +1818,7 @@ read_name:
 				scc_warning("#%d %s", tok_tmp, buf);
 				goto include_done;
 			}
-			
+
 			if (s1->include_stack_ptr >= s1->include_stack + INCLUDE_STACK_SIZE)
 				scc_error("#include recursion too deep");
 
@@ -3171,7 +3174,7 @@ static int paste_tokens(int t1, CValue *v1, int t2, CValue *v2)
         cstr_cat(&cstr, get_tok_str(t2, v2), -1);
     cstr_ccat(&cstr, '\0');
 
-    scc_open_bf(scc_state, ":paste:", cstr.size);
+    scc_open_buf(scc_state, ":paste:", cstr.size);
     SCC(memcpy)(file->buffer, cstr.data, cstr.size);
     tok_flags = 0;
     for (;;) {
@@ -3648,7 +3651,7 @@ ST_FUNC void preprocess_start(SCCState *s1, int is_asm)
 	}
 	if (cstr.size) {
 		*s1->include_stack_ptr++ = file;
-		scc_open_bf(s1, "<command line>", cstr.size);
+		scc_open_buf(s1, "<command line>", cstr.size);
 		SCC(memcpy)(file->buffer, cstr.data, cstr.size);
 	}
 	cstr_free(&cstr);

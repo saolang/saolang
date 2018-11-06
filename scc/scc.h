@@ -304,7 +304,8 @@ LAST_UNUSED_STAB_CODE
 #include SCC_QUOTE(asm-__SCC_TARGET_CPU__-__SCC_TARGET_CPU_BIT__.c)
 
 #ifdef MAKE_DEBUG
-#pragma message "CPU/BIT/OS/FMT/PTR_SIZE:" SCC_QUOTE(__SCC_TARGET_CPU__,__SCC_TARGET_CPU_BIT__,__SCC_TARGET_OS__,__SCC_TARGET_FORMAT__,PTR_SIZE)
+//#pragma message "CPU/BIT/OS/FMT/PTR_SIZE:" SCC_QUOTE(__SCC_TARGET_CPU__,__SCC_TARGET_CPU_BIT__,__SCC_TARGET_OS__,__SCC_TARGET_FORMAT__,PTR_SIZE)
+#warning "CPU/BIT/OS/FMT/PTR_SIZE:" SCC_QUOTE(__SCC_TARGET_CPU__,__SCC_TARGET_CPU_BIT__,__SCC_TARGET_OS__,__SCC_TARGET_FORMAT__,PTR_SIZE)
 #endif
 
 #undef TARGET_DEFS_ONLY
@@ -1110,7 +1111,7 @@ ST_INLN Sym *struct_find(int v);
 ST_INLN Sym *sym_find(int v);
 ST_FUNC Sym *global_identifier_push(int v, int t, int c);
 
-ST_FUNC void scc_open_bf(SCCState *s1, const char *filename, int initlen);
+ST_FUNC void scc_open_buf(SCCState *s1, const char *filename, int initlen);
 ST_FUNC int scc_open(SCCState *s1, const char *filename);
 ST_FUNC void scc_close(void);
 

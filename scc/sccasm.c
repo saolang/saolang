@@ -971,7 +971,7 @@ static void scc_assemble_inline(SCCState *s1, char *str, int len, int global)
     const int *saved_macro_ptr = macro_ptr;
     int dotid = set_idnum('.', IS_ID);
 
-    scc_open_bf(s1, ":asm:", len);
+    scc_open_buf(s1, ":asm:", len);
     SCC(memcpy)(file->buffer, str, len);
     macro_ptr = NULL;
     scc_assemble_internal(s1, 0, global);

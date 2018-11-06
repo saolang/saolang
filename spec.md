@@ -1,10 +1,11 @@
-# inline
+# inline asm
 
 $ModuleName=ASM if omit.
 
 ```
-@<<$ModuleName
->>@
+<<<@$ModuleName
+
+@$ModuleName>>>
 ```
 
 ```LIBC

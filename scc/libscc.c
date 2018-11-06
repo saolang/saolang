@@ -34,11 +34,11 @@ static int nb_states;
 #ifndef CONFIG_SCC_ASM//{
 ST_FUNC void asm_instr(void)
 {
-    scc_error("inline asm() not supported for this arch yet");//TODO add %s to show arch
+    scc_error("inline asm() not supported for this arch yet "__SCC_TARGET_CPU__"-"__SCC_TARGET_CPU_BIT__"-"__SCC_TARGET_OS__"-"__SCC_TARGET_FORMAT__);//TODO add %s to show arch
 }
 ST_FUNC void asm_global_instr(void)
 {
-    scc_error("inline asm() not supported for this arch yet");//TODO to show arch
+    scc_error("inline asm() not supported for this arch yet "__SCC_TARGET_CPU__"-"__SCC_TARGET_CPU_BIT__"-"__SCC_TARGET_OS__"-"__SCC_TARGET_FORMAT__);//TODO to show arch
 }
 #endif//}CONFIG_SCC_ASM
 
@@ -46,18 +46,15 @@ ST_FUNC void asm_global_instr(void)
 #ifdef _WIN32//{
 ST_FUNC char *normalize_slashes(char *path)
 {
-    //char *p;
 		for (char *p = path; *p; ++p){
-			if (*p == '\\'){
-				*p = '/';
-			}
+			if (*p == '\\') *p = '/';
 		}
     return path;
 }
 
 static HMODULE scc_module;
 
-//TODO later: maybe not, but all ...
+//TODO 
 ///* on win32, we suppose the lib and includes are at the location of 'scc.exe' */
 //static void scc_set_lib_path_w32(SCCState *s)
 //{
@@ -101,8 +98,7 @@ ST_FUNC char *pstrcpy(char *buf, int buf_size, const char *s)
         q_end = buf + buf_size - 1;
         while (q < q_end) {
             c = *s++;
-            if (c == '\0')
-                break;
+            if (c == '\0') break;
             *q++ = c;
         }
         *q = '\0';
@@ -166,7 +162,7 @@ PUB_FUNC void *scc_malloc(unsigned long size)
     void *ptr;
     ptr = SCC(malloc)(size);
     if (!ptr && size)
-        scc_error("memory full (malloc)");
+        scc_error("memory full (malloc(%ld))",size);
     return ptr;
 }
 
@@ -517,7 +513,7 @@ LIBSCCAPI void scc_set_error_func(SCCState *s, void *error_opaque,
 /********************************************************/
 /* I/O layer */
 
-ST_FUNC void scc_open_bf(SCCState *s1, const char *filename, int initlen)
+ST_FUNC void scc_open_buf(SCCState *s1, const char *filename, int initlen)
 {
     BufferedFile *bf;
     int buflen = initlen ? initlen : IO_BUF_SIZE;
@@ -561,7 +557,7 @@ ST_FUNC int scc_open(SCCState *s1, const char *filename)
                (int)(s1->include_stack_ptr - s1->include_stack), "", filename);
     if (fd < 0)
         return -1;
-    scc_open_bf(s1, filename, 0);
+    scc_open_buf(s1, filename, 0);
 #ifdef _WIN32
     normalize_slashes(file->filename);
 #endif
@@ -613,7 +609,7 @@ LIBSCCAPI int scc_compile_string(SCCState *s, const char *str)
     int len, ret;
 
     len = SCC(strlen,int)(str);
-    scc_open_bf(s, "<string>", len);
+    scc_open_buf(s, "<string>", len);
     SCC(memcpy)(file->buffer, str, len);
     ret = scc_compile(s, s->filetype);
     scc_close();
@@ -631,7 +627,7 @@ LIBSCCAPI void scc_define_symbol(SCCState *s1, const char *sym, const char *valu
     len2 = SCC(strlen,int)(value);
 
     /* init file structure */
-    scc_open_bf(s1, "<define>", len1 + len2 + 1);
+    scc_open_buf(s1, "<define>", len1 + len2 + 1);
     SCC(memcpy)(file->buffer, sym, len1);
     file->buffer[len1] = ' ';
     SCC(memcpy)(file->buffer + len1 + 1, value, len2);
