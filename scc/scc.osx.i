@@ -5082,37 +5082,39 @@ no_subst:
 }
 static void next(void)
 {
- redo:
-    if (parse_flags & 0x0010)
-        next_nomacro_spc();
-    else
-        next_nomacro();
-    if (macro_ptr) {
-        if (tok == 0xcc || tok == 0xcb) {
-            goto redo;
-        } else if (tok == 0) {
-            end_macro();
-            goto redo;
-        }
-    } else if (tok >= 256 && (parse_flags & 0x0001)) {
-        Sym *s;
-        s = define_find(tok);
-        if (s) {
-            Sym *nested_list = ((void*)0);
-            tokstr_buf.len = 0;
-            macro_subst_tok(&tokstr_buf, &nested_list, s);
-            tok_str_add(&tokstr_buf, 0);
-            begin_macro(&tokstr_buf, 2);
-            goto redo;
-        }
-    }
-    if (tok == 0xbe) {
-        if  (parse_flags & 0x0002)
-            parse_number((char *)tokc.str.data);
-    } else if (tok == 0xbf) {
-        if (parse_flags & 0x0040)
-            parse_string((char *)tokc.str.data, tokc.str.size - 1);
-    }
+redo:
+	if (parse_flags & 0x0010)
+		next_nomacro_spc();
+	else
+		next_nomacro();
+	if (macro_ptr) {
+		if (tok == 0xcc || tok == 0xcb) {
+			goto redo;
+		} else if (tok == 0) {
+			end_macro();
+			goto redo;
+		}
+	} else if (tok >= 256 && (parse_flags & 0x0001)) {
+		Sym *s;
+		s = define_find(tok);
+		if (s) {
+			Sym *nested_list = ((void*)0);
+			tokstr_buf.len = 0;
+			macro_subst_tok(&tokstr_buf, &nested_list, s);
+			tok_str_add(&tokstr_buf, 0);
+			begin_macro(&tokstr_buf, 2);
+			goto redo;
+		}
+	}
+	if (tok == 0xbe) {
+		if  (parse_flags & 0x0002){
+			parse_number((char *)tokc.str.data);
+		}
+	} else if (tok == 0xbf) {
+		if (parse_flags & 0x0040){
+			parse_string((char *)tokc.str.data, tokc.str.size - 1);
+		}
+	}
 }
 static inline void unget_tok(int last_tok)
 {
@@ -5466,23 +5468,23 @@ static void check_vstack(void)
 }
 static void scc_debug_start(SCCState *s1)
 {
-    if (s1->do_debug) {
-        char buf[512];
-        section_sym = put_elf_sym(symtab_section, 0, 0,
-                                  ((((0)) << 4) + (((3)) & 0xf)), 0,
-                                  text_section->sh_num, ((void*)0));
-        (scc_dlsym_("getcwd"))(buf, sizeof(buf));
-        pstrcat(buf, sizeof(buf), "/");
-        put_stabs_r(buf, N_SO, 0, 0,
-                    text_section->data_offset, text_section, section_sym);
-        put_stabs_r(file->filename, N_SO, 0, 0,
-                    text_section->data_offset, text_section, section_sym);
-        last_ind = 0;
-        last_line_num = 0;
-    }
-    put_elf_sym(symtab_section, 0, 0,
-                ((((0)) << 4) + (((4)) & 0xf)), 0,
-                0xfff1, file->filename);
+	if (s1->do_debug) {
+		char buf[512];
+		section_sym = put_elf_sym(symtab_section, 0, 0,
+				((((0)) << 4) + (((3)) & 0xf)), 0,
+				text_section->sh_num, ((void*)0));
+		(scc_dlsym_("getcwd"))(buf, sizeof(buf));
+		pstrcat(buf, sizeof(buf), "/");
+		put_stabs_r(buf, N_SO, 0, 0,
+				text_section->data_offset, text_section, section_sym);
+		put_stabs_r(file->filename, N_SO, 0, 0,
+				text_section->data_offset, text_section, section_sym);
+		last_ind = 0;
+		last_line_num = 0;
+	}
+	put_elf_sym(symtab_section, 0, 0,
+			((((0)) << 4) + (((4)) & 0xf)), 0,
+			0xfff1, file->filename);
 }
 static void scc_debug_end(SCCState *s1)
 {
@@ -5538,7 +5540,7 @@ static int sccgen_compile(SCCState *s1)
     func_old_type.ref->f.func_call = 0;
     func_old_type.ref->f.func_type = 2;
     scc_debug_start(s1);
-    parse_flags = 0x0001 | 0x0002 | 0x0040;
+    parse_flags= 0x0001 |0x0002 |0x0040;
     next();
     decl(0x0030);
     gen_inline_functions(s1);
@@ -14060,12 +14062,12 @@ static void scc_format_new(SCCState *s)
 }
 static void scc_format_stab_new(SCCState *s)
 {
-    stab_section = new_section(s, ".stab", 1, 0);
-    stab_section->sh_entsize = sizeof(Stab_Sym);
-    stabstr_section = new_section(s, ".stabstr", 3, 0);
-    put_elf_str(stabstr_section, "");
-    stab_section->link = stabstr_section;
-    put_stabs("", 0, 0, 0, 0);
+	stab_section = new_section(s, ".stab", 1, 0);
+	stab_section->sh_entsize = sizeof(Stab_Sym);
+	stabstr_section = new_section(s, ".stabstr", 3, 0);
+	put_elf_str(stabstr_section, "");
+	stab_section->link = stabstr_section;
+	put_stabs("", 0, 0, 0, 0);
 }
 static void free_section(Section *s)
 {
@@ -17680,28 +17682,28 @@ static void scc_cleanup(void)
 }
  int scc_set_output_type(SCCState *s, int output_type)
 {
-    s->output_type = output_type;
-    if (output_type == 4)
-        s->output_format = 0;
-    if (s->char_is_unsigned)
-        scc_define_symbol(s, "__CHAR_UNSIGNED__", ((void*)0));
-    if (!s->nostdinc) {
-        scc_add_sysinclude_path(s, "{B}/include" ":" "" "/usr/local/include" ":" "" "/usr/include");
-    }
-    if (s->do_debug) {
-        scc_format_stab_new(s);
-    }
-    scc_add_library_path(s, "" "/usr/" "lib" ":" "" "/" "lib" ":" "" "/usr/local/" "lib");
-    scc_split_path(s, &s->crt_paths, &s->nb_crt_paths, "" "/usr/" "lib");
-    if ((output_type == 2 || output_type == 3) &&
-        !s->nostdlib)
-		{
-			if (output_type != 3){
-				scc_add_crt(s, "crt1.o");
-			}
-			scc_add_crt(s, "crti.o");
-    }
-    return 0;
+	s->output_type = output_type;
+	if (output_type == 4)
+		s->output_format = 0;
+	if (s->char_is_unsigned)
+		scc_define_symbol(s, "__CHAR_UNSIGNED__", ((void*)0));
+	if (!s->nostdinc) {
+		scc_add_sysinclude_path(s, "{B}/include" ":" "" "/usr/local/include" ":" "" "/usr/include");
+	}
+	if (s->do_debug) {
+		scc_format_stab_new(s);
+	}
+	scc_add_library_path(s, "" "/usr/" "lib" ":" "" "/" "lib" ":" "" "/usr/local/" "lib");
+	scc_split_path(s, &s->crt_paths, &s->nb_crt_paths, "" "/usr/" "lib");
+	if ((output_type == 2 || output_type == 3) &&
+			!s->nostdlib)
+	{
+		if (output_type != 3){
+			scc_add_crt(s, "crt1.o");
+		}
+		scc_add_crt(s, "crti.o");
+	}
+	return 0;
 }
  int scc_add_include_path(SCCState *s, const char *pathname)
 {
@@ -17722,8 +17724,7 @@ static int scc_add_file_internal(SCCState *s1, const char *filename, int flags)
 			scc_error_noabort("scc_add_file_internal() file '%s' not found", filename);
 		return ret;
 	}
-	dynarray_add(&s1->target_deps, &s1->nb_target_deps,
-			scc_strdup(filename));
+	dynarray_add(&s1->target_deps, &s1->nb_target_deps, scc_strdup(filename));
 	if (flags & 0x400) {
 		Elf64_Ehdr ehdr;
 		int fd, obj_type;
@@ -18219,265 +18220,265 @@ static void args_parser_listfile(SCCState *s,
 }
  int scc_parse_args(SCCState *s, int *pargc, char ***pargv, int optind)
 {
-    const SCCOption *popt=((void*)0);
-    const char *optarg, *r;
-    const char *run = ((void*)0);
-    int last_o = -1;
-    int x;
-    CString linker_arg;
-    int tool = 0, arg_start = 0, noaction = optind;
-    char **argv = *pargv;
-    int argc = *pargc;
-    cstr_new(&linker_arg);
-    while (optind < argc) {
-        r = argv[optind];
-        if (r[0] == '@' && r[1] != '\0') {
-            args_parser_listfile(s, r + 1, optind, &argc, &argv);
-	    continue;
-        }
-        optind++;
-        if (tool) {
-            if (r[0] == '-' && r[1] == 'v' && r[2] == 0)
-                ++s->verbose;
-            continue;
-        }
+	const SCCOption *popt=((void*)0);
+	const char *optarg, *r;
+	const char *run = ((void*)0);
+	int last_o = -1;
+	int x;
+	CString linker_arg;
+	int tool = 0, arg_start = 0, noaction = optind;
+	char **argv = *pargv;
+	int argc = *pargc;
+	cstr_new(&linker_arg);
+	while (optind < argc) {
+		r = argv[optind];
+		if (r[0] == '@' && r[1] != '\0') {
+			args_parser_listfile(s, r + 1, optind, &argc, &argv);
+			continue;
+		}
+		optind++;
+		if (tool) {
+			if (r[0] == '-' && r[1] == 'v' && r[2] == 0)
+				++s->verbose;
+			continue;
+		}
 reparse:
-        if (r[0] != '-' || r[1] == '\0') {
-            if (r[0] != '@')
-                args_parser_add_file(s, r, s->filetype);
-            if (run) {
-                scc_set_options(s, run);
-                arg_start = optind - 1;
-                break;
-            }
-            continue;
-        }
-        for(popt = scc_options; ; ++popt) {
-            const char *p1 = popt->name;
-            const char *r1 = r + 1;
-            if (p1 == ((void*)0))
-                scc_error("invalid option -- '%s'", r);
-            if (!strstart(p1, &r1))
-                continue;
-            optarg = r1;
-            if (popt->flags & 0x0001) {
-                if (*r1 == '\0' && !(popt->flags & 0x0002)) {
-                    if (optind >= argc)
-                arg_err:
-                        scc_error("argument to '%s' is missing", r);
-                    optarg = argv[optind++];
-                }
-            } else if (*r1 != '\0')
-                continue;
-            break;
-        }
-        switch(popt->index) {
-        case SCC_OPTION_HELP:
-            return 1;
-        case SCC_OPTION_HELP2:
-            return 2;
-        case SCC_OPTION_I:
-            scc_add_include_path(s, optarg);
-            break;
-        case SCC_OPTION_D:
-            parse_option_D(s, optarg);
-            break;
-        case SCC_OPTION_U:
-            scc_undefine_symbol(s, optarg);
-            break;
-        case SCC_OPTION_L:
-            scc_add_library_path(s, optarg);
-            break;
-        case SCC_OPTION_B:
-            scc_set_lib_path(s, optarg);
-            break;
-        case SCC_OPTION_l:
-            args_parser_add_file(s, optarg, 0x8 | (s->filetype & ~(0xFF | 0x400)));
-            s->nb_libraries++;
-            break;
-        case SCC_OPTION_pthread:
-            parse_option_D(s, "_REENTRANT");
-            s->option_pthread = 1;
-            break;
-        case SCC_OPTION_bench:
-            s->do_bench = 1;
-            break;
-        case SCC_OPTION_g:
-            s->do_debug = 1;
-            break;
-        case SCC_OPTION_c:
-            x = 4;
-        set_output_type:
-            if (s->output_type)
-                scc_warning("-%s: overriding compiler action already specified", popt->name);
-            s->output_type = x;
-            break;
-        case SCC_OPTION_d:
-            if (*optarg == 'D')
-                s->dflag = 3;
-            else if (*optarg == 'M')
-                s->dflag = 7;
-            else if (*optarg == 't')
-                s->dflag = 16;
-            else if (isnum(*optarg))
-                g_debug = ((int(*)())scc_dlsym("atoi"))(optarg);
-            else
-                goto unsupported_option;
-            break;
-        case SCC_OPTION_static:
-            s->static_link = 1;
-            break;
-        case SCC_OPTION_std:
-            break;
-        case SCC_OPTION_shared:
-            x = 3;
-            goto set_output_type;
-        case SCC_OPTION_soname:
-            s->soname = scc_strdup(optarg);
-            break;
-        case SCC_OPTION_o:
-            if (s->outfile) {
-                scc_warning("multiple -o option");
-                scc_free(s->outfile);
-            }
-            s->outfile = scc_strdup(optarg);
-            break;
-        case SCC_OPTION_r:
-            s->option_r = 1;
-            x = 4;
-            goto set_output_type;
-        case SCC_OPTION_isystem:
-            scc_add_sysinclude_path(s, optarg);
-            break;
-	case SCC_OPTION_include:
-	    dynarray_add(&s->cmd_include_files,
-			 &s->nb_cmd_include_files, scc_strdup(optarg));
-	    break;
-        case SCC_OPTION_nostdinc:
-            s->nostdinc = 1;
-            break;
-        case SCC_OPTION_nostdlib:
-            s->nostdlib = 1;
-            break;
-        case SCC_OPTION_run:
-            run = optarg;
-            x = 1;
-            goto set_output_type;
-        case SCC_OPTION_v:
-            do ++s->verbose; while (*optarg++ == 'v');
-            ++noaction;
-            break;
-        case SCC_OPTION_f:
-            if (set_flag(s, options_f, optarg) < 0)
-                goto unsupported_option;
-            break;
-        case SCC_OPTION_m:
-            if (set_flag(s, options_m, optarg) < 0) {
-                if (x = ((int(*)())scc_dlsym("atoi"))(optarg), x != 32 && x != 64)
-                    goto unsupported_option;
-                if (8 != x/8)
-                    return x;
-                ++noaction;
-            }
-            break;
-        case SCC_OPTION_W:
-            if (set_flag(s, options_W, optarg) < 0)
-                goto unsupported_option;
-            break;
-        case SCC_OPTION_w:
-            s->warn_none = 1;
-            break;
-        case SCC_OPTION_rdynamic:
-            s->rdynamic = 1;
-            break;
-        case SCC_OPTION_Wl:
-            if (linker_arg.size)
-                --linker_arg.size, cstr_ccat(&linker_arg, ',');
-            cstr_cat(&linker_arg, optarg, 0);
-            if (scc_set_linker(s, linker_arg.data))
-                cstr_free(&linker_arg);
-            break;
-	case SCC_OPTION_Wp:
-	    r = optarg;
-	    goto reparse;
-        case SCC_OPTION_E:
-            x = 5;
-            goto set_output_type;
-        case SCC_OPTION_P:
-            s->Pflag = ((int(*)())scc_dlsym("atoi"))(optarg) + 1;
-            break;
-        case SCC_OPTION_MD:
-            s->gen_deps = 1;
-            break;
-        case SCC_OPTION_MF:
-            s->deps_outfile = scc_strdup(optarg);
-            break;
-        case SCC_OPTION_dumpversion:
-           (scc_dlsym_("printf"))("%s\n", "SCC-0927-001");
-            (scc_dlsym_("exit"))(0);
-            break;
-        case SCC_OPTION_x:
-            x = 0;
-            if (*optarg == 'c')
-                x = 0x1;
-            else if (*optarg == 'a')
-                x = 0x4;
-            else if (*optarg == 'b')
-                x = 0x400;
-            else if (*optarg == 's')
-                x = 0x10;
-            else if (*optarg == 'n')
-                x = 0;
-            else
-                scc_warning("unsupported language -x '%s'", optarg);
-            s->filetype = x | (s->filetype & ~(0xFF | 0x400));
-            break;
-        case SCC_OPTION_O:
-            last_o = ((int(*)())scc_dlsym("atoi"))(optarg);
-            break;
-        case SCC_OPTION_print_search_dirs:
-            x = 4;
-            goto extra_action;
-        case SCC_OPTION_impdef:
-            x = 6;
-            goto extra_action;
-        case SCC_OPTION_ar:
-            x = 5;
-        extra_action:
-            arg_start = optind - 1;
-            if (arg_start != noaction)
-                scc_error("cannot parse %s here", r);
-            tool = x;
-            break;
-        case SCC_OPTION_traditional:
-        case SCC_OPTION_pedantic:
-        case SCC_OPTION_pipe:
-        case SCC_OPTION_s:
-            break;
-        default:
+		if (r[0] != '-' || r[1] == '\0') {
+			if (r[0] != '@')
+				args_parser_add_file(s, r, s->filetype);
+			if (run) {
+				scc_set_options(s, run);
+				arg_start = optind - 1;
+				break;
+			}
+			continue;
+		}
+		for(popt = scc_options; ; ++popt) {
+			const char *p1 = popt->name;
+			const char *r1 = r + 1;
+			if (p1 == ((void*)0))
+				scc_error("invalid option -- '%s'", r);
+			if (!strstart(p1, &r1))
+				continue;
+			optarg = r1;
+			if (popt->flags & 0x0001) {
+				if (*r1 == '\0' && !(popt->flags & 0x0002)) {
+					if (optind >= argc)
+						arg_err:
+							scc_error("argument to '%s' is missing", r);
+					optarg = argv[optind++];
+				}
+			} else if (*r1 != '\0')
+				continue;
+			break;
+		}
+		switch(popt->index) {
+			case SCC_OPTION_HELP:
+				return 1;
+			case SCC_OPTION_HELP2:
+				return 2;
+			case SCC_OPTION_I:
+				scc_add_include_path(s, optarg);
+				break;
+			case SCC_OPTION_D:
+				parse_option_D(s, optarg);
+				break;
+			case SCC_OPTION_U:
+				scc_undefine_symbol(s, optarg);
+				break;
+			case SCC_OPTION_L:
+				scc_add_library_path(s, optarg);
+				break;
+			case SCC_OPTION_B:
+				scc_set_lib_path(s, optarg);
+				break;
+			case SCC_OPTION_l:
+				args_parser_add_file(s, optarg, 0x8 | (s->filetype & ~(0xFF | 0x400)));
+				s->nb_libraries++;
+				break;
+			case SCC_OPTION_pthread:
+				parse_option_D(s, "_REENTRANT");
+				s->option_pthread = 1;
+				break;
+			case SCC_OPTION_bench:
+				s->do_bench = 1;
+				break;
+			case SCC_OPTION_g:
+				s->do_debug = 1;
+				break;
+			case SCC_OPTION_c:
+				x = 4;
+set_output_type:
+				if (s->output_type)
+					scc_warning("-%s: overriding compiler action already specified", popt->name);
+				s->output_type = x;
+				break;
+			case SCC_OPTION_d:
+				if (*optarg == 'D')
+					s->dflag = 3;
+				else if (*optarg == 'M')
+					s->dflag = 7;
+				else if (*optarg == 't')
+					s->dflag = 16;
+				else if (isnum(*optarg))
+					g_debug = ((int(*)())scc_dlsym("atoi"))(optarg);
+				else
+					goto unsupported_option;
+				break;
+			case SCC_OPTION_static:
+				s->static_link = 1;
+				break;
+			case SCC_OPTION_std:
+				break;
+			case SCC_OPTION_shared:
+				x = 3;
+				goto set_output_type;
+			case SCC_OPTION_soname:
+				s->soname = scc_strdup(optarg);
+				break;
+			case SCC_OPTION_o:
+				if (s->outfile) {
+					scc_warning("multiple -o option");
+					scc_free(s->outfile);
+				}
+				s->outfile = scc_strdup(optarg);
+				break;
+			case SCC_OPTION_r:
+				s->option_r = 1;
+				x = 4;
+				goto set_output_type;
+			case SCC_OPTION_isystem:
+				scc_add_sysinclude_path(s, optarg);
+				break;
+			case SCC_OPTION_include:
+				dynarray_add(&s->cmd_include_files,
+						&s->nb_cmd_include_files, scc_strdup(optarg));
+				break;
+			case SCC_OPTION_nostdinc:
+				s->nostdinc = 1;
+				break;
+			case SCC_OPTION_nostdlib:
+				s->nostdlib = 1;
+				break;
+			case SCC_OPTION_run:
+				run = optarg;
+				x = 1;
+				goto set_output_type;
+			case SCC_OPTION_v:
+				do ++s->verbose; while (*optarg++ == 'v');
+				++noaction;
+				break;
+			case SCC_OPTION_f:
+				if (set_flag(s, options_f, optarg) < 0)
+					goto unsupported_option;
+				break;
+			case SCC_OPTION_m:
+				if (set_flag(s, options_m, optarg) < 0) {
+					if (x = ((int(*)())scc_dlsym("atoi"))(optarg), x != 32 && x != 64)
+						goto unsupported_option;
+					if (8 != x/8)
+						return x;
+					++noaction;
+				}
+				break;
+			case SCC_OPTION_W:
+				if (set_flag(s, options_W, optarg) < 0)
+					goto unsupported_option;
+				break;
+			case SCC_OPTION_w:
+				s->warn_none = 1;
+				break;
+			case SCC_OPTION_rdynamic:
+				s->rdynamic = 1;
+				break;
+			case SCC_OPTION_Wl:
+				if (linker_arg.size)
+					--linker_arg.size, cstr_ccat(&linker_arg, ',');
+				cstr_cat(&linker_arg, optarg, 0);
+				if (scc_set_linker(s, linker_arg.data))
+					cstr_free(&linker_arg);
+				break;
+			case SCC_OPTION_Wp:
+				r = optarg;
+				goto reparse;
+			case SCC_OPTION_E:
+				x = 5;
+				goto set_output_type;
+			case SCC_OPTION_P:
+				s->Pflag = ((int(*)())scc_dlsym("atoi"))(optarg) + 1;
+				break;
+			case SCC_OPTION_MD:
+				s->gen_deps = 1;
+				break;
+			case SCC_OPTION_MF:
+				s->deps_outfile = scc_strdup(optarg);
+				break;
+			case SCC_OPTION_dumpversion:
+				(scc_dlsym_("printf"))("%s\n", "SCC-0927-001");
+				(scc_dlsym_("exit"))(0);
+				break;
+			case SCC_OPTION_x:
+				x = 0;
+				if (*optarg == 'c')
+					x = 0x1;
+				else if (*optarg == 'a')
+					x = 0x4;
+				else if (*optarg == 'b')
+					x = 0x400;
+				else if (*optarg == 's')
+					x = 0x10;
+				else if (*optarg == 'n')
+					x = 0;
+				else
+					scc_warning("unsupported language -x '%s'", optarg);
+				s->filetype = x | (s->filetype & ~(0xFF | 0x400));
+				break;
+			case SCC_OPTION_O:
+				last_o = ((int(*)())scc_dlsym("atoi"))(optarg);
+				break;
+			case SCC_OPTION_print_search_dirs:
+				x = 4;
+				goto extra_action;
+			case SCC_OPTION_impdef:
+				x = 6;
+				goto extra_action;
+			case SCC_OPTION_ar:
+				x = 5;
+extra_action:
+				arg_start = optind - 1;
+				if (arg_start != noaction)
+					scc_error("cannot parse %s here", r);
+				tool = x;
+				break;
+			case SCC_OPTION_traditional:
+			case SCC_OPTION_pedantic:
+			case SCC_OPTION_pipe:
+			case SCC_OPTION_s:
+				break;
+			default:
 unsupported_option:
-            if (s->warn_unsupported)
-                scc_warning("unsupported option '%s'", r);
-            break;
-        }
-    }
-    if (last_o > 0)
-        scc_define_symbol(s, "__OPTIMIZE__", ((void*)0));
-    if (linker_arg.size) {
-        r = linker_arg.data;
-        goto arg_err;
-    }
-    *pargc = argc - arg_start;
-    *pargv = argv + arg_start;
-    if (tool)
-        return tool;
-    if (optind != noaction)
-        return 0;
-    if (s->verbose == 2)
-        return 4;
-    if (s->verbose)
-        return 3;
-    return 1;
+				if (s->warn_unsupported)
+					scc_warning("unsupported option '%s'", r);
+				break;
+		}
+	}
+	if (last_o > 0)
+		scc_define_symbol(s, "__OPTIMIZE__", ((void*)0));
+	if (linker_arg.size) {
+		r = linker_arg.data;
+		goto arg_err;
+	}
+	*pargc = argc - arg_start;
+	*pargv = argv + arg_start;
+	if (tool)
+		return tool;
+	if (optind != noaction)
+		return 0;
+	if (s->verbose == 2)
+		return 4;
+	if (s->verbose)
+		return 3;
+	return 1;
 }
  void scc_set_options(SCCState *s, const char *r)
 {

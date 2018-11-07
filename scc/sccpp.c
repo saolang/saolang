@@ -3565,42 +3565,46 @@ no_subst:
 /* return next token with macro substitution */
 ST_FUNC void next(void)
 {
- redo:
-    if (parse_flags & PARSE_FLAG_SPACES)
-        next_nomacro_spc();
-    else
-        next_nomacro();
+redo:
+	if (parse_flags & PARSE_FLAG_SPACES)
+		next_nomacro_spc();
+	else
+		next_nomacro();
 
-    if (macro_ptr) {
-        if (tok == TOK_NOSUBST || tok == TOK_PLCHLDR) {
-        /* discard preprocessor markers */
-            goto redo;
-        } else if (tok == 0) {
-            /* end of macro or unget token string */
-            end_macro();
-            goto redo;
-        }
-    } else if (tok >= TOK_IDENT && (parse_flags & PARSE_FLAG_PREPROCESS)) {
-        Sym *s;
-        /* if reading from file, try to substitute macros */
-        s = define_find(tok);
-        if (s) {
-            Sym *nested_list = NULL;
-            tokstr_buf.len = 0;
-            macro_subst_tok(&tokstr_buf, &nested_list, s);
-            tok_str_add(&tokstr_buf, 0);
-            begin_macro(&tokstr_buf, 2);
-            goto redo;
-        }
-    }
-    /* convert preprocessor tokens into C tokens */
-    if (tok == TOK_PPNUM) {
-        if  (parse_flags & PARSE_FLAG_TOK_NUM)
-            parse_number((char *)tokc.str.data);
-    } else if (tok == TOK_PPSTR) {
-        if (parse_flags & PARSE_FLAG_TOK_STR)
-            parse_string((char *)tokc.str.data, tokc.str.size - 1);
-    }
+	if (macro_ptr) {
+		if (tok == TOK_NOSUBST || tok == TOK_PLCHLDR) {
+			/* discard preprocessor markers */
+			goto redo;
+		} else if (tok == 0) {
+			/* end of macro or unget token string */
+			end_macro();
+			goto redo;
+		}
+	} else if (tok >= TOK_IDENT && (parse_flags & PARSE_FLAG_PREPROCESS)) {
+		Sym *s;
+		/* if reading from file, try to substitute macros */
+		s = define_find(tok);
+		if (s) {
+			Sym *nested_list = NULL;
+			tokstr_buf.len = 0;
+			macro_subst_tok(&tokstr_buf, &nested_list, s);
+			tok_str_add(&tokstr_buf, 0);
+			begin_macro(&tokstr_buf, 2);
+			goto redo;
+		}
+	}
+
+	if (tok == TOK_PPNUM) {
+		if  (parse_flags & PARSE_FLAG_TOK_NUM){
+			//convert number like to decimal number
+			parse_number((char *)tokc.str.data);
+		}
+	} else if (tok == TOK_PPSTR) {
+		if (parse_flags & PARSE_FLAG_TOK_STR){
+			//convert string to string
+			parse_string((char *)tokc.str.data, tokc.str.size - 1);
+		}
+	}
 }
 
 /* push back current token and set current token to 'last_tok'. Only
@@ -3780,8 +3784,10 @@ static void pp_line(SCCState *s1, BufferedFile *f, int level)
 		;
 	} else if (level == 0 && f->line_ref && d < 8) {
 		while (d > 0) SCC(fputs)("\n", s1->ppfp), --d;
+
 	} else if (s1->Pflag == LINE_MACRO_OUTPUT_FORMAT_STD) {
 		SCC(fprintf)(s1->ppfp, "#line %d \"%s\"\n", f->line_num, f->filename);
+
 	} else {
 		SCC(fprintf)(s1->ppfp, "# %d \"%s\"%s\n", f->line_num, f->filename,
 				level > 0 ? " 1" : level < 0 ? " 2" : "");
@@ -3884,9 +3890,7 @@ ST_FUNC int scc_preprocess(SCCState *s1)
                 | PARSE_FLAG_SPACES
                 | PARSE_FLAG_ACCEPT_STRAYS
                 ;
-    /* Credits to 's initial revision to demonstrate its
-       capability to compile and run itself, provided all numbers are
-       given as decimals. scc -E -P10 will do. */
+
     if (s1->Pflag == LINE_MACRO_OUTPUT_FORMAT_P10)
         parse_flags |= PARSE_FLAG_TOK_NUM, s1->Pflag = 1;
 

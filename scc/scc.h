@@ -701,15 +701,19 @@ struct SCCState {
     //typeof(SCC(jmp_buf)) error_jmp_buf;//segment fault
     int nb_errors;
 
-    /* output file for preprocessing (-E) */
+		//-E
     FILE *ppfp;
+
+		//-P
 		enum {
-			LINE_MACRO_OUTPUT_FORMAT_GCC,//
-			LINE_MACRO_OUTPUT_FORMAT_NONE,//
-			LINE_MACRO_OUTPUT_FORMAT_STD,//
-			LINE_MACRO_OUTPUT_FORMAT_P10 = 11
-		} Pflag; /* -P switch */
-    char dflag; /* -dX value */
+			LINE_MACRO_OUTPUT_FORMAT_GCC,//not use
+			LINE_MACRO_OUTPUT_FORMAT_NONE,//1 => not output pp line
+			LINE_MACRO_OUTPUT_FORMAT_STD,//like #line %d %s
+			LINE_MACRO_OUTPUT_FORMAT_P10 = 11 //@ref scc_preprocess(), num to decimal
+		} Pflag;
+
+		//-dX
+    char dflag;
 
     /* for -MD/-MF: collected dependencies for this compilation */
     char **target_deps;
@@ -1324,10 +1328,9 @@ ST_FUNC int classify_x86_64_va_arg(CType *ty);
 #endif
 
 /* ------------ sccelf.c ------------ */
-
-#define SCC_OUTPUT_FORMAT_ELF    0 /* default output format: ELF */
-#define SCC_OUTPUT_FORMAT_BINARY 1 /* binary image output */
-#define SCC_OUTPUT_FORMAT_COFF   2 /* COFF */
+#define SCC_OUTPUT_FORMAT_ELF    0 // default output format ELF
+#define SCC_OUTPUT_FORMAT_BINARY 1 
+//#define SCC_OUTPUT_FORMAT_COFF   2
 
 #define ARMAG  "!<arch>\012"    /* For COFF and a.out archives */
 

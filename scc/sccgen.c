@@ -232,7 +232,7 @@ ST_FUNC int sccgen_compile(SCCState *s1)
     printf("%s: **** new file\n", file->filename);
 #endif
 
-    parse_flags = PARSE_FLAG_PREPROCESS | PARSE_FLAG_TOK_NUM | PARSE_FLAG_TOK_STR;
+    parse_flags= PARSE_FLAG_PREPROCESS |PARSE_FLAG_TOK_NUM |PARSE_FLAG_TOK_STR;
     next();
     decl(VT_CONST);
     gen_inline_functions(s1);

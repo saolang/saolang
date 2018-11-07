@@ -1634,295 +1634,295 @@ static void args_parser_listfile(SCCState *s,
 
 PUB_FUNC int scc_parse_args(SCCState *s, int *pargc, char ***pargv, int optind)
 {
-    const SCCOption *popt=NULL;
-    const char *optarg, *r;
-    const char *run = NULL;
-    int last_o = -1;
-    int x;
-    CString linker_arg; /* collect -Wl options */
-    int tool = 0, arg_start = 0, noaction = optind;
-    char **argv = *pargv;
-    int argc = *pargc;
+	const SCCOption *popt=NULL;
+	const char *optarg, *r;
+	const char *run = NULL;
+	int last_o = -1;
+	int x;
+	CString linker_arg; /* collect -Wl options */
+	int tool = 0, arg_start = 0, noaction = optind;
+	char **argv = *pargv;
+	int argc = *pargc;
 
-    cstr_new(&linker_arg);
+	cstr_new(&linker_arg);
 
-    while (optind < argc) {
-        r = argv[optind];
-        if (r[0] == '@' && r[1] != '\0') {
-            args_parser_listfile(s, r + 1, optind, &argc, &argv);
-	    continue;
-        }
-        optind++;
-        if (tool) {
-            if (r[0] == '-' && r[1] == 'v' && r[2] == 0)
-                ++s->verbose;
-            continue;
-        }
+	while (optind < argc) {
+		r = argv[optind];
+		if (r[0] == '@' && r[1] != '\0') {
+			args_parser_listfile(s, r + 1, optind, &argc, &argv);
+			continue;
+		}
+		optind++;
+		if (tool) {
+			if (r[0] == '-' && r[1] == 'v' && r[2] == 0)
+				++s->verbose;
+			continue;
+		}
 reparse:
-        if (r[0] != '-' || r[1] == '\0') {
-            if (r[0] != '@') /* allow "scc file(s) -run @ args ..." */
-                args_parser_add_file(s, r, s->filetype);
-            if (run) {
-                scc_set_options(s, run);
-                arg_start = optind - 1;
-                break;
-            }
-            continue;
-        }
+		if (r[0] != '-' || r[1] == '\0') {
+			if (r[0] != '@') /* allow "scc file(s) -run @ args ..." */
+				args_parser_add_file(s, r, s->filetype);
+			if (run) {
+				scc_set_options(s, run);
+				arg_start = optind - 1;
+				break;
+			}
+			continue;
+		}
 
-        /* find option in table */
-        for(popt = scc_options; ; ++popt) {
-            const char *p1 = popt->name;
-            const char *r1 = r + 1;
-            if (p1 == NULL)
-                scc_error("invalid option -- '%s'", r);
-            if (!strstart(p1, &r1))
-                continue;
-            optarg = r1;
-            if (popt->flags & SCC_OPTION_HAS_ARG) {
-                if (*r1 == '\0' && !(popt->flags & SCC_OPTION_NOSEP)) {
-                    if (optind >= argc)
-                arg_err:
-                        scc_error("argument to '%s' is missing", r);
-                    optarg = argv[optind++];
-                }
-            } else if (*r1 != '\0')
-                continue;
-            break;
-        }
+		/* find option in table */
+		for(popt = scc_options; ; ++popt) {
+			const char *p1 = popt->name;
+			const char *r1 = r + 1;
+			if (p1 == NULL)
+				scc_error("invalid option -- '%s'", r);
+			if (!strstart(p1, &r1))
+				continue;
+			optarg = r1;
+			if (popt->flags & SCC_OPTION_HAS_ARG) {
+				if (*r1 == '\0' && !(popt->flags & SCC_OPTION_NOSEP)) {
+					if (optind >= argc)
+						arg_err:
+							scc_error("argument to '%s' is missing", r);
+					optarg = argv[optind++];
+				}
+			} else if (*r1 != '\0')
+				continue;
+			break;
+		}
 
-        switch(popt->index) {
-        case SCC_OPTION_HELP:
-            return OPT_HELP;
-        case SCC_OPTION_HELP2:
-            return OPT_HELP2;
-        case SCC_OPTION_I:
-            scc_add_include_path(s, optarg);
-            break;
-        case SCC_OPTION_D:
-            parse_option_D(s, optarg);
-            break;
-        case SCC_OPTION_U:
-            scc_undefine_symbol(s, optarg);
-            break;
-        case SCC_OPTION_L://-L
-            scc_add_library_path(s, optarg);
-            break;
-        case SCC_OPTION_B:
-            /* set scc utilities path (mainly for scc development) */
-            scc_set_lib_path(s, optarg);
-            break;
-        case SCC_OPTION_l://-l??
-            args_parser_add_file(s, optarg, AFF_TYPE_LIB | (s->filetype & ~AFF_TYPE_MASK));
-            s->nb_libraries++;
-            break;
-        case SCC_OPTION_pthread:
-            parse_option_D(s, "_REENTRANT");
-            s->option_pthread = 1;
-            break;
-        case SCC_OPTION_bench:
-            s->do_bench = 1;
-            break;
+		switch(popt->index) {
+			case SCC_OPTION_HELP:
+				return OPT_HELP;
+			case SCC_OPTION_HELP2:
+				return OPT_HELP2;
+			case SCC_OPTION_I:
+				scc_add_include_path(s, optarg);
+				break;
+			case SCC_OPTION_D:
+				parse_option_D(s, optarg);
+				break;
+			case SCC_OPTION_U:
+				scc_undefine_symbol(s, optarg);
+				break;
+			case SCC_OPTION_L://-L
+				scc_add_library_path(s, optarg);
+				break;
+			case SCC_OPTION_B:
+				/* set scc utilities path (mainly for scc development) */
+				scc_set_lib_path(s, optarg);
+				break;
+			case SCC_OPTION_l://-l??
+				args_parser_add_file(s, optarg, AFF_TYPE_LIB | (s->filetype & ~AFF_TYPE_MASK));
+				s->nb_libraries++;
+				break;
+			case SCC_OPTION_pthread:
+				parse_option_D(s, "_REENTRANT");
+				s->option_pthread = 1;
+				break;
+			case SCC_OPTION_bench:
+				s->do_bench = 1;
+				break;
 #ifdef CONFIG_SCC_BACKTRACE
-        case SCC_OPTION_bt:
-            scc_set_num_callers(SCC(atoi,int)(optarg));
-            break;
+			case SCC_OPTION_bt:
+				scc_set_num_callers(SCC(atoi,int)(optarg));
+				break;
 #endif
-        case SCC_OPTION_g:
-            s->do_debug = 1;
-            break;
-        case SCC_OPTION_c:
-            x = SCC_OUTPUT_OBJ;
-        set_output_type:
-            if (s->output_type)
-                scc_warning("-%s: overriding compiler action already specified", popt->name);
-            s->output_type = x;
-            break;
-        case SCC_OPTION_d:
-            if (*optarg == 'D')
-                s->dflag = 3;
-            else if (*optarg == 'M')
-                s->dflag = 7;
-            else if (*optarg == 't')
-                s->dflag = 16;
-            else if (isnum(*optarg))
-                g_debug = SCC(atoi,int)(optarg);
-            else
-                goto unsupported_option;
-            break;
-        case SCC_OPTION_static:
-            s->static_link = 1;
-            break;
-        case SCC_OPTION_std:
-    	    /* silently ignore, a current purpose:
-    	       allow to use a scc as a reference compiler for "make test" */
-            break;
-        case SCC_OPTION_shared:
-            x = SCC_OUTPUT_DLL;
-            goto set_output_type;
-        case SCC_OPTION_soname:
-            s->soname = scc_strdup(optarg);
-            break;
-        case SCC_OPTION_o:
-            if (s->outfile) {
-                scc_warning("multiple -o option");
-                scc_free(s->outfile);
-            }
-            s->outfile = scc_strdup(optarg);
-            break;
-        case SCC_OPTION_r:
-            /* generate a .o merging several output files */
-            s->option_r = 1;
-            x = SCC_OUTPUT_OBJ;
-            goto set_output_type;
-        case SCC_OPTION_isystem:
-            scc_add_sysinclude_path(s, optarg);
-            break;
-	case SCC_OPTION_include:
-	    dynarray_add(&s->cmd_include_files,
-			 &s->nb_cmd_include_files, scc_strdup(optarg));
-	    break;
-        case SCC_OPTION_nostdinc:
-            s->nostdinc = 1;
-            break;
-        case SCC_OPTION_nostdlib:
-            s->nostdlib = 1;
-            break;
-        case SCC_OPTION_run:
+			case SCC_OPTION_g:
+				s->do_debug = 1;
+				break;
+			case SCC_OPTION_c:
+				x = SCC_OUTPUT_OBJ;
+set_output_type:
+				if (s->output_type)
+					scc_warning("-%s: overriding compiler action already specified", popt->name);
+				s->output_type = x;
+				break;
+			case SCC_OPTION_d:
+				if (*optarg == 'D')
+					s->dflag = 3;
+				else if (*optarg == 'M')
+					s->dflag = 7;
+				else if (*optarg == 't')
+					s->dflag = 16;
+				else if (isnum(*optarg))
+					g_debug = SCC(atoi,int)(optarg);
+				else
+					goto unsupported_option;
+				break;
+			case SCC_OPTION_static:
+				s->static_link = 1;
+				break;
+			case SCC_OPTION_std:
+				/* silently ignore, a current purpose:
+					 allow to use a scc as a reference compiler for "make test" */
+				break;
+			case SCC_OPTION_shared:
+				x = SCC_OUTPUT_DLL;
+				goto set_output_type;
+			case SCC_OPTION_soname:
+				s->soname = scc_strdup(optarg);
+				break;
+			case SCC_OPTION_o:
+				if (s->outfile) {
+					scc_warning("multiple -o option");
+					scc_free(s->outfile);
+				}
+				s->outfile = scc_strdup(optarg);
+				break;
+			case SCC_OPTION_r:
+				/* generate a .o merging several output files */
+				s->option_r = 1;
+				x = SCC_OUTPUT_OBJ;
+				goto set_output_type;
+			case SCC_OPTION_isystem:
+				scc_add_sysinclude_path(s, optarg);
+				break;
+			case SCC_OPTION_include:
+				dynarray_add(&s->cmd_include_files,
+						&s->nb_cmd_include_files, scc_strdup(optarg));
+				break;
+			case SCC_OPTION_nostdinc:
+				s->nostdinc = 1;
+				break;
+			case SCC_OPTION_nostdlib:
+				s->nostdlib = 1;
+				break;
+			case SCC_OPTION_run:
 #ifndef SCC_IS_NATIVE
-            scc_error("-run is not available in a cross compiler");
+				scc_error("-run is not available in a cross compiler");
 #endif
-            run = optarg;
-            x = SCC_OUTPUT_MEMORY;
-            goto set_output_type;
-        case SCC_OPTION_v:
-            do ++s->verbose; while (*optarg++ == 'v');
-            ++noaction;
-            break;
-        case SCC_OPTION_f:
-            if (set_flag(s, options_f, optarg) < 0)
-                goto unsupported_option;
-            break;
+				run = optarg;
+				x = SCC_OUTPUT_MEMORY;
+				goto set_output_type;
+			case SCC_OPTION_v:
+				do ++s->verbose; while (*optarg++ == 'v');
+				++noaction;
+				break;
+			case SCC_OPTION_f:
+				if (set_flag(s, options_f, optarg) < 0)
+					goto unsupported_option;
+				break;
 #ifdef SCC_TARGET_ARM
-        case SCC_OPTION_mfloat_abi:
-            /* scc doesn't support soft float yet */
-            if (!SCC(strcmp,int)(optarg, "softfp")) {
-                s->float_abi = ARM_SOFTFP_FLOAT;
-                scc_undefine_symbol(s, "__ARM_PCS_VFP");
-            } else if (!SCC(strcmp,int)(optarg, "hard"))
-                s->float_abi = ARM_HARD_FLOAT;
-            else
-                scc_error("unsupported float abi '%s'", optarg);
-            break;
+			case SCC_OPTION_mfloat_abi:
+				/* scc doesn't support soft float yet */
+				if (!SCC(strcmp,int)(optarg, "softfp")) {
+					s->float_abi = ARM_SOFTFP_FLOAT;
+					scc_undefine_symbol(s, "__ARM_PCS_VFP");
+				} else if (!SCC(strcmp,int)(optarg, "hard"))
+					s->float_abi = ARM_HARD_FLOAT;
+				else
+					scc_error("unsupported float abi '%s'", optarg);
+				break;
 #endif
-        case SCC_OPTION_m:
-            if (set_flag(s, options_m, optarg) < 0) {
-                if (x = SCC(atoi,int)(optarg), x != 32 && x != 64)
-                    goto unsupported_option;
-                if (PTR_SIZE != x/8)
-                    return x;
-                ++noaction;
-            }
-            break;
-        case SCC_OPTION_W:
-            if (set_flag(s, options_W, optarg) < 0)
-                goto unsupported_option;
-            break;
-        case SCC_OPTION_w:
-            s->warn_none = 1;
-            break;
-        case SCC_OPTION_rdynamic:
-            s->rdynamic = 1;
-            break;
-        case SCC_OPTION_Wl:
-            if (linker_arg.size)
-                --linker_arg.size, cstr_ccat(&linker_arg, ',');
-            cstr_cat(&linker_arg, optarg, 0);
-            if (scc_set_linker(s, linker_arg.data))
-                cstr_free(&linker_arg);
-            break;
-	case SCC_OPTION_Wp:
-	    r = optarg;
-	    goto reparse;
-        case SCC_OPTION_E:
-            x = SCC_OUTPUT_PREPROCESS;
-            goto set_output_type;
-        case SCC_OPTION_P:
-            s->Pflag = SCC(atoi,int)(optarg) + 1;
-            break;
-        case SCC_OPTION_MD:
-            s->gen_deps = 1;
-            break;
-        case SCC_OPTION_MF:
-            s->deps_outfile = scc_strdup(optarg);
-            break;
-        case SCC_OPTION_dumpversion:
-           SCC(printf)("%s\n", SCC_VERSION);
-            SCC(exit)(0);
-            break;
-        case SCC_OPTION_x:
-            x = 0;
-            if (*optarg == 'c')
-                x = AFF_TYPE_C;
-            else if (*optarg == 'a')
-                x = AFF_TYPE_ASMPP;
-            else if (*optarg == 'b')
-                x = AFF_TYPE_BIN;
-            else if (*optarg == 's')
-                x = AFF_TYPE_SAO;
-            else if (*optarg == 'n')
-                x = AFF_TYPE_NONE;
-            else
-                scc_warning("unsupported language -x '%s'", optarg);
-            s->filetype = x | (s->filetype & ~AFF_TYPE_MASK);
-            break;
-        case SCC_OPTION_O:
-            last_o = SCC(atoi,int)(optarg);
-            break;
-        case SCC_OPTION_print_search_dirs:
-            x = OPT_PRINT_DIRS;
-            goto extra_action;
-        case SCC_OPTION_impdef:
-            x = OPT_IMPDEF;
-            goto extra_action;
-        case SCC_OPTION_ar:
-            x = OPT_AR;
-        extra_action:
-            arg_start = optind - 1;
-            if (arg_start != noaction)
-                scc_error("cannot parse %s here", r);
-            tool = x;
-            break;
-        case SCC_OPTION_traditional:
-        case SCC_OPTION_pedantic:
-        case SCC_OPTION_pipe:
-        case SCC_OPTION_s:
-            /* ignored */
-            break;
-        default:
+			case SCC_OPTION_m:
+				if (set_flag(s, options_m, optarg) < 0) {
+					if (x = SCC(atoi,int)(optarg), x != 32 && x != 64)
+						goto unsupported_option;
+					if (PTR_SIZE != x/8)
+						return x;
+					++noaction;
+				}
+				break;
+			case SCC_OPTION_W:
+				if (set_flag(s, options_W, optarg) < 0)
+					goto unsupported_option;
+				break;
+			case SCC_OPTION_w:
+				s->warn_none = 1;
+				break;
+			case SCC_OPTION_rdynamic:
+				s->rdynamic = 1;
+				break;
+			case SCC_OPTION_Wl:
+				if (linker_arg.size)
+					--linker_arg.size, cstr_ccat(&linker_arg, ',');
+				cstr_cat(&linker_arg, optarg, 0);
+				if (scc_set_linker(s, linker_arg.data))
+					cstr_free(&linker_arg);
+				break;
+			case SCC_OPTION_Wp:
+				r = optarg;
+				goto reparse;
+			case SCC_OPTION_E:
+				x = SCC_OUTPUT_PREPROCESS;
+				goto set_output_type;
+			case SCC_OPTION_P:
+				s->Pflag = SCC(atoi,int)(optarg) + 1;
+				break;
+			case SCC_OPTION_MD:
+				s->gen_deps = 1;
+				break;
+			case SCC_OPTION_MF:
+				s->deps_outfile = scc_strdup(optarg);
+				break;
+			case SCC_OPTION_dumpversion:
+				SCC(printf)("%s\n", SCC_VERSION);
+				SCC(exit)(0);
+				break;
+			case SCC_OPTION_x:
+				x = 0;
+				if (*optarg == 'c')
+					x = AFF_TYPE_C;
+				else if (*optarg == 'a')
+					x = AFF_TYPE_ASMPP;
+				else if (*optarg == 'b')
+					x = AFF_TYPE_BIN;
+				else if (*optarg == 's')
+					x = AFF_TYPE_SAO;
+				else if (*optarg == 'n')
+					x = AFF_TYPE_NONE;
+				else
+					scc_warning("unsupported language -x '%s'", optarg);
+				s->filetype = x | (s->filetype & ~AFF_TYPE_MASK);
+				break;
+			case SCC_OPTION_O:
+				last_o = SCC(atoi,int)(optarg);
+				break;
+			case SCC_OPTION_print_search_dirs:
+				x = OPT_PRINT_DIRS;
+				goto extra_action;
+			case SCC_OPTION_impdef:
+				x = OPT_IMPDEF;
+				goto extra_action;
+			case SCC_OPTION_ar:
+				x = OPT_AR;
+extra_action:
+				arg_start = optind - 1;
+				if (arg_start != noaction)
+					scc_error("cannot parse %s here", r);
+				tool = x;
+				break;
+			case SCC_OPTION_traditional:
+			case SCC_OPTION_pedantic:
+			case SCC_OPTION_pipe:
+			case SCC_OPTION_s:
+				/* ignored */
+				break;
+			default:
 unsupported_option:
-            if (s->warn_unsupported)
-                scc_warning("unsupported option '%s'", r);
-            break;
-        }
-    }
-    if (last_o > 0)
-        scc_define_symbol(s, "__OPTIMIZE__", NULL);
-    if (linker_arg.size) {
-        r = linker_arg.data;
-        goto arg_err;
-    }
-    *pargc = argc - arg_start;
-    *pargv = argv + arg_start;
-    if (tool)
-        return tool;
-    if (optind != noaction)
-        return 0;
-    if (s->verbose == 2)
-        return OPT_PRINT_DIRS;
-    if (s->verbose)
-        return OPT_V;
-    return OPT_HELP;
+				if (s->warn_unsupported)
+					scc_warning("unsupported option '%s'", r);
+				break;
+		}
+	}
+	if (last_o > 0)
+		scc_define_symbol(s, "__OPTIMIZE__", NULL);
+	if (linker_arg.size) {
+		r = linker_arg.data;
+		goto arg_err;
+	}
+	*pargc = argc - arg_start;
+	*pargv = argv + arg_start;
+	if (tool)
+		return tool;
+	if (optind != noaction)
+		return 0;
+	if (s->verbose == 2)
+		return OPT_PRINT_DIRS;
+	if (s->verbose)
+		return OPT_V;
+	return OPT_HELP;
 }
 
 LIBSCCAPI void scc_set_options(SCCState *s, const char *r)
