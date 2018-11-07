@@ -256,7 +256,7 @@ PUB_FUNC void *scc_malloc_debug(unsigned long size, const char *file, int line)
     MEM_DEBUG_CHECK3(header) = MEM_DEBUG_MAGIC3;
     header->line_num = line;
     ofs = SCC(strlen,int)(file) - MEM_DEBUG_FILE_LEN;
-    strncpy(header->file_name, file + (ofs > 0 ? ofs : 0), MEM_DEBUG_FILE_LEN);
+    SCC(strncpy)(header->file_name, file + (ofs > 0 ? ofs : 0), MEM_DEBUG_FILE_LEN);
     header->file_name[MEM_DEBUG_FILE_LEN] = 0;
 
     header->next = mem_debug_chain;
@@ -286,7 +286,7 @@ PUB_FUNC void scc_free_debug(void *ptr)
         header->prev->next = header->next;
     if (header == mem_debug_chain)
         mem_debug_chain = header->next;
-    free(header);
+    SCC(free)(header);
 }
 
 PUB_FUNC void *scc_mallocz_debug(unsigned long size, const char *file, int line)

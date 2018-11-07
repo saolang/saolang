@@ -2420,105 +2420,6 @@ static int expect(const char *msg)
     scc_error("%s expected", msg);
 		return -1;
 }
-typedef struct TinyAlloc {
-    unsigned  limit;
-    unsigned  size;
-    uint8_t *buffer;
-    uint8_t *p;
-    unsigned  nb_allocs;
-    struct TinyAlloc *next, *top;
-} TinyAlloc;
-typedef struct tal_header_t {
-    unsigned  size;
-} tal_header_t;
-static TinyAlloc *tal_new(TinyAlloc **pal, unsigned limit, unsigned size)
-{
-    TinyAlloc *al = scc_mallocz(sizeof(TinyAlloc));
-    al->p = al->buffer = scc_malloc(size);
-    al->limit = limit;
-    al->size = size;
-    if (pal) *pal = al;
-    return al;
-}
-static void tal_delete(TinyAlloc *al)
-{
-    TinyAlloc *next;
-tail_call:
-    if (!al)
-        return;
-    next = al->next;
-    scc_free(al->buffer);
-    scc_free(al);
-    al = next;
-    goto tail_call;
-}
-static void tal_free_impl(TinyAlloc *al, void *p )
-{
-    if (!p)
-        return;
-tail_call:
-    if (al->buffer <= (uint8_t *)p && (uint8_t *)p < al->buffer + al->size) {
-        al->nb_allocs--;
-        if (!al->nb_allocs)
-            al->p = al->buffer;
-    } else if (al->next) {
-        al = al->next;
-        goto tail_call;
-    }
-    else
-        scc_free(p);
-}
-static void *tal_realloc_impl(TinyAlloc **pal, void *p, unsigned size )
-{
-    tal_header_t *header;
-    void *ret;
-    int is_own;
-    unsigned adj_size = (size + 3) & -4;
-    TinyAlloc *al = *pal;
-tail_call:
-    is_own = (al->buffer <= (uint8_t *)p && (uint8_t *)p < al->buffer + al->size);
-    if ((!p || is_own) && size <= al->limit) {
-        if (al->p + adj_size + sizeof(tal_header_t) < al->buffer + al->size) {
-            header = (tal_header_t *)al->p;
-            header->size = adj_size;
-            ret = al->p + sizeof(tal_header_t);
-            al->p += adj_size + sizeof(tal_header_t);
-            if (is_own) {
-                header = (((tal_header_t *)p) - 1);
-                (scc_dlsym_("memcpy"))(ret, p, header->size);
-            } else {
-                al->nb_allocs++;
-            }
-            return ret;
-        } else if (is_own) {
-            al->nb_allocs--;
-            ret = tal_realloc_impl(&*pal, 0, size);
-            header = (((tal_header_t *)p) - 1);
-            (scc_dlsym_("memcpy"))(ret, p, header->size);
-            return ret;
-        }
-        if (al->next) {
-            al = al->next;
-        } else {
-            TinyAlloc *bottom = al, *next = al->top ? al->top : al;
-            al = tal_new(pal, next->limit, next->size * 2);
-            al->next = next;
-            bottom->top = al;
-        }
-        goto tail_call;
-    }
-    if (is_own) {
-        al->nb_allocs--;
-        ret = scc_malloc(size);
-        header = (((tal_header_t *)p) - 1);
-        (scc_dlsym_("memcpy"))(ret, p, header->size);
-    } else if (al->next) {
-        al = al->next;
-        goto tail_call;
-    } else
-        ret = scc_realloc(p, size);
-    return ret;
-}
 static void cstr_realloc(CString *cstr, int new_size)
 {
     int size;
@@ -2527,7 +2428,7 @@ static void cstr_realloc(CString *cstr, int new_size)
         size = 8;
     while (size < new_size)
         size = size * 2;
-    cstr->data = tal_realloc_impl(&cstr_alloc, cstr->data, size);
+    cstr->data = scc_realloc(cstr->data, size);
     cstr->size_allocated = size;
 }
 static inline void cstr_ccat(CString *cstr, int ch)
@@ -2565,7 +2466,7 @@ static void cstr_new(CString *cstr)
 }
 static void cstr_free(CString *cstr)
 {
-    tal_free_impl(cstr_alloc, cstr->data);
+    scc_free(cstr->data);
     cstr_new(cstr);
 }
 static void cstr_reset(CString *cstr)
@@ -2601,7 +2502,7 @@ static TokenSym *tok_alloc_new(TokenSym **pts, const char *str, int len)
         ptable = scc_realloc(table_ident, (i + 512) * sizeof(TokenSym *));
         table_ident = ptable;
     }
-    ts = tal_realloc_impl(&toksym_alloc, 0, sizeof(TokenSym) + len);
+    ts = scc_realloc(0, sizeof(TokenSym) + len);
     table_ident[i] = ts;
     ts->tok = tok_ident++;
     ts->sym_define = ((void*)0);
@@ -3093,25 +2994,25 @@ static inline void tok_str_new(TokenString *s)
 }
 static TokenString *tok_str_alloc(void)
 {
-    TokenString *str = tal_realloc_impl(&tokstr_alloc, 0, sizeof *str);
+    TokenString *str = scc_realloc(0, sizeof *str);
     tok_str_new(str);
     return str;
 }
 static int *tok_str_dup(TokenString *s)
 {
     int *str;
-    str = tal_realloc_impl(&tokstr_alloc, 0, s->len * sizeof(int));
+    str = scc_realloc(0, s->len * sizeof(int));
     (scc_dlsym_("memcpy"))(str, s->str, s->len * sizeof(int));
     return str;
 }
 static void tok_str_free_str(int *str)
 {
-    tal_free_impl(tokstr_alloc, str);
+    scc_free(str);
 }
 static void tok_str_free(TokenString *str)
 {
     tok_str_free_str(str->str);
-    tal_free_impl(tokstr_alloc, str);
+    scc_free(str);
 }
 static int *tok_str_realloc(TokenString *s, int new_size)
 {
@@ -3122,7 +3023,7 @@ static int *tok_str_realloc(TokenString *s, int new_size)
     while (size < new_size)
         size = size * 2;
     if (size > s->allocated_len) {
-        str = tal_realloc_impl(&tokstr_alloc, s->str, size * sizeof(int));
+        str = scc_realloc(s->str, size * sizeof(int));
         s->allocated_len = size;
         s->str = str;
     }
@@ -3306,22 +3207,21 @@ static inline Sym *define_find(int v)
 }
 static void free_defines(Sym *b)
 {
-    while (define_stack != b) {
-        Sym *top = define_stack;
-        define_stack = top->prev;
-        tok_str_free_str(top->d);
-        define_undef(top);
-        sym_free(top);
-    }
-    while (b) {
-        int v = b->v;
-        if (v >= 256 && v < tok_ident) {
-            Sym **d = &table_ident[v - 256]->sym_define;
-            if (!*d)
-                *d = b;
-        }
-        b = b->prev;
-    }
+	while (define_stack != b) {
+		Sym *top = define_stack;
+		define_stack = top->prev;
+		tok_str_free_str(top->d);
+		define_undef(top);
+		sym_free(top);
+	}
+	while (b) {
+		int v = b->v;
+		if (v >= 256 && v < tok_ident) {
+			Sym **d = &table_ident[v - 256]->sym_define;
+			if (!*d) *d = b;
+		}
+		b = b->prev;
+	}
 }
 static Sym *label_find(int v)
 {
@@ -5281,9 +5181,9 @@ static void sccpp_new(SCCState *s)
             : 0);
     for(i = 128; i<256; i++)
         set_idnum(i, 2);
-    tal_new(&toksym_alloc, 256, (768 * 1024));
-    tal_new(&tokstr_alloc, 128, (768 * 1024));
-    tal_new(&cstr_alloc, 1024, (256 * 1024));
+    ;
+    ;
+    ;
 		hash_ident = ((TokenSym**(*)())scc_dlsym("malloc"))(16384 * sizeof(TokenSym *));
     (scc_dlsym_("memset"))(hash_ident, 0, 16384 * sizeof(TokenSym *));
     cstr_new(&cstr_buf);
@@ -5311,18 +5211,18 @@ static void sccpp_delete(SCCState *s)
 		hash_ident = ((void*)0);
     n = tok_ident - 256;
     for(i = 0; i < n; i++)
-        tal_free_impl(toksym_alloc, table_ident[i]);
+        scc_free(table_ident[i]);
     scc_free(table_ident);
     table_ident = ((void*)0);
     cstr_free(&tokcstr);
     cstr_free(&cstr_buf);
     cstr_free(&macro_equal_buf);
     tok_str_free_str(tokstr_buf.str);
-    tal_delete(toksym_alloc);
+    ;
     toksym_alloc = ((void*)0);
-    tal_delete(tokstr_alloc);
+    ;
     tokstr_alloc = ((void*)0);
-    tal_delete(cstr_alloc);
+    ;
     cstr_alloc = ((void*)0);
 }
 static void tok_print(const char *msg, const int *str)
@@ -5803,10 +5703,7 @@ static Sym *sym_push(int v, CType *type, int r, int c)
 {
     Sym *s, **ps;
     TokenSym *ts;
-    if (local_stack)
-        ps = &local_stack;
-    else
-        ps = &global_stack;
+		ps = (local_stack) ? &local_stack : & global_stack;
     s = sym_push2(ps, v, type->t, c);
     s->type.ref = type->ref;
     s->r = r;
@@ -9591,58 +9488,58 @@ static int case_cmp(const void *pa, const void *pb)
 }
 static void gcase(struct case_t **base, int len, int *bsym)
 {
-    struct case_t *p;
-    int e;
-    int ll = (vtop->type.t & 0x000f) == 4;
-    gv(0x0001);
-    while (len > 4) {
-        p = base[len/2];
-        vdup();
-	if (ll)
-	    vpushll(p->v2);
-	else
-	    vpushi(p->v2);
-        gen_op(0x9e);
-        e = gtst(1, 0);
-        vdup();
-	if (ll)
-	    vpushll(p->v1);
-	else
-	    vpushi(p->v1);
-        gen_op(0x9d);
-        gtst_addr(0, p->sym);
-        gcase(base, len/2, bsym);
-        if (cur_switch->def_sym)
-            gjmp_addr(cur_switch->def_sym);
-        else
-            *bsym = gjmp(*bsym);
-        gsym(e);
-        e = len/2 + 1;
-        base += e; len -= e;
-    }
-    while (len--) {
-        p = *base++;
-        vdup();
-	if (ll)
-	    vpushll(p->v2);
-	else
-	    vpushi(p->v2);
-        if (p->v1 == p->v2) {
-            gen_op(0x94);
-            gtst_addr(0, p->sym);
-        } else {
-            gen_op(0x9e);
-            e = gtst(1, 0);
-            vdup();
-	    if (ll)
-	        vpushll(p->v1);
-	    else
-	        vpushi(p->v1);
-            gen_op(0x9d);
-            gtst_addr(0, p->sym);
-            gsym(e);
-        }
-    }
+	struct case_t *p;
+	int e;
+	int ll = (vtop->type.t & 0x000f) == 4;
+	gv(0x0001);
+	while (len > 4) {
+		p = base[len/2];
+		vdup();
+		if (ll)
+			vpushll(p->v2);
+		else
+			vpushi(p->v2);
+		gen_op(0x9e);
+		e = gtst(1, 0);
+		vdup();
+		if (ll)
+			vpushll(p->v1);
+		else
+			vpushi(p->v1);
+		gen_op(0x9d);
+		gtst_addr(0, p->sym);
+		gcase(base, len/2, bsym);
+		if (cur_switch->def_sym)
+			gjmp_addr(cur_switch->def_sym);
+		else
+			*bsym = gjmp(*bsym);
+		gsym(e);
+		e = len/2 + 1;
+		base += e; len -= e;
+	}
+	while (len--) {
+		p = *base++;
+		vdup();
+		if (ll)
+			vpushll(p->v2);
+		else
+			vpushi(p->v2);
+		if (p->v1 == p->v2) {
+			gen_op(0x94);
+			gtst_addr(0, p->sym);
+		} else {
+			gen_op(0x9e);
+			e = gtst(1, 0);
+			vdup();
+			if (ll)
+				vpushll(p->v1);
+			else
+				vpushi(p->v1);
+			gen_op(0x9d);
+			gtst_addr(0, p->sym);
+			gsym(e);
+		}
+	}
 }
 static void block(int *bsym, int *csym, int is_expr)
 {
@@ -15987,48 +15884,48 @@ static int scc_load_alacarte(SCCState *s1, int fd, int size, int entrysize)
 }
 static int scc_load_archive(SCCState *s1, int fd, int alacarte)
 {
-    ArchiveHeader hdr;
-    char ar_size[11];
-    char ar_name[17];
-    char magic[8];
-    int size, len, i;
-    unsigned long file_offset;
-    (scc_dlsym_("read"))(fd, magic, sizeof(magic));
-    for(;;) {
-        len = ((int(*)())scc_dlsym("read"))(fd, &hdr, sizeof(hdr));
-        if (len == 0)
-            break;
-        if (len != sizeof(hdr)) {
-            scc_error_noabort("invalid archive");
-            return -1;
-        }
-        (scc_dlsym_("memcpy"))(ar_size, hdr.ar_size, sizeof(hdr.ar_size));
-        ar_size[sizeof(hdr.ar_size)] = '\0';
-        size = ((int(*)())scc_dlsym("strtol"))(ar_size, ((void*)0), 0);
-        (scc_dlsym_("memcpy"))(ar_name, hdr.ar_name, sizeof(hdr.ar_name));
-        for(i = sizeof(hdr.ar_name) - 1; i >= 0; i--) {
-            if (ar_name[i] != ' ')
-                break;
-        }
-        ar_name[i + 1] = '\0';
-        file_offset = ((unsigned long(*)())scc_dlsym("lseek"))(fd, 0, 1);
-        size = (size + 1) & ~1;
-        if (!((int(*)())scc_dlsym("strcmp"))(ar_name, "/")) {
-            if (alacarte)
-                return scc_load_alacarte(s1, fd, size, 4);
-	} else if (!((int(*)())scc_dlsym("strcmp"))(ar_name, "/SYM64/")) {
-            if (alacarte)
-                return scc_load_alacarte(s1, fd, size, 8);
-        } else {
-            Elf64_Ehdr ehdr;
-            if (scc_object_type(fd, &ehdr) == 1) {
-                if (scc_load_object_file(s1, fd, file_offset) < 0)
-                    return -1;
-            }
-        }
-        (scc_dlsym_("lseek"))(fd, file_offset + size, 0);
-    }
-    return 0;
+	ArchiveHeader hdr;
+	char ar_size[11];
+	char ar_name[17];
+	char magic[8];
+	int size, len, i;
+	unsigned long file_offset;
+	(scc_dlsym_("read"))(fd, magic, sizeof(magic));
+	for(;;) {
+		len = ((int(*)())scc_dlsym("read"))(fd, &hdr, sizeof(hdr));
+		if (len == 0)
+			break;
+		if (len != sizeof(hdr)) {
+			scc_error_noabort("invalid archive");
+			return -1;
+		}
+		(scc_dlsym_("memcpy"))(ar_size, hdr.ar_size, sizeof(hdr.ar_size));
+		ar_size[sizeof(hdr.ar_size)] = '\0';
+		size = ((int(*)())scc_dlsym("strtol"))(ar_size, ((void*)0), 0);
+		(scc_dlsym_("memcpy"))(ar_name, hdr.ar_name, sizeof(hdr.ar_name));
+		for(i = sizeof(hdr.ar_name) - 1; i >= 0; i--) {
+			if (ar_name[i] != ' ')
+				break;
+		}
+		ar_name[i + 1] = '\0';
+		file_offset = ((unsigned long(*)())scc_dlsym("lseek"))(fd, 0, 1);
+		size = (size + 1) & ~1;
+		if (!((int(*)())scc_dlsym("strcmp"))(ar_name, "/")) {
+			if (alacarte)
+				return scc_load_alacarte(s1, fd, size, 4);
+		} else if (!((int(*)())scc_dlsym("strcmp"))(ar_name, "/SYM64/")) {
+			if (alacarte)
+				return scc_load_alacarte(s1, fd, size, 8);
+		} else {
+			Elf64_Ehdr ehdr;
+			if (scc_object_type(fd, &ehdr) == 1) {
+				if (scc_load_object_file(s1, fd, file_offset) < 0)
+					return -1;
+			}
+		}
+		(scc_dlsym_("lseek"))(fd, file_offset + size, 0);
+	}
+	return 0;
 }
 static int scc_load_dll(SCCState *s1, int fd, const char *filename, int level)
 {

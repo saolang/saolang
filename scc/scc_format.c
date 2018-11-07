@@ -1827,10 +1827,10 @@ static void scc_output_elf(SCCState *s1, FILE *f, int phnum, ElfW(Phdr) *phdr,
     file_offset = (file_offset + 3) & -4;
 
     /* fill header */
-    ehdr.e_ident[0] = ELFMAG0;
-    ehdr.e_ident[1] = ELFMAG1;
-    ehdr.e_ident[2] = ELFMAG2;
-    ehdr.e_ident[3] = ELFMAG3;
+    ehdr.e_ident[0] = ELFMAGIC0;
+    ehdr.e_ident[1] = ELFMAGIC1;
+    ehdr.e_ident[2] = ELFMAGIC2;
+    ehdr.e_ident[3] = ELFMAGIC3;
     ehdr.e_ident[4] = ELFCLASSW;
     ehdr.e_ident[5] = ELFDATA2LSB;
     ehdr.e_ident[6] = EV_CURRENT;
@@ -2216,13 +2216,13 @@ typedef struct SectionMergeInfo {
     uint8_t link_once;         /* true if link once section */
 } SectionMergeInfo;
 
-//TODO obj type
+//TODO .dylib
 ST_FUNC int scc_object_type(int fd, ElfW(Ehdr) *h)
 {
 	int size = SCC(read,int)(fd, h, sizeof *h);
 
 	//probe the e_type from ELF header...
-	if (size == sizeof *h && 0 == SCC(memcmp,int)(h, ELFMAG, 4)) {
+	if (size == sizeof *h && 0 == SCC(memcmp,int)(h, ELFMAGIC, 4)) {
 		if (h->e_type == ET_REL)
 			return AFF_BINTYPE_REL;
 
@@ -2598,57 +2598,56 @@ static int scc_load_alacarte(SCCState *s1, int fd, int size, int entrysize)
     return ret;
 }
 
-/* load a '.a' file */
 ST_FUNC int scc_load_archive(SCCState *s1, int fd, int alacarte)
 {
-    ArchiveHeader hdr;
-    char ar_size[11];
-    char ar_name[17];
-    char magic[8];
-    int size, len, i;
-    unsigned long file_offset;
+	ArchiveHeader hdr;
+	char ar_size[11];
+	char ar_name[17];
+	char magic[8];
+	int size, len, i;
+	unsigned long file_offset;
 
-    /* skip magic which was already checked */
-    SCC(read)(fd, magic, sizeof(magic));
+	/* skip magic which was already checked */
+	SCC(read)(fd, magic, sizeof(magic));
 
-    for(;;) {
-        len = SCC(read,int)(fd, &hdr, sizeof(hdr));
-        if (len == 0)
-            break;
-        if (len != sizeof(hdr)) {
-            scc_error_noabort("invalid archive");
-            return -1;
-        }
-        SCC(memcpy)(ar_size, hdr.ar_size, sizeof(hdr.ar_size));
-        ar_size[sizeof(hdr.ar_size)] = '\0';
-        size = SCC(strtol,int)(ar_size, NULL, 0);
-        SCC(memcpy)(ar_name, hdr.ar_name, sizeof(hdr.ar_name));
-        for(i = sizeof(hdr.ar_name) - 1; i >= 0; i--) {
-            if (ar_name[i] != ' ')
-                break;
-        }
-        ar_name[i + 1] = '\0';
-        file_offset = SCC(lseek,unsigned long)(fd, 0, SEEK_CUR);
-        /* align to even */
-        size = (size + 1) & ~1;
-        if (!SCC(strcmp,int)(ar_name, "/")) {
-            /* coff symbol table : we handle it */
-            if (alacarte)
-                return scc_load_alacarte(s1, fd, size, 4);
-	} else if (!SCC(strcmp,int)(ar_name, "/SYM64/")) {
-            if (alacarte)
-                return scc_load_alacarte(s1, fd, size, 8);
-        } else {
-            ElfW(Ehdr) ehdr;
-            if (scc_object_type(fd, &ehdr) == AFF_BINTYPE_REL) {
-                if (scc_load_object_file(s1, fd, file_offset) < 0)
-                    return -1;
-            }
-        }
-        SCC(lseek)(fd, file_offset + size, SEEK_SET);
-    }
-    return 0;
-}
+	for(;;) {
+		len = SCC(read,int)(fd, &hdr, sizeof(hdr));
+		if (len == 0)
+			break;
+		if (len != sizeof(hdr)) {
+			scc_error_noabort("invalid archive");
+			return -1;
+		}
+		SCC(memcpy)(ar_size, hdr.ar_size, sizeof(hdr.ar_size));
+		ar_size[sizeof(hdr.ar_size)] = '\0';
+		size = SCC(strtol,int)(ar_size, NULL, 0);
+		SCC(memcpy)(ar_name, hdr.ar_name, sizeof(hdr.ar_name));
+		for(i = sizeof(hdr.ar_name) - 1; i >= 0; i--) {
+			if (ar_name[i] != ' ')
+				break;
+		}
+		ar_name[i + 1] = '\0';
+		file_offset = SCC(lseek,unsigned long)(fd, 0, SEEK_CUR);
+		/* align to even */
+		size = (size + 1) & ~1;
+		if (!SCC(strcmp,int)(ar_name, "/")) {
+			/* coff symbol table : we handle it */
+			if (alacarte)
+				return scc_load_alacarte(s1, fd, size, 4);
+		} else if (!SCC(strcmp,int)(ar_name, "/SYM64/")) {
+			if (alacarte)
+				return scc_load_alacarte(s1, fd, size, 8);
+		} else {
+			ElfW(Ehdr) ehdr;
+			if (scc_object_type(fd, &ehdr) == AFF_BINTYPE_REL) {
+				if (scc_load_object_file(s1, fd, file_offset) < 0)
+					return -1;
+			}
+		}
+		SCC(lseek)(fd, file_offset + size, SEEK_SET);
+	}
+	return 0;
+}//scc_load_archive()
 
 #ifndef SCC_TARGET_PE
 /* load a DLL and all referenced DLLs. 'level = 0' means that the DLL

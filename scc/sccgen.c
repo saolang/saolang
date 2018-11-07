@@ -15,6 +15,7 @@ ST_DATA Sym *local_stack;
 ST_DATA Sym *define_stack;
 ST_DATA Sym *global_label_stack;
 ST_DATA Sym *local_label_stack;
+
 static int local_scope;
 static int in_sizeof;
 static int section_sym;
@@ -446,18 +447,21 @@ ST_INLN void sym_free(Sym *sym)
 #endif
 }
 
-/* push, without hashing */
+//push without hashing
 ST_FUNC Sym *sym_push2(Sym **ps, int v, int t, int c)
 {
     Sym *s;
 
     s = sym_malloc();
     SCC(memset)(s, 0, sizeof *s);
+
     s->v = v;
     s->type.t = t;
     s->c = c;
+
     /* add in stack */
     s->prev = *ps;
+
     *ps = s;
     return s;
 }
@@ -494,16 +498,19 @@ ST_INLN Sym *sym_find(int v)
     return table_ident[v]->sym_identifier;
 }
 
-/* push a given symbol on the symbol stack */
+// push a given symbol on the symbol stack
 ST_FUNC Sym *sym_push(int v, CType *type, int r, int c)
 {
     Sym *s, **ps;
     TokenSym *ts;
 
-    if (local_stack)
-        ps = &local_stack;
-    else
-        ps = &global_stack;
+//    if (local_stack)
+//        ps = &local_stack;
+//    else
+//        ps = &global_stack;
+
+		ps = (local_stack) ? &local_stack : & global_stack;
+
     s = sym_push2(ps, v, type->t, c);
     s->type.ref = type->ref;
     s->r = r;
@@ -5718,62 +5725,62 @@ static int case_cmp(const void *pa, const void *pb)
 
 static void gcase(struct case_t **base, int len, int *bsym)
 {
-    struct case_t *p;
-    int e;
-    int ll = (vtop->type.t & VT_BTYPE) == VT_LLONG;
-    gv(RC_INT);
-    while (len > 4) {
-        /* binary search */
-        p = base[len/2];
-        vdup();
-	if (ll)
-	    vpushll(p->v2);
-	else
-	    vpushi(p->v2);
-        gen_op(TOK_LE);
-        e = gtst(1, 0);
-        vdup();
-	if (ll)
-	    vpushll(p->v1);
-	else
-	    vpushi(p->v1);
-        gen_op(TOK_GE);
-        gtst_addr(0, p->sym); /* v1 <= x <= v2 */
-        /* x < v1 */
-        gcase(base, len/2, bsym);
-        if (cur_switch->def_sym)
-            gjmp_addr(cur_switch->def_sym);
-        else
-            *bsym = gjmp(*bsym);
-        /* x > v2 */
-        gsym(e);
-        e = len/2 + 1;
-        base += e; len -= e;
-    }
-    /* linear scan */
-    while (len--) {
-        p = *base++;
-        vdup();
-	if (ll)
-	    vpushll(p->v2);
-	else
-	    vpushi(p->v2);
-        if (p->v1 == p->v2) {
-            gen_op(TOK_EQ);
-            gtst_addr(0, p->sym);
-        } else {
-            gen_op(TOK_LE);
-            e = gtst(1, 0);
-            vdup();
-	    if (ll)
-	        vpushll(p->v1);
-	    else
-	        vpushi(p->v1);
-            gen_op(TOK_GE);
-            gtst_addr(0, p->sym);
-            gsym(e);
-        }
-    }
+	struct case_t *p;
+	int e;
+	int ll = (vtop->type.t & VT_BTYPE) == VT_LLONG;
+	gv(RC_INT);
+	while (len > 4) {
+		/* binary search */
+		p = base[len/2];
+		vdup();
+		if (ll)
+			vpushll(p->v2);
+		else
+			vpushi(p->v2);
+		gen_op(TOK_LE);
+		e = gtst(1, 0);
+		vdup();
+		if (ll)
+			vpushll(p->v1);
+		else
+			vpushi(p->v1);
+		gen_op(TOK_GE);
+		gtst_addr(0, p->sym); /* v1 <= x <= v2 */
+		/* x < v1 */
+		gcase(base, len/2, bsym);
+		if (cur_switch->def_sym)
+			gjmp_addr(cur_switch->def_sym);
+		else
+			*bsym = gjmp(*bsym);
+		/* x > v2 */
+		gsym(e);
+		e = len/2 + 1;
+		base += e; len -= e;
+	}
+	/* linear scan */
+	while (len--) {
+		p = *base++;
+		vdup();
+		if (ll)
+			vpushll(p->v2);
+		else
+			vpushi(p->v2);
+		if (p->v1 == p->v2) {
+			gen_op(TOK_EQ);
+			gtst_addr(0, p->sym);
+		} else {
+			gen_op(TOK_LE);
+			e = gtst(1, 0);
+			vdup();
+			if (ll)
+				vpushll(p->v1);
+			else
+				vpushi(p->v1);
+			gen_op(TOK_GE);
+			gtst_addr(0, p->sym);
+			gsym(e);
+		}
+	}
 }
 
 static void block(int *bsym, int *csym, int is_expr)

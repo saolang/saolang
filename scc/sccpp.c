@@ -1,6 +1,6 @@
 #include "scc.h"
 
-/********************************************************/
+/* ------------------------------------------------------------------------- */
 /* global variables */
 
 ST_DATA int tok_flags;
@@ -12,7 +12,6 @@ ST_DATA CValue tokc;
 ST_DATA const int *macro_ptr;
 ST_DATA CString tokcstr; /* current parsed string, if any */
 
-/* display benchmark infos */
 ST_DATA int total_lines;
 ST_DATA int total_bytes;
 ST_DATA int tok_ident;
@@ -95,7 +94,7 @@ ST_FUNC int expect(const char *msg)
 /* ------------------------------------------------------------------------- */
 /* Custom allocator for tiny objects */
 
-#define USE_TAL
+//#define USE_TAL
 
 #ifndef USE_TAL
 #define tal_free(al, p) scc_free(p)
@@ -225,81 +224,81 @@ tail_call:
 
 static void *tal_realloc_impl(TinyAlloc **pal, void *p, unsigned size TAL_DEBUG_PARAMS)
 {
-    tal_header_t *header;
-    void *ret;
-    int is_own;
-    unsigned adj_size = (size + 3) & -4;
-    TinyAlloc *al = *pal;
+	tal_header_t *header;
+	void *ret;
+	int is_own;
+	unsigned adj_size = (size + 3) & -4;
+	TinyAlloc *al = *pal;
 
 tail_call:
-    is_own = (al->buffer <= (uint8_t *)p && (uint8_t *)p < al->buffer + al->size);
-    if ((!p || is_own) && size <= al->limit) {
-        if (al->p + adj_size + sizeof(tal_header_t) < al->buffer + al->size) {
-            header = (tal_header_t *)al->p;
-            header->size = adj_size;
+	is_own = (al->buffer <= (uint8_t *)p && (uint8_t *)p < al->buffer + al->size);
+	if ((!p || is_own) && size <= al->limit) {
+		if (al->p + adj_size + sizeof(tal_header_t) < al->buffer + al->size) {
+			header = (tal_header_t *)al->p;
+			header->size = adj_size;
 #ifdef TAL_DEBUG
-            { int ofs = SCC(strlen,int)(file) - TAL_DEBUG_FILE_LEN;
-            strncpy(header->file_name, file + (ofs > 0 ? ofs : 0), TAL_DEBUG_FILE_LEN);
-            header->file_name[TAL_DEBUG_FILE_LEN] = 0;
-            header->line_num = line; }
+			{ int ofs = SCC(strlen,int)(file) - TAL_DEBUG_FILE_LEN;
+				strncpy(header->file_name, file + (ofs > 0 ? ofs : 0), TAL_DEBUG_FILE_LEN);
+				header->file_name[TAL_DEBUG_FILE_LEN] = 0;
+				header->line_num = line; }
 #endif
-            ret = al->p + sizeof(tal_header_t);
-            al->p += adj_size + sizeof(tal_header_t);
-            if (is_own) {
-                header = (((tal_header_t *)p) - 1);
-                SCC(memcpy)(ret, p, header->size);
+			ret = al->p + sizeof(tal_header_t);
+			al->p += adj_size + sizeof(tal_header_t);
+			if (is_own) {
+				header = (((tal_header_t *)p) - 1);
+				SCC(memcpy)(ret, p, header->size);
 #ifdef TAL_DEBUG
-                header->line_num = -header->line_num;
+				header->line_num = -header->line_num;
 #endif
-            } else {
-                al->nb_allocs++;
-            }
+			} else {
+				al->nb_allocs++;
+			}
 #ifdef TAL_INFO
-            if (al->nb_peak < al->nb_allocs)
-                al->nb_peak = al->nb_allocs;
-            if (al->peak_p < al->p)
-                al->peak_p = al->p;
-            al->nb_total++;
+			if (al->nb_peak < al->nb_allocs)
+				al->nb_peak = al->nb_allocs;
+			if (al->peak_p < al->p)
+				al->peak_p = al->p;
+			al->nb_total++;
 #endif
-            return ret;
-        } else if (is_own) {
-            al->nb_allocs--;
-            ret = tal_realloc(*pal, 0, size);
-            header = (((tal_header_t *)p) - 1);
-            SCC(memcpy)(ret, p, header->size);
+			return ret;
+		} else if (is_own) {
+			al->nb_allocs--;
+			ret = tal_realloc(*pal, 0, size);
+			header = (((tal_header_t *)p) - 1);
+			SCC(memcpy)(ret, p, header->size);
 #ifdef TAL_DEBUG
-            header->line_num = -header->line_num;
+			header->line_num = -header->line_num;
 #endif
-            return ret;
-        }
-        if (al->next) {
-            al = al->next;
-        } else {
-            TinyAlloc *bottom = al, *next = al->top ? al->top : al;
+			return ret;
+		}
+		if (al->next) {
+			al = al->next;
+		} else {
+			TinyAlloc *bottom = al, *next = al->top ? al->top : al;
 
-            al = tal_new(pal, next->limit, next->size * 2);
-            al->next = next;
-            bottom->top = al;
-        }
-        goto tail_call;
-    }
-    if (is_own) {
-        al->nb_allocs--;
-        ret = scc_malloc(size);
-        header = (((tal_header_t *)p) - 1);
-        SCC(memcpy)(ret, p, header->size);
+			al = tal_new(pal, next->limit, next->size * 2);
+			al->next = next;
+			bottom->top = al;
+		}
+		goto tail_call;
+	}
+	if (is_own) {
+		al->nb_allocs--;
+		ret = scc_malloc(size);
+		header = (((tal_header_t *)p) - 1);
+		SCC(memcpy)(ret, p, header->size);
 #ifdef TAL_DEBUG
-        header->line_num = -header->line_num;
+		header->line_num = -header->line_num;
 #endif
-    } else if (al->next) {
-        al = al->next;
-        goto tail_call;
-    } else
-        ret = scc_realloc(p, size);
+	} else if (al->next) {
+		al = al->next;
+		goto tail_call;
+	} else
+		ret = scc_realloc(p, size);
 #ifdef TAL_INFO
-    al->nb_missed++;
+	al->nb_missed++;
 #endif
-    return ret;
+	return ret;
 }
 
 #endif /* USE_TAL */
@@ -1313,28 +1312,26 @@ ST_INLN Sym *define_find(int v)
     return table_ident[v]->sym_define;
 }
 
-/* free define stack until top reaches 'b' */
+// free define stack until top reaches *b
 ST_FUNC void free_defines(Sym *b)
 {
-    while (define_stack != b) {
-        Sym *top = define_stack;
-        define_stack = top->prev;
-        tok_str_free_str(top->d);
-        define_undef(top);
-        sym_free(top);
-    }
+	while (define_stack != b) {
+		Sym *top = define_stack;
+		define_stack = top->prev;
+		tok_str_free_str(top->d);
+		define_undef(top);
+		sym_free(top);
+	}
 
-    /* restore remaining (-D or predefined) symbols if they were
-       #undef'd in the file */
-    while (b) {
-        int v = b->v;
-        if (v >= TOK_IDENT && v < tok_ident) {
-            Sym **d = &table_ident[v - TOK_IDENT]->sym_define;
-            if (!*d)
-                *d = b;
-        }
-        b = b->prev;
-    }
+	//restore (-D or predefined) symbols if they were #undef'd in the file
+	while (b) {
+		int v = b->v;
+		if (v >= TOK_IDENT && v < tok_ident) {
+			Sym **d = &table_ident[v - TOK_IDENT]->sym_define;
+			if (!*d) *d = b;
+		}
+		b = b->prev;
+	}
 }
 
 /* label lookup */
