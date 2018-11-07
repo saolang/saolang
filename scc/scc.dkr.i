@@ -5840,27 +5840,24 @@ static Sym *global_identifier_push(int v, int t, int c)
 }
 static void sym_pop(Sym **ptop, Sym *b, int keep)
 {
-    Sym *s, *ss, **ps;
-    TokenSym *ts;
-    int v;
-    s = *ptop;
-    while(s != b) {
-        ss = s->prev;
-        v = s->v;
-        if (!(v & 0x20000000) && (v & ~0x40000000) < 0x10000000) {
-            ts = table_ident[(v & ~0x40000000) - 256];
-            if (v & 0x40000000)
-                ps = &ts->sym_struct;
-            else
-                ps = &ts->sym_identifier;
-            *ps = s->prev_tok;
-        }
+	Sym *s, *ss, **ps;
+	TokenSym *ts;
+	int v;
+	s = *ptop;
+	while(s != b) {
+		ss = s->prev;
+		v = s->v;
+		if (!(v & 0x20000000) && (v & ~0x40000000) < 0x10000000) {
+			ts = table_ident[(v & ~0x40000000) - 256];
+			ps = (v & 0x40000000) ? &ts->sym_struct : &ts->sym_identifier;
+			*ps = s->prev_tok;
+		}
+		if (!keep)
+			sym_free(s);
+		s = ss;
+	}
 	if (!keep)
-	    sym_free(s);
-        s = ss;
-    }
-    if (!keep)
-	*ptop = b;
+		*ptop = b;
 }
 static void vsetc(CType *type, int r, CValue *vc)
 {
@@ -15508,10 +15505,11 @@ static int scc_write_elf_file(SCCState *s1, const char *filename, int phnum,
 	if (s1->verbose){
 		(scc_dlsym_("printf"))("<- %s\n", filename);
 	}
-		if (s1->output_format == 0)
-			scc_output_elf(s1, f, phnum, phdr, file_offset, sec_order);
-		else
-			scc_output_binary(s1, f, sec_order);
+	if (s1->output_format == 0) {
+		scc_output_elf(s1, f, phnum, phdr, file_offset, sec_order);
+	} else {
+		scc_output_binary(s1, f, sec_order);
+	}
 	(scc_dlsym_("fclose"))(f);
 	file_type = s1->output_type;
 	(scc_dlsym_("chmod"))(filename, (file_type == 4)?0666:0777);
@@ -15560,123 +15558,123 @@ static void tidy_section_headers(SCCState *s1, int *sec_order)
 }
 static int elf_output_file(SCCState *s1, const char *filename)
 {
-    int i, ret, phnum, shnum, file_type, file_offset, *sec_order;
-    struct dyn_inf dyninf = {0};
-    Elf64_Phdr *phdr;
-    Elf64_Sym *sym;
-    Section *strsec, *interp, *dynamic, *dynstr;
-    int textrel;
-    file_type = s1->output_type;
-    s1->nb_errors = 0;
-    ret = -1;
-    phdr = ((void*)0);
-    sec_order = ((void*)0);
-    interp = dynamic = dynstr = ((void*)0);
-    textrel = 0;
-    if (file_type != 4) {
-        scc_add_runtime(s1);
-	resolve_common_syms(s1);
-        if (!s1->static_link) {
-            if (file_type == 2) {
-                char *ptr;
-                const char *elfinterp = (scc_dlsym_("getenv"))("LD_SO");
-                if (elfinterp == ((void*)0)) elfinterp = "/lib64/ld-linux-x86-64.so.2";
-                interp = new_section(s1, ".interp", 1, (1 << 1));
-                interp->sh_addralign = 1;
-                ptr = section_ptr_add(interp, 1 + ((int(*)())scc_dlsym("strlen"))(elfinterp));
-                (scc_dlsym_("strcpy"))(ptr, elfinterp);
-            }
-            s1->dynsym = new_symtab(s1, ".dynsym", 11, (1 << 1),
-                                    ".dynstr",
-                                    ".hash", (1 << 1));
-            dynstr = s1->dynsym->link;
-            dynamic = new_section(s1, ".dynamic", 6,
-                                  (1 << 1) | (1 << 0));
-            dynamic->link = dynstr;
-            dynamic->sh_entsize = sizeof(Elf64_Dyn);
-            build_got(s1);
-            if (file_type == 2) {
-                bind_exe_dynsyms(s1);
-                if (s1->nb_errors)
-                    goto the_end;
-                bind_libs_dynsyms(s1);
-            } else {
-                export_global_syms(s1);
-            }
-        }
-        build_got_entries(s1);
-    }
-    strsec = new_section(s1, ".shstrtab", 3, 0);
-    put_elf_str(strsec, "");
-    textrel = alloc_sec_names(s1, file_type, strsec);
-    if (dynamic) {
-        for(i = 0; i < s1->nb_loaded_dlls; i++) {
-            DLLReference *dllref = s1->loaded_dlls[i];
-            if (dllref->level == 0)
-                put_dt(dynamic, 1, put_elf_str(dynstr, dllref->name));
-        }
-        if (s1->rpath)
-            put_dt(dynamic, s1->enable_new_dtags ? 29 : 15,
-                   put_elf_str(dynstr, s1->rpath));
-        if (file_type == 3) {
-            if (s1->soname)
-                put_dt(dynamic, 14, put_elf_str(dynstr, s1->soname));
-            if (textrel)
-                put_dt(dynamic, 22, 0);
-        }
-        if (s1->symbolic)
-            put_dt(dynamic, 16, 0);
-        dyninf.dynamic = dynamic;
-        dyninf.dynstr = dynstr;
-        dyninf.data_offset = dynamic->data_offset;
-        fill_dynamic(s1, &dyninf);
-        dynamic->sh_size = dynamic->data_offset;
-        dynstr->sh_size = dynstr->data_offset;
-    }
-    if (file_type == 4)
-        phnum = 0;
-    else if (file_type == 3)
-        phnum = 3;
-    else if (s1->static_link)
-        phnum = 2;
-    else
-        phnum = 5;
-    phdr = scc_mallocz(phnum * sizeof(Elf64_Phdr));
-    shnum = s1->nb_sections;
-    sec_order = scc_malloc(sizeof(int) * shnum);
-    sec_order[0] = 0;
-    file_offset = layout_sections(s1, phdr, phnum, interp, strsec, &dyninf,
-                                  sec_order);
-    if (file_type != 4) {
-        fill_unloadable_phdr(phdr, phnum, interp, dynamic);
-        if (dynamic) {
-            dynamic->data_offset = dyninf.data_offset;
-            fill_dynamic(s1, &dyninf);
-            write32le(s1->got->data, dynamic->sh_addr);
-            if (file_type == 2
-                || (1 && file_type == 3))
-                relocate_plt(s1);
-            for (sym = (Elf64_Sym *) s1->dynsym->data + 1; sym < (Elf64_Sym *) (s1->dynsym->data + s1->dynsym->data_offset); sym++) {
-                if (sym->st_shndx != 0 && sym->st_shndx < 0xff00) {
-                    sym->st_value += s1->sections[sym->st_shndx]->sh_addr;
-                }
-            }
-        }
-        ret = final_sections_reloc(s1);
-        if (ret)
-            goto the_end;
-	tidy_section_headers(s1, sec_order);
-        if (file_type == 2 && s1->static_link)
-            fill_got(s1);
-        else if (s1->got)
-            fill_local_got_entries(s1);
-    }
-    ret = scc_write_elf_file(s1, filename, phnum, phdr, file_offset, sec_order);
-    s1->nb_sections = shnum;
- the_end:
-    scc_free(sec_order);
-    scc_free(phdr);
-    return ret;
+	int i, ret, phnum, shnum, file_type, file_offset, *sec_order;
+	struct dyn_inf dyninf = {0};
+	Elf64_Phdr *phdr;
+	Elf64_Sym *sym;
+	Section *strsec, *interp, *dynamic, *dynstr;
+	int textrel;
+	file_type = s1->output_type;
+	s1->nb_errors = 0;
+	ret = -1;
+	phdr = ((void*)0);
+	sec_order = ((void*)0);
+	interp = dynamic = dynstr = ((void*)0);
+	textrel = 0;
+	if (file_type != 4) {
+		scc_add_runtime(s1);
+		resolve_common_syms(s1);
+		if (!s1->static_link) {
+			if (file_type == 2) {
+				char *ptr;
+				const char *elfinterp = (scc_dlsym_("getenv"))("LD_SO");
+				if (elfinterp == ((void*)0)) elfinterp = "/lib64/ld-linux-x86-64.so.2";
+				interp = new_section(s1, ".interp", 1, (1 << 1));
+				interp->sh_addralign = 1;
+				ptr = section_ptr_add(interp, 1 + ((int(*)())scc_dlsym("strlen"))(elfinterp));
+				(scc_dlsym_("strcpy"))(ptr, elfinterp);
+			}
+			s1->dynsym = new_symtab(s1, ".dynsym", 11, (1 << 1),
+					".dynstr",
+					".hash", (1 << 1));
+			dynstr = s1->dynsym->link;
+			dynamic = new_section(s1, ".dynamic", 6,
+					(1 << 1) | (1 << 0));
+			dynamic->link = dynstr;
+			dynamic->sh_entsize = sizeof(Elf64_Dyn);
+			build_got(s1);
+			if (file_type == 2) {
+				bind_exe_dynsyms(s1);
+				if (s1->nb_errors)
+					goto the_end;
+				bind_libs_dynsyms(s1);
+			} else {
+				export_global_syms(s1);
+			}
+		}
+		build_got_entries(s1);
+	}
+	strsec = new_section(s1, ".shstrtab", 3, 0);
+	put_elf_str(strsec, "");
+	textrel = alloc_sec_names(s1, file_type, strsec);
+	if (dynamic) {
+		for(i = 0; i < s1->nb_loaded_dlls; i++) {
+			DLLReference *dllref = s1->loaded_dlls[i];
+			if (dllref->level == 0)
+				put_dt(dynamic, 1, put_elf_str(dynstr, dllref->name));
+		}
+		if (s1->rpath)
+			put_dt(dynamic, s1->enable_new_dtags ? 29 : 15,
+					put_elf_str(dynstr, s1->rpath));
+		if (file_type == 3) {
+			if (s1->soname)
+				put_dt(dynamic, 14, put_elf_str(dynstr, s1->soname));
+			if (textrel)
+				put_dt(dynamic, 22, 0);
+		}
+		if (s1->symbolic)
+			put_dt(dynamic, 16, 0);
+		dyninf.dynamic = dynamic;
+		dyninf.dynstr = dynstr;
+		dyninf.data_offset = dynamic->data_offset;
+		fill_dynamic(s1, &dyninf);
+		dynamic->sh_size = dynamic->data_offset;
+		dynstr->sh_size = dynstr->data_offset;
+	}
+	if (file_type == 4)
+		phnum = 0;
+	else if (file_type == 3)
+		phnum = 3;
+	else if (s1->static_link)
+		phnum = 2;
+	else
+		phnum = 5;
+	phdr = scc_mallocz(phnum * sizeof(Elf64_Phdr));
+	shnum = s1->nb_sections;
+	sec_order = scc_malloc(sizeof(int) * shnum);
+	sec_order[0] = 0;
+	file_offset = layout_sections(s1, phdr, phnum, interp, strsec, &dyninf,
+			sec_order);
+	if (file_type != 4) {
+		fill_unloadable_phdr(phdr, phnum, interp, dynamic);
+		if (dynamic) {
+			dynamic->data_offset = dyninf.data_offset;
+			fill_dynamic(s1, &dyninf);
+			write32le(s1->got->data, dynamic->sh_addr);
+			if (file_type == 2
+					|| (1 && file_type == 3))
+				relocate_plt(s1);
+			for (sym = (Elf64_Sym *) s1->dynsym->data + 1; sym < (Elf64_Sym *) (s1->dynsym->data + s1->dynsym->data_offset); sym++) {
+				if (sym->st_shndx != 0 && sym->st_shndx < 0xff00) {
+					sym->st_value += s1->sections[sym->st_shndx]->sh_addr;
+				}
+			}
+		}
+		ret = final_sections_reloc(s1);
+		if (ret)
+			goto the_end;
+		tidy_section_headers(s1, sec_order);
+		if (file_type == 2 && s1->static_link)
+			fill_got(s1);
+		else if (s1->got)
+			fill_local_got_entries(s1);
+	}
+	ret = scc_write_elf_file(s1, filename, phnum, phdr, file_offset, sec_order);
+	s1->nb_sections = shnum;
+the_end:
+	scc_free(sec_order);
+	scc_free(phdr);
+	return ret;
 }
  int scc_output_file(SCCState *s, const char *filename)
 {
@@ -15700,17 +15698,17 @@ typedef struct SectionMergeInfo {
 } SectionMergeInfo;
 static int scc_object_type(int fd, Elf64_Ehdr *h)
 {
-    int size = ((int(*)())scc_dlsym("read"))(fd, h, sizeof *h);
-    if (size == sizeof *h && 0 == ((int(*)())scc_dlsym("memcmp"))(h, "\177ELF", 4)) {
-        if (h->e_type == 1)
-            return 1;
-        if (h->e_type == 3)
-            return 2;
-    } else if (size >= 8) {
-        if (0 == ((int(*)())scc_dlsym("memcmp"))(h, "!<arch>\012", 8))
-            return 3;
-    }
-    return 0;
+	int size = ((int(*)())scc_dlsym("read"))(fd, h, sizeof *h);
+	if (size == sizeof *h && 0 == ((int(*)())scc_dlsym("memcmp"))(h, "\177ELF", 4)) {
+		if (h->e_type == 1)
+			return 1;
+		if (h->e_type == 3)
+			return 2;
+	} else if (size >= 8) {
+		if (0 == ((int(*)())scc_dlsym("memcmp"))(h, "!<arch>\012", 8))
+			return 3;
+	}
+	return 0;
 }
 static int scc_load_object_file(SCCState *s1,
                                 int fd, unsigned long file_offset)
@@ -16106,7 +16104,7 @@ static int scc_load_dll(SCCState *s1, int fd, const char *filename, int level)
                 if (!((int(*)())scc_dlsym("strcmp"))(name, dllref->name))
                     goto already_loaded;
             }
-            if (scc_add_dll(s1, name, 0x20) < 0) {
+            if (scc_add_dll(s1, name, 0x200) < 0) {
                 scc_error_noabort("referenced dll '%s' not found", name);
                 ret = -1;
                 goto the_end;
@@ -16239,7 +16237,7 @@ static int ld_add_file(SCCState *s1, const char filename[])
 {
 	if (filename[0] == '/') {
 		if (""[0] == '\0'
-				&& scc_add_file_internal(s1, filename, 0x40) == 0)
+				&& scc_add_file_internal(s1, filename, 0x400) == 0)
 			return 0;
 		filename = scc_basename(filename);
 	}
@@ -17597,32 +17595,32 @@ static inline void strcat_printf(char *buf, int buf_size, const char *fmt, ...)
 }
 static void scc_open_buf(SCCState *s1, const char *filename, int initlen)
 {
-    BufferedFile *bf;
+    BufferedFile *buf;
     int buflen = initlen ? initlen : 8192;
-    bf = scc_mallocz(sizeof(BufferedFile) + buflen);
-    bf->buf_ptr = bf->buffer;
-    bf->buf_end = bf->buffer + initlen;
-    bf->buf_end[0] = '\\';
-    pstrcpy(bf->filename, sizeof(bf->filename), filename);
-    bf->true_filename = bf->filename;
-    bf->line_num = 1;
-    bf->ifdef_stack_ptr = s1->ifdef_stack_ptr;
-    bf->fd = -1;
-    bf->prev = file;
-    file = bf;
+    buf = scc_mallocz(sizeof(BufferedFile) + buflen);
+    buf->buf_ptr = buf->buffer;
+    buf->buf_end = buf->buffer + initlen;
+    buf->buf_end[0] = '\\';
+    pstrcpy(buf->filename, sizeof(buf->filename), filename);
+    buf->true_filename = buf->filename;
+    buf->line_num = 1;
+    buf->ifdef_stack_ptr = s1->ifdef_stack_ptr;
+    buf->fd = -1;
+    buf->prev = file;
+    file = buf;
     tok_flags = 0x0001 | 0x0002;
 }
 static void scc_close(void)
 {
-    BufferedFile *bf = file;
-    if (bf->fd > 0) {
-        (scc_dlsym_("close"))(bf->fd);
-        total_lines += bf->line_num;
+    BufferedFile *buf = file;
+    if (buf->fd > 0) {
+        (scc_dlsym_("close"))(buf->fd);
+        total_lines += buf->line_num;
     }
-    if (bf->true_filename != bf->filename)
-        scc_free(bf->true_filename);
-    file = bf->prev;
-    scc_free(bf);
+    if (buf->true_filename != buf->filename)
+        scc_free(buf->true_filename);
+    file = buf->prev;
+    scc_free(buf);
 }
 static int scc_open(SCCState *s1, const char *filename)
 {
@@ -17633,9 +17631,8 @@ static int scc_open(SCCState *s1, const char *filename)
         fd = ((int(*)())scc_dlsym("open"))(filename, 000000 | 0);
     if ((s1->verbose == 2 && fd >= 0) || s1->verbose == 3)
        (scc_dlsym_("printf"))("%s %*s%s\n", fd < 0 ? "nf":"->",
-               (int)(s1->include_stack_ptr - s1->include_stack), "", filename);
-    if (fd < 0)
-        return -1;
+               (s1->include_stack_ptr - s1->include_stack), "", filename);
+    if (fd < 0) return -1;
     scc_open_buf(s1, filename, 0);
     file->fd = fd;
     return fd;
@@ -17645,7 +17642,7 @@ static int scc_compile(SCCState *s1, int filetype)
 	Sym *define_start;
 	int is_asm;
 	define_start = define_stack;
-	is_asm = !!(filetype & (2|4));
+	is_asm = !!(filetype & (0x2|0x4));
 	scc_format_begin_file(s1);
 	if (((int(*)())scc_dlsym("setjmp"))(s1->error_jmp_buf) == 0) {
 		s1->nb_errors = 0;
@@ -17654,7 +17651,7 @@ static int scc_compile(SCCState *s1, int filetype)
 		if (s1->output_type == 5) {
 			scc_preprocess(s1);
 		} else if (is_asm) {
-			scc_assemble(s1, !!(filetype & 4));
+			scc_assemble(s1, !!(filetype & 0x4));
 		} else {
 			sccgen_compile(s1);
 		}
@@ -17826,13 +17823,13 @@ static int scc_add_file_internal(SCCState *s1, const char *filename, int flags)
 	int ret;
 	ret = scc_open(s1, filename);
 	if (ret < 0) {
-		if (flags & 0x10)
+		if (flags & 0x100)
 			scc_error_noabort("scc_add_file_internal() file '%s' not found", filename);
 		return ret;
 	}
 	dynarray_add(&s1->target_deps, &s1->nb_target_deps,
 			scc_strdup(filename));
-	if (flags & 0x40) {
+	if (flags & 0x400) {
 		Elf64_Ehdr ehdr;
 		int fd, obj_type;
 		fd = file->fd;
@@ -17848,11 +17845,11 @@ static int scc_add_file_internal(SCCState *s1, const char *filename, int flags)
 					if (((void*)0) == scc_dlopen(filename))
 						ret = -1;
 				} else {
-					ret = scc_load_dll(s1, fd, filename, (flags & 0x20) != 0);
+					ret = scc_load_dll(s1, fd, filename, (flags & 0x200) != 0);
 				}
 				break;
 			case 3:
-				ret = scc_load_archive(s1, fd, !(flags & 0x80));
+				ret = scc_load_archive(s1, fd, !(flags & 0x800));
 				break;
 			default:
 				ret = scc_load_ldscript(s1);
@@ -17869,23 +17866,25 @@ static int scc_add_file_internal(SCCState *s1, const char *filename, int flags)
  int scc_add_file(SCCState *s, const char *filename)
 {
 	int filetype = s->filetype;
-	if (0 == (filetype & (15 | 0x40))) {
+	if (0 == (filetype & (0xFF | 0x400))) {
 		const char *ext = scc_fileextension(filename);
 		if (ext[0]) {
 			ext++;
-			if (!((int(*)())scc_dlsym("strcmp"))(ext, "S"))
-				filetype = 4;
-			else if (!((int(*)())scc_dlsym("strcmp"))(ext, "s"))
-				filetype = 2;
-			else if (!((int(*)())scc_dlsym("strcmp"))(ext, "c") || !((int(*)())scc_dlsym("strcmp"))(ext, "i"))
-				filetype = 1;
-			else
-				filetype |= 0x40;
+			if (!((int(*)())scc_dlsym("strcmp"))(ext, "S")) {
+				filetype = 0x4;
+			} else if (!((int(*)())scc_dlsym("strcmp"))(ext, "s")) {
+				filetype = 0x2;
+			} else if (!((int(*)())scc_dlsym("strcmp"))(ext, "c") || !((int(*)())scc_dlsym("strcmp"))(ext, "i")) {
+				filetype = 0x1;
+			} else if (!((int(*)())scc_dlsym("strcmp"))(ext, "sao")){
+				filetype = 0x10;
+			} else
+				filetype |= 0x400;
 		} else {
-			filetype = 1;
+			filetype = 0x1;
 		}
 	}
-	return scc_add_file_internal(s, filename, filetype | 0x10);
+	return scc_add_file_internal(s, filename, filetype | 0x100);
 }
  int scc_add_library_path(SCCState *s, const char *pathname)
 {
@@ -17899,7 +17898,7 @@ static int scc_add_library_internal(SCCState *s, const char *fmt,
     int i;
     for(i = 0; i < nb_paths; i++) {
         (scc_dlsym_("snprintf"))(buf, sizeof(buf), fmt, paths[i], filename);
-        if (scc_add_file_internal(s, buf, flags | 0x40) == 0)
+        if (scc_add_file_internal(s, buf, flags | 0x400) == 0)
             return 0;
     }
     return -1;
@@ -17920,7 +17919,7 @@ static int scc_add_crt(SCCState *s, const char *filename)
 {
     const char *libs[] = { "%s/lib%s.so", "%s/lib%s.a", ((void*)0) };
     const char **pp = s->static_link ? libs + 1 : libs;
-    int flags = s->filetype & 0x80;
+    int flags = s->filetype & 0x800;
     while (*pp) {
         if (0 == scc_add_library_internal(s, *pp,
             libraryname, flags, s->library_paths, s->nb_library_paths))
@@ -18106,9 +18105,9 @@ static int scc_set_linker(SCCState *s, const char *option)
             copy_linker_arg(&s->soname, p, 0);
         } else if (ret = link_option(option, "?whole-archive", &p), ret) {
             if (ret > 0)
-                s->filetype |= 0x80;
+                s->filetype |= 0x800;
             else
-                s->filetype &= ~0x80;
+                s->filetype &= ~0x800;
         } else if (p) {
             return 0;
         } else {
@@ -18398,7 +18397,7 @@ reparse:
             scc_set_lib_path(s, optarg);
             break;
         case SCC_OPTION_l:
-            args_parser_add_file(s, optarg, 8 | (s->filetype & ~(15 | 0x40)));
+            args_parser_add_file(s, optarg, 0x8 | (s->filetype & ~(0xFF | 0x400)));
             s->nb_libraries++;
             break;
         case SCC_OPTION_pthread:
@@ -18525,16 +18524,18 @@ reparse:
         case SCC_OPTION_x:
             x = 0;
             if (*optarg == 'c')
-                x = 1;
+                x = 0x1;
             else if (*optarg == 'a')
-                x = 4;
+                x = 0x4;
             else if (*optarg == 'b')
-                x = 0x40;
+                x = 0x400;
+            else if (*optarg == 's')
+                x = 0x10;
             else if (*optarg == 'n')
                 x = 0;
             else
-                scc_warning("unsupported language '%s'", optarg);
-            s->filetype = x | (s->filetype & ~(15 | 0x40));
+                scc_warning("unsupported language -x '%s'", optarg);
+            s->filetype = x | (s->filetype & ~(0xFF | 0x400));
             break;
         case SCC_OPTION_O:
             last_o = ((int(*)())scc_dlsym("atoi"))(optarg);
@@ -18889,7 +18890,7 @@ static const char help[] =
     "Debugger:\n"
     "  -g          generate runtime debug info\n"
     "Misc. options:\n"
-    "  -x[c|a|b|n] specify type of the next infile (C,ASM,BIN,NONE)\n"
+    "  -x[c|a|b|s|n] specify type of the next infile (C,ASM,BIN,SAO,NONE)\n"
     "  -nostdinc   do not use standard system include paths\n"
     "  -nostdlib   do not link with standard crt and libraries\n"
     "  -Bdir       set scc's private include/library dir\n"
@@ -19072,7 +19073,7 @@ redo:
 	for (first_file = ((void*)0), ret = 0;;) {
 		struct filespec *f = s->files[s->nb_files - n];
 		s->filetype = f->type;
-		if (f->type & 8) {
+		if (f->type & 0x8) {
 			if (scc_add_library_err(s, f->name) < 0)
 				ret = 1;
 		} else {
@@ -19080,8 +19081,9 @@ redo:
 				(scc_dlsym_("printf"))("-> %s\n", f->name);
 			if (!first_file)
 				first_file = f->name;
-			if (scc_add_file(s, f->name) < 0)
+			if (scc_add_file(s, f->name) < 0){
 				ret = 1;
+			}
 		}
 		if (--n == 0 || ret
 				|| (s->output_type == 4 && !s->option_r))

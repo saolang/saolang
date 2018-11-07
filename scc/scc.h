@@ -1215,7 +1215,7 @@ ST_FUNC void label_pop(Sym **ptop, Sym *slast, int keep);
 ST_FUNC void parse_define(void);
 ST_FUNC void preprocess(int is_bof);
 ST_FUNC void next_nomacro(void);
-ST_FUNC void next(void);
+ST_FUNC void next(void);//
 ST_INLN void unget_tok(int last_tok);
 ST_FUNC void preprocess_start(SCCState *s1, int is_asm);
 ST_FUNC void preprocess_end(SCCState *s1);

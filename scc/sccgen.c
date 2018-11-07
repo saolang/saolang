@@ -251,7 +251,7 @@ ST_FUNC int sccgen_compile(SCCState *s1)
     decl(VT_CONST);
     gen_inline_functions(s1);
     check_vstack();
-    /* end of translation unit info */
+
     scc_debug_end(s1);
     return 0;
 }
@@ -544,34 +544,28 @@ ST_FUNC Sym *global_identifier_push(int v, int t, int c)
     return s;
 }
 
-/* pop symbols until top reaches 'b'.  If KEEP is non-zero don't really
-   pop them yet from the list, but do remove them from the token array.  */
+//pop symbols until *$b, and free it unless $keep
 ST_FUNC void sym_pop(Sym **ptop, Sym *b, int keep)
 {
-    Sym *s, *ss, **ps;
-    TokenSym *ts;
-    int v;
+	Sym *s, *ss, **ps;
+	TokenSym *ts;
+	int v;
 
-    s = *ptop;
-    while(s != b) {
-        ss = s->prev;
-        v = s->v;
-        /* remove symbol in token array */
-        /* XXX: simplify */
-        if (!(v & SYM_FIELD) && (v & ~SYM_STRUCT) < SYM_FIRST_ANOM) {
-            ts = table_ident[(v & ~SYM_STRUCT) - TOK_IDENT];
-            if (v & SYM_STRUCT)
-                ps = &ts->sym_struct;
-            else
-                ps = &ts->sym_identifier;
-            *ps = s->prev_tok;
-        }
+	s = *ptop;
+	while(s != b) {
+		ss = s->prev;
+		v = s->v;
+		if (!(v & SYM_FIELD) && (v & ~SYM_STRUCT) < SYM_FIRST_ANOM) {
+			ts = table_ident[(v & ~SYM_STRUCT) - TOK_IDENT];
+			ps = (v & SYM_STRUCT) ? &ts->sym_struct : &ts->sym_identifier;
+			*ps = s->prev_tok;
+		}
+		if (!keep)
+			sym_free(s);
+		s = ss;
+	}
 	if (!keep)
-	    sym_free(s);
-        s = ss;
-    }
-    if (!keep)
-	*ptop = b;
+		*ptop = b;
 }
 
 /* ------------------------------------------------------------------------- */

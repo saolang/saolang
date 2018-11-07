@@ -23,8 +23,8 @@ echo DDD=$DDD
 
 echo $CCC | $DDD bash
 
-echo $DDD ./build_in_dkr_gcc_musl/scc -I. -B ./build_in_dkr_gcc_musl -run ./examples/ex3.c 33
-$DDD ./build_in_dkr_gcc_musl/scc -I. -B ./build_in_dkr_gcc_musl -run ./examples/ex3.c 33
+echo $DDD ./build_in_dkr_gcc_musl/scc -I. -B ./build_in_dkr_gcc_musl -run ./test/fib.c 33
+$DDD ./build_in_dkr_gcc_musl/scc -I. -B ./build_in_dkr_gcc_musl -run ./test/fib.c 33
 
 echo $DDD ./build_in_dkr_gcc_musl/scc -I. -B ./build_in_dkr_gcc_musl -E -P0 scc.c \> scc.dkr.i
 $DDD ./build_in_dkr_gcc_musl/scc -I. -B ./build_in_dkr_gcc_musl -E -P0 scc.c > scc.dkr.i

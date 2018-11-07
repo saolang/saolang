@@ -5840,27 +5840,24 @@ static Sym *global_identifier_push(int v, int t, int c)
 }
 static void sym_pop(Sym **ptop, Sym *b, int keep)
 {
-    Sym *s, *ss, **ps;
-    TokenSym *ts;
-    int v;
-    s = *ptop;
-    while(s != b) {
-        ss = s->prev;
-        v = s->v;
-        if (!(v & 0x20000000) && (v & ~0x40000000) < 0x10000000) {
-            ts = table_ident[(v & ~0x40000000) - 256];
-            if (v & 0x40000000)
-                ps = &ts->sym_struct;
-            else
-                ps = &ts->sym_identifier;
-            *ps = s->prev_tok;
-        }
+	Sym *s, *ss, **ps;
+	TokenSym *ts;
+	int v;
+	s = *ptop;
+	while(s != b) {
+		ss = s->prev;
+		v = s->v;
+		if (!(v & 0x20000000) && (v & ~0x40000000) < 0x10000000) {
+			ts = table_ident[(v & ~0x40000000) - 256];
+			ps = (v & 0x40000000) ? &ts->sym_struct : &ts->sym_identifier;
+			*ps = s->prev_tok;
+		}
+		if (!keep)
+			sym_free(s);
+		s = ss;
+	}
 	if (!keep)
-	    sym_free(s);
-        s = ss;
-    }
-    if (!keep)
-	*ptop = b;
+		*ptop = b;
 }
 static void vsetc(CType *type, int r, CValue *vc)
 {
@@ -17598,32 +17595,32 @@ static inline void strcat_printf(char *buf, int buf_size, const char *fmt, ...)
 }
 static void scc_open_buf(SCCState *s1, const char *filename, int initlen)
 {
-    BufferedFile *bf;
+    BufferedFile *buf;
     int buflen = initlen ? initlen : 8192;
-    bf = scc_mallocz(sizeof(BufferedFile) + buflen);
-    bf->buf_ptr = bf->buffer;
-    bf->buf_end = bf->buffer + initlen;
-    bf->buf_end[0] = '\\';
-    pstrcpy(bf->filename, sizeof(bf->filename), filename);
-    bf->true_filename = bf->filename;
-    bf->line_num = 1;
-    bf->ifdef_stack_ptr = s1->ifdef_stack_ptr;
-    bf->fd = -1;
-    bf->prev = file;
-    file = bf;
+    buf = scc_mallocz(sizeof(BufferedFile) + buflen);
+    buf->buf_ptr = buf->buffer;
+    buf->buf_end = buf->buffer + initlen;
+    buf->buf_end[0] = '\\';
+    pstrcpy(buf->filename, sizeof(buf->filename), filename);
+    buf->true_filename = buf->filename;
+    buf->line_num = 1;
+    buf->ifdef_stack_ptr = s1->ifdef_stack_ptr;
+    buf->fd = -1;
+    buf->prev = file;
+    file = buf;
     tok_flags = 0x0001 | 0x0002;
 }
 static void scc_close(void)
 {
-    BufferedFile *bf = file;
-    if (bf->fd > 0) {
-        (scc_dlsym_("close"))(bf->fd);
-        total_lines += bf->line_num;
+    BufferedFile *buf = file;
+    if (buf->fd > 0) {
+        (scc_dlsym_("close"))(buf->fd);
+        total_lines += buf->line_num;
     }
-    if (bf->true_filename != bf->filename)
-        scc_free(bf->true_filename);
-    file = bf->prev;
-    scc_free(bf);
+    if (buf->true_filename != buf->filename)
+        scc_free(buf->true_filename);
+    file = buf->prev;
+    scc_free(buf);
 }
 static int scc_open(SCCState *s1, const char *filename)
 {
@@ -17635,8 +17632,7 @@ static int scc_open(SCCState *s1, const char *filename)
     if ((s1->verbose == 2 && fd >= 0) || s1->verbose == 3)
        (scc_dlsym_("printf"))("%s %*s%s\n", fd < 0 ? "nf":"->",
                (s1->include_stack_ptr - s1->include_stack), "", filename);
-    if (fd < 0)
-        return -1;
+    if (fd < 0) return -1;
     scc_open_buf(s1, filename, 0);
     file->fd = fd;
     return fd;

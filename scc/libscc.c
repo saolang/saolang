@@ -599,8 +599,10 @@ static int scc_compile(SCCState *s1, int filetype)
 	preprocess_end(s1);
 
 	free_inline_functions(s1);
+
 	/* reset define stack, but keep -D and built-ins */
 	free_defines(define_start);
+
 	sym_pop(&global_stack, NULL, 0);
 	sym_pop(&local_stack, NULL, 0);
 
