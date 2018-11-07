@@ -1949,11 +1949,6 @@ static int scc_write_elf_file(SCCState *s1, const char *filename, int phnum,
 		SCC(printf)("<- %s\n", filename);
 	}
 
-	//#ifdef SCC_TARGET_COFF
-	//	if (s1->output_format == SCC_OUTPUT_FORMAT_COFF)
-	//		scc_output_coff(s1, f);
-	//	else
-	//#endif
 	if (s1->output_format == SCC_OUTPUT_FORMAT_ELF) {
 		scc_output_elf(s1, f, phnum, phdr, file_offset, sec_order);
 	} else {

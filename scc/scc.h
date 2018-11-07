@@ -1532,16 +1532,6 @@ ST_FUNC void gen_va_arg(CType *t);
 ST_FUNC void gen_clear_cache(void);
 #endif
 
-/* ------------ c67-gen.c ------------ */
-#ifdef SCC_TARGET_C67
-#endif
-
-/* ------------ scccoff.c ------------ */
-//#ifdef SCC_TARGET_COFF
-//ST_FUNC int scc_output_coff(SCCState *s1, FILE *f);
-//ST_FUNC int scc_load_coff(SCCState * s1, int fd);
-//#endif
-
 /* ------------ sccasm.c ------------ */
 ST_FUNC void asm_instr(void);
 ST_FUNC void asm_global_instr(void);
