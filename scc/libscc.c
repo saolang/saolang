@@ -515,34 +515,34 @@ LIBSCCAPI void scc_set_error_func(SCCState *s, void *error_opaque,
 
 ST_FUNC void scc_open_buf(SCCState *s1, const char *filename, int initlen)
 {
-    BufferedFile *bf;
+    BufferedFile *buf;
     int buflen = initlen ? initlen : IO_BUF_SIZE;
 
-    bf = scc_mallocz(sizeof(BufferedFile) + buflen);
-    bf->buf_ptr = bf->buffer;
-    bf->buf_end = bf->buffer + initlen;
-    bf->buf_end[0] = CH_EOB; /* put eob symbol */
-    pstrcpy(bf->filename, sizeof(bf->filename), filename);
-    bf->true_filename = bf->filename;
-    bf->line_num = 1;
-    bf->ifdef_stack_ptr = s1->ifdef_stack_ptr;
-    bf->fd = -1;
-    bf->prev = file;
-    file = bf;
+    buf = scc_mallocz(sizeof(BufferedFile) + buflen);
+    buf->buf_ptr = buf->buffer;
+    buf->buf_end = buf->buffer + initlen;
+    buf->buf_end[0] = CH_EOB; /* put eob symbol */
+    pstrcpy(buf->filename, sizeof(buf->filename), filename);
+    buf->true_filename = buf->filename;
+    buf->line_num = 1;
+    buf->ifdef_stack_ptr = s1->ifdef_stack_ptr;
+    buf->fd = -1;
+    buf->prev = file;
+    file = buf;
     tok_flags = TOK_FLAG_BOL | TOK_FLAG_BOF;
 }
 
 ST_FUNC void scc_close(void)
 {
-    BufferedFile *bf = file;
-    if (bf->fd > 0) {
-        SCC(close)(bf->fd);
-        total_lines += bf->line_num;
+    BufferedFile *buf = file;
+    if (buf->fd > 0) {
+        SCC(close)(buf->fd);
+        total_lines += buf->line_num;
     }
-    if (bf->true_filename != bf->filename)
-        scc_free(bf->true_filename);
-    file = bf->prev;
-    scc_free(bf);
+    if (buf->true_filename != buf->filename)
+        scc_free(buf->true_filename);
+    file = buf->prev;
+    scc_free(buf);
 }
 
 ST_FUNC int scc_open(SCCState *s1, const char *filename)
@@ -552,11 +552,13 @@ ST_FUNC int scc_open(SCCState *s1, const char *filename)
         fd = 0, filename = "<stdin>";
     else
         fd = SCC(open,int)(filename, O_RDONLY | O_BINARY);
+
     if ((s1->verbose == 2 && fd >= 0) || s1->verbose == 3)
        SCC(printf)("%s %*s%s\n", fd < 0 ? "nf":"->",
-               (int)(s1->include_stack_ptr - s1->include_stack), "", filename);
-    if (fd < 0)
-        return -1;
+               (s1->include_stack_ptr - s1->include_stack), "", filename);
+
+    if (fd < 0) return -1;
+
     scc_open_buf(s1, filename, 0);
 #ifdef _WIN32
     normalize_slashes(file->filename);
@@ -586,7 +588,7 @@ static int scc_compile(SCCState *s1, int filetype)
 #ifdef CONFIG_SCC_ASM
 			scc_assemble(s1, !!(filetype & AFF_TYPE_ASMPP));
 #else
-			scc_error_noabort("asm not supported");//TODO add not supported %s,for_what
+			scc_error_noabort("asm not supported");
 #endif
 		} else {
 			sccgen_compile(s1);
@@ -595,11 +597,13 @@ static int scc_compile(SCCState *s1, int filetype)
 	s1->error_set_jmp_enabled = 0;
 
 	preprocess_end(s1);
+
 	free_inline_functions(s1);
 	/* reset define stack, but keep -D and built-ins */
 	free_defines(define_start);
 	sym_pop(&global_stack, NULL, 0);
 	sym_pop(&local_stack, NULL, 0);
+
 	scc_format_end_file(s1);
 	return s1->nb_errors != 0 ? -1 : 0;
 }
@@ -951,6 +955,7 @@ LIBSCCAPI int scc_add_sysinclude_path(SCCState *s, const char *pathname)
     return 0;
 }
 
+//@ref ld_add_file()
 ST_FUNC int scc_add_file_internal(SCCState *s1, const char *filename, int flags)
 {
 	int ret;
@@ -1025,7 +1030,7 @@ ST_FUNC int scc_add_file_internal(SCCState *s1, const char *filename, int flags)
 	}
 	scc_close();
 	return ret;
-}
+}//scc_add_file_internal()
 
 LIBSCCAPI int scc_add_file(SCCState *s, const char *filename)
 {
@@ -1035,15 +1040,15 @@ LIBSCCAPI int scc_add_file(SCCState *s, const char *filename)
 		const char *ext = scc_fileextension(filename);
 		if (ext[0]) {
 			ext++;
-			if (!SCC(strcmp,int)(ext, "S"))
+			if (!SCC(strcmp,int)(ext, "S")) {
 				filetype = AFF_TYPE_ASMPP;
-			else if (!SCC(strcmp,int)(ext, "s"))
+			} else if (!SCC(strcmp,int)(ext, "s")) {
 				filetype = AFF_TYPE_ASM;
-			else if (!PATHCMP(ext, "c") || !PATHCMP(ext, "i"))//The .i files are also called as "Pure C files
+			} else if (!PATHCMP(ext, "c") || !PATHCMP(ext, "i")) { //The .i files are also called as "Pure C files
 				filetype = AFF_TYPE_C;
-			else if (!SCC(strcmp,int)(ext, "sao"))
+			} else if (!SCC(strcmp,int)(ext, "sao")){
 				filetype = AFF_TYPE_SAO;
-			else
+			} else
 				filetype |= AFF_TYPE_BIN;
 		} else { //default as c
 			filetype = AFF_TYPE_C;

@@ -15508,10 +15508,11 @@ static int scc_write_elf_file(SCCState *s1, const char *filename, int phnum,
 	if (s1->verbose){
 		(scc_dlsym_("printf"))("<- %s\n", filename);
 	}
-		if (s1->output_format == 0)
-			scc_output_elf(s1, f, phnum, phdr, file_offset, sec_order);
-		else
-			scc_output_binary(s1, f, sec_order);
+	if (s1->output_format == 0) {
+		scc_output_elf(s1, f, phnum, phdr, file_offset, sec_order);
+	} else {
+		scc_output_binary(s1, f, sec_order);
+	}
 	(scc_dlsym_("fclose"))(f);
 	file_type = s1->output_type;
 	(scc_dlsym_("chmod"))(filename, (file_type == 4)?0666:0777);
@@ -15560,123 +15561,123 @@ static void tidy_section_headers(SCCState *s1, int *sec_order)
 }
 static int elf_output_file(SCCState *s1, const char *filename)
 {
-    int i, ret, phnum, shnum, file_type, file_offset, *sec_order;
-    struct dyn_inf dyninf = {0};
-    Elf64_Phdr *phdr;
-    Elf64_Sym *sym;
-    Section *strsec, *interp, *dynamic, *dynstr;
-    int textrel;
-    file_type = s1->output_type;
-    s1->nb_errors = 0;
-    ret = -1;
-    phdr = ((void*)0);
-    sec_order = ((void*)0);
-    interp = dynamic = dynstr = ((void*)0);
-    textrel = 0;
-    if (file_type != 4) {
-        scc_add_runtime(s1);
-	resolve_common_syms(s1);
-        if (!s1->static_link) {
-            if (file_type == 2) {
-                char *ptr;
-                const char *elfinterp = (scc_dlsym_("getenv"))("LD_SO");
-                if (elfinterp == ((void*)0)) elfinterp = "/lib64/ld-linux-x86-64.so.2";
-                interp = new_section(s1, ".interp", 1, (1 << 1));
-                interp->sh_addralign = 1;
-                ptr = section_ptr_add(interp, 1 + ((int(*)())scc_dlsym("strlen"))(elfinterp));
-                (scc_dlsym_("strcpy"))(ptr, elfinterp);
-            }
-            s1->dynsym = new_symtab(s1, ".dynsym", 11, (1 << 1),
-                                    ".dynstr",
-                                    ".hash", (1 << 1));
-            dynstr = s1->dynsym->link;
-            dynamic = new_section(s1, ".dynamic", 6,
-                                  (1 << 1) | (1 << 0));
-            dynamic->link = dynstr;
-            dynamic->sh_entsize = sizeof(Elf64_Dyn);
-            build_got(s1);
-            if (file_type == 2) {
-                bind_exe_dynsyms(s1);
-                if (s1->nb_errors)
-                    goto the_end;
-                bind_libs_dynsyms(s1);
-            } else {
-                export_global_syms(s1);
-            }
-        }
-        build_got_entries(s1);
-    }
-    strsec = new_section(s1, ".shstrtab", 3, 0);
-    put_elf_str(strsec, "");
-    textrel = alloc_sec_names(s1, file_type, strsec);
-    if (dynamic) {
-        for(i = 0; i < s1->nb_loaded_dlls; i++) {
-            DLLReference *dllref = s1->loaded_dlls[i];
-            if (dllref->level == 0)
-                put_dt(dynamic, 1, put_elf_str(dynstr, dllref->name));
-        }
-        if (s1->rpath)
-            put_dt(dynamic, s1->enable_new_dtags ? 29 : 15,
-                   put_elf_str(dynstr, s1->rpath));
-        if (file_type == 3) {
-            if (s1->soname)
-                put_dt(dynamic, 14, put_elf_str(dynstr, s1->soname));
-            if (textrel)
-                put_dt(dynamic, 22, 0);
-        }
-        if (s1->symbolic)
-            put_dt(dynamic, 16, 0);
-        dyninf.dynamic = dynamic;
-        dyninf.dynstr = dynstr;
-        dyninf.data_offset = dynamic->data_offset;
-        fill_dynamic(s1, &dyninf);
-        dynamic->sh_size = dynamic->data_offset;
-        dynstr->sh_size = dynstr->data_offset;
-    }
-    if (file_type == 4)
-        phnum = 0;
-    else if (file_type == 3)
-        phnum = 3;
-    else if (s1->static_link)
-        phnum = 2;
-    else
-        phnum = 5;
-    phdr = scc_mallocz(phnum * sizeof(Elf64_Phdr));
-    shnum = s1->nb_sections;
-    sec_order = scc_malloc(sizeof(int) * shnum);
-    sec_order[0] = 0;
-    file_offset = layout_sections(s1, phdr, phnum, interp, strsec, &dyninf,
-                                  sec_order);
-    if (file_type != 4) {
-        fill_unloadable_phdr(phdr, phnum, interp, dynamic);
-        if (dynamic) {
-            dynamic->data_offset = dyninf.data_offset;
-            fill_dynamic(s1, &dyninf);
-            write32le(s1->got->data, dynamic->sh_addr);
-            if (file_type == 2
-                || (1 && file_type == 3))
-                relocate_plt(s1);
-            for (sym = (Elf64_Sym *) s1->dynsym->data + 1; sym < (Elf64_Sym *) (s1->dynsym->data + s1->dynsym->data_offset); sym++) {
-                if (sym->st_shndx != 0 && sym->st_shndx < 0xff00) {
-                    sym->st_value += s1->sections[sym->st_shndx]->sh_addr;
-                }
-            }
-        }
-        ret = final_sections_reloc(s1);
-        if (ret)
-            goto the_end;
-	tidy_section_headers(s1, sec_order);
-        if (file_type == 2 && s1->static_link)
-            fill_got(s1);
-        else if (s1->got)
-            fill_local_got_entries(s1);
-    }
-    ret = scc_write_elf_file(s1, filename, phnum, phdr, file_offset, sec_order);
-    s1->nb_sections = shnum;
- the_end:
-    scc_free(sec_order);
-    scc_free(phdr);
-    return ret;
+	int i, ret, phnum, shnum, file_type, file_offset, *sec_order;
+	struct dyn_inf dyninf = {0};
+	Elf64_Phdr *phdr;
+	Elf64_Sym *sym;
+	Section *strsec, *interp, *dynamic, *dynstr;
+	int textrel;
+	file_type = s1->output_type;
+	s1->nb_errors = 0;
+	ret = -1;
+	phdr = ((void*)0);
+	sec_order = ((void*)0);
+	interp = dynamic = dynstr = ((void*)0);
+	textrel = 0;
+	if (file_type != 4) {
+		scc_add_runtime(s1);
+		resolve_common_syms(s1);
+		if (!s1->static_link) {
+			if (file_type == 2) {
+				char *ptr;
+				const char *elfinterp = (scc_dlsym_("getenv"))("LD_SO");
+				if (elfinterp == ((void*)0)) elfinterp = "/lib64/ld-linux-x86-64.so.2";
+				interp = new_section(s1, ".interp", 1, (1 << 1));
+				interp->sh_addralign = 1;
+				ptr = section_ptr_add(interp, 1 + ((int(*)())scc_dlsym("strlen"))(elfinterp));
+				(scc_dlsym_("strcpy"))(ptr, elfinterp);
+			}
+			s1->dynsym = new_symtab(s1, ".dynsym", 11, (1 << 1),
+					".dynstr",
+					".hash", (1 << 1));
+			dynstr = s1->dynsym->link;
+			dynamic = new_section(s1, ".dynamic", 6,
+					(1 << 1) | (1 << 0));
+			dynamic->link = dynstr;
+			dynamic->sh_entsize = sizeof(Elf64_Dyn);
+			build_got(s1);
+			if (file_type == 2) {
+				bind_exe_dynsyms(s1);
+				if (s1->nb_errors)
+					goto the_end;
+				bind_libs_dynsyms(s1);
+			} else {
+				export_global_syms(s1);
+			}
+		}
+		build_got_entries(s1);
+	}
+	strsec = new_section(s1, ".shstrtab", 3, 0);
+	put_elf_str(strsec, "");
+	textrel = alloc_sec_names(s1, file_type, strsec);
+	if (dynamic) {
+		for(i = 0; i < s1->nb_loaded_dlls; i++) {
+			DLLReference *dllref = s1->loaded_dlls[i];
+			if (dllref->level == 0)
+				put_dt(dynamic, 1, put_elf_str(dynstr, dllref->name));
+		}
+		if (s1->rpath)
+			put_dt(dynamic, s1->enable_new_dtags ? 29 : 15,
+					put_elf_str(dynstr, s1->rpath));
+		if (file_type == 3) {
+			if (s1->soname)
+				put_dt(dynamic, 14, put_elf_str(dynstr, s1->soname));
+			if (textrel)
+				put_dt(dynamic, 22, 0);
+		}
+		if (s1->symbolic)
+			put_dt(dynamic, 16, 0);
+		dyninf.dynamic = dynamic;
+		dyninf.dynstr = dynstr;
+		dyninf.data_offset = dynamic->data_offset;
+		fill_dynamic(s1, &dyninf);
+		dynamic->sh_size = dynamic->data_offset;
+		dynstr->sh_size = dynstr->data_offset;
+	}
+	if (file_type == 4)
+		phnum = 0;
+	else if (file_type == 3)
+		phnum = 3;
+	else if (s1->static_link)
+		phnum = 2;
+	else
+		phnum = 5;
+	phdr = scc_mallocz(phnum * sizeof(Elf64_Phdr));
+	shnum = s1->nb_sections;
+	sec_order = scc_malloc(sizeof(int) * shnum);
+	sec_order[0] = 0;
+	file_offset = layout_sections(s1, phdr, phnum, interp, strsec, &dyninf,
+			sec_order);
+	if (file_type != 4) {
+		fill_unloadable_phdr(phdr, phnum, interp, dynamic);
+		if (dynamic) {
+			dynamic->data_offset = dyninf.data_offset;
+			fill_dynamic(s1, &dyninf);
+			write32le(s1->got->data, dynamic->sh_addr);
+			if (file_type == 2
+					|| (1 && file_type == 3))
+				relocate_plt(s1);
+			for (sym = (Elf64_Sym *) s1->dynsym->data + 1; sym < (Elf64_Sym *) (s1->dynsym->data + s1->dynsym->data_offset); sym++) {
+				if (sym->st_shndx != 0 && sym->st_shndx < 0xff00) {
+					sym->st_value += s1->sections[sym->st_shndx]->sh_addr;
+				}
+			}
+		}
+		ret = final_sections_reloc(s1);
+		if (ret)
+			goto the_end;
+		tidy_section_headers(s1, sec_order);
+		if (file_type == 2 && s1->static_link)
+			fill_got(s1);
+		else if (s1->got)
+			fill_local_got_entries(s1);
+	}
+	ret = scc_write_elf_file(s1, filename, phnum, phdr, file_offset, sec_order);
+	s1->nb_sections = shnum;
+the_end:
+	scc_free(sec_order);
+	scc_free(phdr);
+	return ret;
 }
  int scc_output_file(SCCState *s, const char *filename)
 {
@@ -17633,7 +17634,7 @@ static int scc_open(SCCState *s1, const char *filename)
         fd = ((int(*)())scc_dlsym("open"))(filename, 000000 | 0);
     if ((s1->verbose == 2 && fd >= 0) || s1->verbose == 3)
        (scc_dlsym_("printf"))("%s %*s%s\n", fd < 0 ? "nf":"->",
-               (int)(s1->include_stack_ptr - s1->include_stack), "", filename);
+               (s1->include_stack_ptr - s1->include_stack), "", filename);
     if (fd < 0)
         return -1;
     scc_open_buf(s1, filename, 0);
@@ -17871,15 +17872,15 @@ static int scc_add_file_internal(SCCState *s1, const char *filename, int flags)
 		const char *ext = scc_fileextension(filename);
 		if (ext[0]) {
 			ext++;
-			if (!((int(*)())scc_dlsym("strcmp"))(ext, "S"))
+			if (!((int(*)())scc_dlsym("strcmp"))(ext, "S")) {
 				filetype = 0x4;
-			else if (!((int(*)())scc_dlsym("strcmp"))(ext, "s"))
+			} else if (!((int(*)())scc_dlsym("strcmp"))(ext, "s")) {
 				filetype = 0x2;
-			else if (!((int(*)())scc_dlsym("strcmp"))(ext, "c") || !((int(*)())scc_dlsym("strcmp"))(ext, "i"))
+			} else if (!((int(*)())scc_dlsym("strcmp"))(ext, "c") || !((int(*)())scc_dlsym("strcmp"))(ext, "i")) {
 				filetype = 0x1;
-			else if (!((int(*)())scc_dlsym("strcmp"))(ext, "sao"))
+			} else if (!((int(*)())scc_dlsym("strcmp"))(ext, "sao")){
 				filetype = 0x10;
-			else
+			} else
 				filetype |= 0x400;
 		} else {
 			filetype = 0x1;
@@ -19082,8 +19083,9 @@ redo:
 				(scc_dlsym_("printf"))("-> %s\n", f->name);
 			if (!first_file)
 				first_file = f->name;
-			if (scc_add_file(s, f->name) < 0)
+			if (scc_add_file(s, f->name) < 0){
 				ret = 1;
+			}
 		}
 		if (--n == 0 || ret
 				|| (s->output_type == 4 && !s->option_r))

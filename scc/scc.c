@@ -332,8 +332,9 @@ redo:
 				SCC(printf)("-> %s\n", f->name);
 			if (!first_file)
 				first_file = f->name;
-			if (scc_add_file(s, f->name) < 0)
+			if (scc_add_file(s, f->name) < 0){
 				ret = 1;
+			}
 		}
 		if (--n == 0 || ret
 				|| (s->output_type == SCC_OUTPUT_OBJ && !s->option_r))
