@@ -112,49 +112,34 @@ ST_FUNC void check_vstack(void)
 }
 
 /* ------------------------------------------------------------------------- */
-/* vstack debugging aid */
-
-#if 0
-void pv (const char *lbl, int a, int b)
-{
-    int i;
-    for (i = a; i < a + b; ++i) {
-        SValue *p = &vtop[-i];
-        printf("%s vtop[-%d] : type.t:%04x  r:%04x  r2:%04x  c.i:%d\n",
-            lbl, i, p->type.t, p->r, p->r2, (int)p->c.i);
-    }
-}
-#endif
-
-/* ------------------------------------------------------------------------- */
 /* start of translation unit info */
 ST_FUNC void scc_debug_start(SCCState *s1)
 {
-    if (s1->do_debug) {
-        char buf[512];
+	if (s1->do_debug) {
+		char buf[512];
 
-        /* file info: full path + filename */
-        section_sym = put_elf_sym(symtab_section, 0, 0,
-                                  ELFW(ST_INFO)(STB_LOCAL, STT_SECTION), 0,
-                                  text_section->sh_num, NULL);
-        SCC(getcwd)(buf, sizeof(buf));
+		/* file info: full path + filename */
+		section_sym = put_elf_sym(symtab_section, 0, 0,
+				ELFW(ST_INFO)(STB_LOCAL, STT_SECTION), 0,
+				text_section->sh_num, NULL);
+		SCC(getcwd)(buf, sizeof(buf));
 #ifdef _WIN32
-        normalize_slashes(buf);
+		normalize_slashes(buf);
 #endif
-        pstrcat(buf, sizeof(buf), "/");
-        put_stabs_r(buf, N_SO, 0, 0,
-                    text_section->data_offset, text_section, section_sym);
-        put_stabs_r(file->filename, N_SO, 0, 0,
-                    text_section->data_offset, text_section, section_sym);
-        last_ind = 0;
-        last_line_num = 0;
-    }
+		pstrcat(buf, sizeof(buf), "/");
+		put_stabs_r(buf, N_SO, 0, 0,
+				text_section->data_offset, text_section, section_sym);
+		put_stabs_r(file->filename, N_SO, 0, 0,
+				text_section->data_offset, text_section, section_sym);
+		last_ind = 0;
+		last_line_num = 0;
+	}
 
-    /* an elf symbol of type STT_FILE must be put so that STB_LOCAL
-       symbols can be safely used */
-    put_elf_sym(symtab_section, 0, 0,
-                ELFW(ST_INFO)(STB_LOCAL, STT_FILE), 0,
-                SHN_ABS, file->filename);
+	/* an elf symbol of type STT_FILE must be put so that STB_LOCAL
+		 symbols can be safely used */
+	put_elf_sym(symtab_section, 0, 0,
+			ELFW(ST_INFO)(STB_LOCAL, STT_FILE), 0,
+			SHN_ABS, file->filename);
 }
 
 /* put end of translation unit info */
@@ -1581,7 +1566,6 @@ static void gen_opl(int op)
     case '*':
     case '+':
     case '-':
-        //pv("gen_opl A",0,2);
         t = vtop->type.t;
         vswap();
         lexpand();
@@ -1596,7 +1580,6 @@ static void gen_opl(int op)
         vtop[-3] = tmp;
         vswap();
         /* stack: H1 H2 L1 L2 */
-        //pv("gen_opl B",0,4);
         if (op == '*') {
             vpushv(vtop - 1);
             vpushv(vtop - 1);

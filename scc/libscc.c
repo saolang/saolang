@@ -71,6 +71,7 @@ static HMODULE scc_module;
 static void scc_add_systemdir(SCCState *s)
 {
     char buf[1000];
+		//TODO GetSystemDirectoryA,GetSystemDirectoryW
     SCC(GetSystemDirectory)(buf, sizeof buf);
     scc_add_library_path(s, normalize_slashes(buf));
 }
@@ -578,6 +579,7 @@ static int scc_compile(SCCState *s1, int filetype)
 	scc_format_begin_file(s1);
 
 	if (SCC(setjmp,int)(s1->error_jmp_buf) == 0) {
+
 		s1->nb_errors = 0;
 		s1->error_set_jmp_enabled = 1;
 
@@ -594,6 +596,7 @@ static int scc_compile(SCCState *s1, int filetype)
 			sccgen_compile(s1);
 		}
 	}
+
 	s1->error_set_jmp_enabled = 0;
 
 	preprocess_end(s1);
@@ -898,51 +901,53 @@ LIBSCCAPI void scc_delete(SCCState *s1)
 
 LIBSCCAPI int scc_set_output_type(SCCState *s, int output_type)
 {
-    s->output_type = output_type;
+	s->output_type = output_type;
 
-    /* always elf for objects */
-    if (output_type == SCC_OUTPUT_OBJ)
-        s->output_format = SCC_OUTPUT_FORMAT_ELF;
+	/* always elf for objects */
+	if (output_type == SCC_OUTPUT_OBJ)
+		s->output_format = SCC_OUTPUT_FORMAT_ELF;
 
-    if (s->char_is_unsigned)
-        scc_define_symbol(s, "__CHAR_UNSIGNED__", NULL);
+	if (s->char_is_unsigned)
+		scc_define_symbol(s, "__CHAR_UNSIGNED__", NULL);
 
-    if (!s->nostdinc) {
-        /* default include paths */
-        /* -isystem paths have already been handled */
-        scc_add_sysinclude_path(s, CONFIG_SCC_SYSINCLUDEPATHS);
-    }
+	if (!s->nostdinc) {
+		/* default include paths */
+		/* -isystem paths have already been handled */
+		scc_add_sysinclude_path(s, CONFIG_SCC_SYSINCLUDEPATHS);
+	}
 
-    if (s->do_debug) {
-        /* add debug sections */
-        scc_format_stab_new(s);
-    }
+	if (s->do_debug) {
+		/* add debug sections */
+		scc_format_stab_new(s);
+	}
 
-    scc_add_library_path(s, CONFIG_SCC_LIBPATHS);
+	scc_add_library_path(s, CONFIG_SCC_LIBPATHS);
 
 #ifdef SCC_TARGET_PE
 # ifdef _WIN32
-    if (!s->nostdlib && output_type != SCC_OUTPUT_OBJ)
-        scc_add_systemdir(s);
+	if (!s->nostdlib && output_type != SCC_OUTPUT_OBJ)
+	{
+		scc_add_systemdir(s);
+	}
 # endif
 #else
-    /* paths for crt objects */
-    scc_split_path(s, &s->crt_paths, &s->nb_crt_paths, CONFIG_SCC_CRTPREFIX);
-    /* add libc crt1/crti objects */
+	/* paths for crt objects */
+	scc_split_path(s, &s->crt_paths, &s->nb_crt_paths, CONFIG_SCC_CRTPREFIX);
+	/* add libc crt1/crti objects */
 #ifdef SCC_TARGET_MACHO
-		//TODO for apple??
+	//TODO for apple??
 #else
-    if ((output_type == SCC_OUTPUT_EXE || output_type == SCC_OUTPUT_DLL) &&
-        !s->nostdlib)
-		{
-			if (output_type != SCC_OUTPUT_DLL){
-				scc_add_crt(s, "crt1.o");
-			}
-			scc_add_crt(s, "crti.o");
-    }
+	if ((output_type == SCC_OUTPUT_EXE || output_type == SCC_OUTPUT_DLL) &&
+			!s->nostdlib)
+	{
+		if (output_type != SCC_OUTPUT_DLL){
+			scc_add_crt(s, "crt1.o");
+		}
+		scc_add_crt(s, "crti.o");
+	}
 #endif//SCC_TARGET_MACHO
 #endif
-    return 0;
+	return 0;
 }
 
 LIBSCCAPI int scc_add_include_path(SCCState *s, const char *pathname)
@@ -962,7 +967,6 @@ ST_FUNC int scc_add_file_internal(SCCState *s1, const char *filename, int flags)
 {
 	int ret;
 
-	/* open the file */
 	ret = scc_open(s1, filename);
 	if (ret < 0) {
 		if (flags & AFF_PRINT_ERROR)
@@ -970,9 +974,8 @@ ST_FUNC int scc_add_file_internal(SCCState *s1, const char *filename, int flags)
 		return ret;
 	}
 
-	/* update target deps */
-	dynarray_add(&s1->target_deps, &s1->nb_target_deps,
-			scc_strdup(filename));
+	//dependence
+	dynarray_add(&s1->target_deps, &s1->nb_target_deps, scc_strdup(filename));
 
 	if (flags & AFF_TYPE_BIN) {
 		ElfW(Ehdr) ehdr;

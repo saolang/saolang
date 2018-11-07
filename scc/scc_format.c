@@ -55,13 +55,13 @@ ST_FUNC void scc_format_new(SCCState *s)
 
 ST_FUNC void scc_format_stab_new(SCCState *s)
 {
-    stab_section = new_section(s, ".stab", SHT_PROGBITS, 0);
-    stab_section->sh_entsize = sizeof(Stab_Sym);
-    stabstr_section = new_section(s, ".stabstr", SHT_STRTAB, 0);
-    put_elf_str(stabstr_section, "");
-    stab_section->link = stabstr_section;
-    /* put first entry */
-    put_stabs("", 0, 0, 0, 0);
+	stab_section = new_section(s, ".stab", SHT_PROGBITS, 0);
+	stab_section->sh_entsize = sizeof(Stab_Sym);
+	stabstr_section = new_section(s, ".stabstr", SHT_STRTAB, 0);
+	put_elf_str(stabstr_section, "");
+	stab_section->link = stabstr_section;
+	/* put first entry */
+	put_stabs("", 0, 0, 0, 0);
 }
 
 static void free_section(Section *s)
