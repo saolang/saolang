@@ -3,3 +3,6 @@
 c.int main(){
 	return 42;
 }
+
+//main()=>{
+//}

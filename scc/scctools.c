@@ -1,8 +1,5 @@
 #include "scc.h"
 
-//#define ARMAG  "!<arch>\n"
-#define ARFMAG "`\n"
-
 typedef struct {
     char ar_name[16];
     char ar_date[12];
@@ -45,7 +42,7 @@ ST_FUNC int scc_tool_ar(SCCState *s1, int argc, char **argv)
         "0     ",
         "0       ",
         "          ",
-        ARFMAG
+        ARFMAGIC
         };
 
     static ArHdr arhdro = {
@@ -55,7 +52,7 @@ ST_FUNC int scc_tool_ar(SCCState *s1, int argc, char **argv)
         "0     ",
         "0       ",
         "          ",
-        ARFMAG
+        ARFMAGIC
         };
 
     FILE *fi, *fh = NULL, *fo = NULL;

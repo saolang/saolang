@@ -1327,10 +1327,12 @@ ST_FUNC int expr_const(void);
 ST_FUNC int classify_x86_64_va_arg(CType *ty);
 #endif
 
+/* ------------ scctools.c ------------ */
+#define ARFMAGIC "`\n"
+
 /* ------------ sccelf.c ------------ */
 #define SCC_OUTPUT_FORMAT_ELF    0 // default output format ELF
 #define SCC_OUTPUT_FORMAT_BINARY 1 
-//#define SCC_OUTPUT_FORMAT_COFF   2
 
 #define ARMAG  "!<arch>\012"    /* For COFF and a.out archives */
 

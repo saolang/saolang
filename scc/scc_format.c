@@ -2227,10 +2227,6 @@ ST_FUNC int scc_object_type(int fd, ElfW(Ehdr) *h)
 	} else if (size >= 8) {
 		if (0 == SCC(memcmp,int)(h, ARMAG, 8))
 			return AFF_BINTYPE_AR;
-		//#ifdef SCC_TARGET_COFF
-		//        if (((struct filehdr*)h)->f_magic == COFF_C67_MAGIC)
-		//            return AFF_BINTYPE_C67;
-		//#endif
 	}
 
 	return 0;
@@ -2535,7 +2531,7 @@ typedef struct ArchiveHeader {
     char ar_gid[6];             /* owner gid; printed as decimal */
     char ar_mode[8];            /* file mode, printed as octal   */
     char ar_size[10];           /* file size, printed as decimal */
-    char ar_fmag[2];            /* should contain ARFMAG */
+    char ar_fmag[2];            // contain ARFMAGIC
 } ArchiveHeader;
 
 static int get_be32(const uint8_t *b)

@@ -17611,48 +17611,48 @@ static void scc_cleanup(void)
 }
  SCCState *scc_new(void)
 {
-    SCCState *s;
-    scc_cleanup();
-    s = scc_mallocz(sizeof(SCCState));
-    if (!s)
-        return ((void*)0);
-    scc_state = s;
-    ++nb_states;
-    s->nocommon = 1;
-    s->warn_implicit_function_declaration = 1;
-    s->ms_extensions = 1;
-    scc_set_lib_path(s, ".");
-    scc_format_new(s);
-    sccpp_new(s);
-    define_push(TOK___LINE__, 0, ((void*)0), ((void*)0));
-    define_push(TOK___FILE__, 0, ((void*)0), ((void*)0));
-    define_push(TOK___DATE__, 0, ((void*)0), ((void*)0));
-    define_push(TOK___TIME__, 0, ((void*)0), ((void*)0));
-    define_push(TOK___COUNTER__, 0, ((void*)0), ((void*)0));
-    {
-        char buffer[32]; int a,b,c;
-        (scc_dlsym_("sscanf"))("SCC-0927-001", "%d.%d.%d", &a, &b, &c);
-        (scc_dlsym_("sprintf"))(buffer, "%d", a*10000 + b*100 + c);
-        scc_define_symbol(s, "__SAOCC__", buffer);
-    }
-    scc_define_symbol(s, "__STDC__", ((void*)0));
-    scc_define_symbol(s, "__STDC_VERSION__", "199901L");
-    scc_define_symbol(s, "__STDC_HOSTED__", ((void*)0));
-    scc_define_symbol(s, "__x86_64__", ((void*)0));
-    scc_define_symbol(s, "__unix__", ((void*)0));
-    scc_define_symbol(s, "__unix", ((void*)0));
-    scc_define_symbol(s, "unix", ((void*)0));
-    scc_define_symbol(s, "__SIZE_TYPE__", "unsigned long");
-    scc_define_symbol(s, "__PTRDIFF_TYPE__", "long");
-    scc_define_symbol(s, "__LP64__", ((void*)0));
-    scc_define_symbol(s, "__WCHAR_TYPE__", "int");
-    scc_define_symbol(s, "__WINT_TYPE__", "unsigned int");
-    scc_define_symbol(s, "__REDIRECT(name, proto, alias)",
-        "name proto __asm__ (#alias)");
-    scc_define_symbol(s, "__REDIRECT_NTH(name, proto, alias)",
-        "name proto __asm__ (#alias) __THROW");
-    scc_define_symbol(s, "__builtin_extract_return_addr(x)", "x");
-    return s;
+	SCCState *s;
+	scc_cleanup();
+	s = scc_mallocz(sizeof(SCCState));
+	if (!s)
+		return ((void*)0);
+	scc_state = s;
+	++nb_states;
+	s->nocommon = 1;
+	s->warn_implicit_function_declaration = 1;
+	s->ms_extensions = 1;
+	scc_set_lib_path(s, ".");
+	scc_format_new(s);
+	sccpp_new(s);
+	define_push(TOK___LINE__, 0, ((void*)0), ((void*)0));
+	define_push(TOK___FILE__, 0, ((void*)0), ((void*)0));
+	define_push(TOK___DATE__, 0, ((void*)0), ((void*)0));
+	define_push(TOK___TIME__, 0, ((void*)0), ((void*)0));
+	define_push(TOK___COUNTER__, 0, ((void*)0), ((void*)0));
+	{
+		char buffer[32]; int a,b,c;
+		(scc_dlsym_("sscanf"))("SCC-0927-001", "%d.%d.%d", &a, &b, &c);
+		(scc_dlsym_("sprintf"))(buffer, "%d", a*10000 + b*100 + c);
+		scc_define_symbol(s, "__SAOCC__", buffer);
+	}
+	scc_define_symbol(s, "__STDC__", ((void*)0));
+	scc_define_symbol(s, "__STDC_VERSION__", "199901L");
+	scc_define_symbol(s, "__STDC_HOSTED__", ((void*)0));
+	scc_define_symbol(s, "__x86_64__", ((void*)0));
+	scc_define_symbol(s, "__unix__", ((void*)0));
+	scc_define_symbol(s, "__unix", ((void*)0));
+	scc_define_symbol(s, "unix", ((void*)0));
+	scc_define_symbol(s, "__SIZE_TYPE__", "unsigned long");
+	scc_define_symbol(s, "__PTRDIFF_TYPE__", "long");
+	scc_define_symbol(s, "__LP64__", ((void*)0));
+	scc_define_symbol(s, "__WCHAR_TYPE__", "int");
+	scc_define_symbol(s, "__WINT_TYPE__", "unsigned int");
+	scc_define_symbol(s, "__REDIRECT(name, proto, alias)",
+			"name proto __asm__ (#alias)");
+	scc_define_symbol(s, "__REDIRECT_NTH(name, proto, alias)",
+			"name proto __asm__ (#alias) __THROW");
+	scc_define_symbol(s, "__builtin_extract_return_addr(x)", "x");
+	return s;
 }
  void scc_delete(SCCState *s1)
 {

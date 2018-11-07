@@ -676,188 +676,188 @@ static void scc_cleanup(void)
 
 LIBSCCAPI SCCState *scc_new(void)
 {
-    SCCState *s;
+	SCCState *s;
 
-    scc_cleanup();
+	scc_cleanup();
 
-    s = scc_mallocz(sizeof(SCCState));
-    if (!s)
-        return NULL;
-    scc_state = s;
-    ++nb_states;
+	s = scc_mallocz(sizeof(SCCState));
+	if (!s)
+		return NULL;
+	scc_state = s;
+	++nb_states;
 
-    s->nocommon = 1;
-    s->warn_implicit_function_declaration = 1;
-    s->ms_extensions = 1;
+	s->nocommon = 1;
+	s->warn_implicit_function_declaration = 1;
+	s->ms_extensions = 1;
 
 #ifdef CHAR_IS_UNSIGNED
-    s->char_is_unsigned = 1;
+	s->char_is_unsigned = 1;
 #endif
 #ifdef SCC_TARGET_I386
-    s->seg_size = 32;
+	s->seg_size = 32;
 #endif
-    /* enable this if you want symbols with leading underscore on windows: */
+	/* enable this if you want symbols with leading underscore on windows: */
 #if 0 /* def SCC_TARGET_PE */
-    s->leading_underscore = 1;
+	s->leading_underscore = 1;
 #endif
 
-//#ifdef _WIN32
-//    scc_set_lib_path_w32(s);
-//#else
-//    scc_set_lib_path(s, CONFIG_SCCDIR);
-//#endif
+	//#ifdef _WIN32
+	//    scc_set_lib_path_w32(s);
+	//#else
+	//    scc_set_lib_path(s, CONFIG_SCCDIR);
+	//#endif
 
-    scc_set_lib_path(s, CONFIG_SCCDIR);
+	scc_set_lib_path(s, CONFIG_SCCDIR);
 
-		//TODO ELF/PE/MACHO divide
-    scc_format_new(s);
+	//TODO ELF/PE/MACHO divide
+	scc_format_new(s);
 
-    sccpp_new(s);
+	sccpp_new(s);
 
-    /* we add dummy defines for some special macros to speed up tests
-       and to have working defined() */
-    define_push(TOK___LINE__, MACRO_OBJ, NULL, NULL);
-    define_push(TOK___FILE__, MACRO_OBJ, NULL, NULL);
-    define_push(TOK___DATE__, MACRO_OBJ, NULL, NULL);
-    define_push(TOK___TIME__, MACRO_OBJ, NULL, NULL);
-    define_push(TOK___COUNTER__, MACRO_OBJ, NULL, NULL);
-    {
-        /* define __SAOCC__ 92X  */
-        char buffer[32]; int a,b,c;
-        SCC(sscanf)(SCC_VERSION, "%d.%d.%d", &a, &b, &c);
-        SCC(sprintf)(buffer, "%d", a*10000 + b*100 + c);
-        scc_define_symbol(s, "__SAOCC__", buffer);
-    }
+	/* we add dummy defines for some special macros to speed up tests
+		 and to have working defined() */
+	define_push(TOK___LINE__, MACRO_OBJ, NULL, NULL);
+	define_push(TOK___FILE__, MACRO_OBJ, NULL, NULL);
+	define_push(TOK___DATE__, MACRO_OBJ, NULL, NULL);
+	define_push(TOK___TIME__, MACRO_OBJ, NULL, NULL);
 
-		//TODO forward symbol from current compiler to new compile env if not cross compile.
-		//how to say a cross compile? diff os/cpu-type/cpu-bit....
+	define_push(TOK___COUNTER__, MACRO_OBJ, NULL, NULL);
+	{
+		char buffer[32]; int a,b,c;
+		SCC(sscanf)(SCC_VERSION, "%d.%d.%d", &a, &b, &c);
+		SCC(sprintf)(buffer, "%d", a*10000 + b*100 + c);
+		scc_define_symbol(s, "__SAOCC__", buffer);
+	}
 
-    /* standard defines */
-    scc_define_symbol(s, "__STDC__", NULL);
-    scc_define_symbol(s, "__STDC_VERSION__", "199901L");
-    scc_define_symbol(s, "__STDC_HOSTED__", NULL);
+	//TODO forward symbol from current compiler to new compile env if not cross compile.
+	//how to say a cross compile? diff os/cpu-type/cpu-bit....
 
-    /* target defines */
+	/* standard defines */
+	scc_define_symbol(s, "__STDC__", NULL);
+	scc_define_symbol(s, "__STDC_VERSION__", "199901L");
+	scc_define_symbol(s, "__STDC_HOSTED__", NULL);
+
+	/* target defines */
 #if defined(SCC_TARGET_I386)
-    scc_define_symbol(s, "__i386__", NULL);
-    scc_define_symbol(s, "__i386", NULL);
-    scc_define_symbol(s, "i386", NULL);
+	scc_define_symbol(s, "__i386__", NULL);
+	scc_define_symbol(s, "__i386", NULL);
+	scc_define_symbol(s, "i386", NULL);
 #elif defined(SCC_TARGET_X86_64)
-    scc_define_symbol(s, "__x86_64__", NULL);
+	scc_define_symbol(s, "__x86_64__", NULL);
 #elif defined(SCC_TARGET_ARM)
-    scc_define_symbol(s, "__ARM_ARCH_4__", NULL);
-    scc_define_symbol(s, "__arm_elf__", NULL);
-    scc_define_symbol(s, "__arm_elf", NULL);
-    scc_define_symbol(s, "arm_elf", NULL);
-    scc_define_symbol(s, "__arm__", NULL);
-    scc_define_symbol(s, "__arm", NULL);
-    scc_define_symbol(s, "arm", NULL);
-    scc_define_symbol(s, "__APCS_32__", NULL);
-    scc_define_symbol(s, "__ARMEL__", NULL);
+	scc_define_symbol(s, "__ARM_ARCH_4__", NULL);
+	scc_define_symbol(s, "__arm_elf__", NULL);
+	scc_define_symbol(s, "__arm_elf", NULL);
+	scc_define_symbol(s, "arm_elf", NULL);
+	scc_define_symbol(s, "__arm__", NULL);
+	scc_define_symbol(s, "__arm", NULL);
+	scc_define_symbol(s, "arm", NULL);
+	scc_define_symbol(s, "__APCS_32__", NULL);
+	scc_define_symbol(s, "__ARMEL__", NULL);
 #if defined(SCC_ARM_EABI)
-    scc_define_symbol(s, "__ARM_EABI__", NULL);
+	scc_define_symbol(s, "__ARM_EABI__", NULL);
 #endif
 #if defined(SCC_ARM_HARDFLOAT)
-    s->float_abi = ARM_HARD_FLOAT;
-    scc_define_symbol(s, "__ARM_PCS_VFP", NULL);
+	s->float_abi = ARM_HARD_FLOAT;
+	scc_define_symbol(s, "__ARM_PCS_VFP", NULL);
 #else
-    s->float_abi = ARM_SOFTFP_FLOAT;
+	s->float_abi = ARM_SOFTFP_FLOAT;
 #endif
 #elif defined(SCC_TARGET_ARM64)
-    scc_define_symbol(s, "__aarch64__", NULL);
+	scc_define_symbol(s, "__aarch64__", NULL);
 #elif defined SCC_TARGET_C67
-    scc_define_symbol(s, "__C67__", NULL);
+	scc_define_symbol(s, "__C67__", NULL);
 #endif
 
 #ifdef SCC_TARGET_MACHO
-    scc_define_symbol(s, "__APPLE__", NULL);
+	scc_define_symbol(s, "__APPLE__", NULL);
 #endif
 
 #ifdef SCC_TARGET_PE
-    scc_define_symbol(s, "_WIN32", NULL);
+	scc_define_symbol(s, "_WIN32", NULL);
 # ifdef SCC_TARGET_X86_64
-    scc_define_symbol(s, "_WIN64", NULL);
+	scc_define_symbol(s, "_WIN64", NULL);
 # endif
 #else
-    scc_define_symbol(s, "__unix__", NULL);
-    scc_define_symbol(s, "__unix", NULL);
-    scc_define_symbol(s, "unix", NULL);
+	scc_define_symbol(s, "__unix__", NULL);
+	scc_define_symbol(s, "__unix", NULL);
+	scc_define_symbol(s, "unix", NULL);
 
-		//TODO should do it only when in run mode..!!!!
+	//TODO should do it only when in run mode..!!!!
 # if defined(__linux__)
-    scc_define_symbol(s, "__linux__", NULL);
-    scc_define_symbol(s, "__linux", NULL);
+	scc_define_symbol(s, "__linux__", NULL);
+	scc_define_symbol(s, "__linux", NULL);
 # endif
 
 # if defined(__FreeBSD__)
-    scc_define_symbol(s, "__FreeBSD__", "__FreeBSD__");
-    /* No 'Thread Storage Local' on FreeBSD with scc */
-    scc_define_symbol(s, "__NO_TLS", NULL);
+	scc_define_symbol(s, "__FreeBSD__", "__FreeBSD__");
+	/* No 'Thread Storage Local' on FreeBSD with scc */
+	scc_define_symbol(s, "__NO_TLS", NULL);
 # endif
 # if defined(__FreeBSD_kernel__)
-    scc_define_symbol(s, "__FreeBSD_kernel__", NULL);
+	scc_define_symbol(s, "__FreeBSD_kernel__", NULL);
 # endif
 # if defined(__NetBSD__)
-    scc_define_symbol(s, "__NetBSD__", "__NetBSD__");
+	scc_define_symbol(s, "__NetBSD__", "__NetBSD__");
 # endif
 # if defined(__OpenBSD__)
-    scc_define_symbol(s, "__OpenBSD__", "__OpenBSD__");
+	scc_define_symbol(s, "__OpenBSD__", "__OpenBSD__");
 # endif
 #endif
 
-    /* SaoCC & gcc defines */
+	/* SaoCC & gcc defines */
 #if PTR_SIZE == 4
-    /* 32bit systems. */
-    scc_define_symbol(s, "__SIZE_TYPE__", "unsigned int");
-    scc_define_symbol(s, "__PTRDIFF_TYPE__", "int");
-    scc_define_symbol(s, "__ILP32__", NULL);
+	/* 32bit systems. */
+	scc_define_symbol(s, "__SIZE_TYPE__", "unsigned int");
+	scc_define_symbol(s, "__PTRDIFF_TYPE__", "int");
+	scc_define_symbol(s, "__ILP32__", NULL);
 #elif LONG_SIZE == 4
-    /* 64bit Windows. */
-    scc_define_symbol(s, "__SIZE_TYPE__", "unsigned long long");
-    scc_define_symbol(s, "__PTRDIFF_TYPE__", "long long");
-    scc_define_symbol(s, "__LLP64__", NULL);
+	/* 64bit Windows. */
+	scc_define_symbol(s, "__SIZE_TYPE__", "unsigned long long");
+	scc_define_symbol(s, "__PTRDIFF_TYPE__", "long long");
+	scc_define_symbol(s, "__LLP64__", NULL);
 #else
-    /* Other 64bit systems. */
-    scc_define_symbol(s, "__SIZE_TYPE__", "unsigned long");
-    scc_define_symbol(s, "__PTRDIFF_TYPE__", "long");
-    scc_define_symbol(s, "__LP64__", NULL);
+	/* Other 64bit systems. */
+	scc_define_symbol(s, "__SIZE_TYPE__", "unsigned long");
+	scc_define_symbol(s, "__PTRDIFF_TYPE__", "long");
+	scc_define_symbol(s, "__LP64__", NULL);
 #endif
 
 #ifdef SCC_TARGET_PE
-    scc_define_symbol(s, "__WCHAR_TYPE__", "unsigned short");
-    scc_define_symbol(s, "__WINT_TYPE__", "unsigned short");
+	scc_define_symbol(s, "__WCHAR_TYPE__", "unsigned short");
+	scc_define_symbol(s, "__WINT_TYPE__", "unsigned short");
 #else
-    scc_define_symbol(s, "__WCHAR_TYPE__", "int");
-    /* wint_t is unsigned int by default, but (signed) int on BSDs
-       and unsigned short on windows.  Other OSes might have still
-       other conventions, sigh.  */
+	scc_define_symbol(s, "__WCHAR_TYPE__", "int");
+	/* wint_t is unsigned int by default, but (signed) int on BSDs
+		 and unsigned short on windows.  Other OSes might have still
+		 other conventions, sigh.  */
 # if defined(__FreeBSD__) || defined (__FreeBSD_kernel__) \
-  || defined(__NetBSD__) || defined(__OpenBSD__)
-    scc_define_symbol(s, "__WINT_TYPE__", "int");
+	|| defined(__NetBSD__) || defined(__OpenBSD__)
+	scc_define_symbol(s, "__WINT_TYPE__", "int");
 #  ifdef __FreeBSD__
-    /* define __GNUC__ to have some useful stuff from sys/cdefs.h
-       that are unconditionally used in FreeBSDs other system headers :/ */
-    scc_define_symbol(s, "__GNUC__", "2");
-    scc_define_symbol(s, "__GNUC_MINOR__", "7");
-    scc_define_symbol(s, "__builtin_alloca", "alloca");
+	/* define __GNUC__ to have some useful stuff from sys/cdefs.h
+		 that are unconditionally used in FreeBSDs other system headers :/ */
+	scc_define_symbol(s, "__GNUC__", "2");
+	scc_define_symbol(s, "__GNUC_MINOR__", "7");
+	scc_define_symbol(s, "__builtin_alloca", "alloca");
 #  endif
 # else
-    scc_define_symbol(s, "__WINT_TYPE__", "unsigned int");
-    /* glibc defines */
-    scc_define_symbol(s, "__REDIRECT(name, proto, alias)",
-        "name proto __asm__ (#alias)");
-    scc_define_symbol(s, "__REDIRECT_NTH(name, proto, alias)",
-        "name proto __asm__ (#alias) __THROW");
+	scc_define_symbol(s, "__WINT_TYPE__", "unsigned int");
+	/* glibc defines */
+	scc_define_symbol(s, "__REDIRECT(name, proto, alias)",
+			"name proto __asm__ (#alias)");
+	scc_define_symbol(s, "__REDIRECT_NTH(name, proto, alias)",
+			"name proto __asm__ (#alias) __THROW");
 # endif
 # if defined(SCC_MUSL)
-    scc_define_symbol(s, "__DEFINED_va_list", "");
-    scc_define_symbol(s, "__DEFINED___isoc_va_list", "");
-    scc_define_symbol(s, "__isoc_va_list", "void *");
+	scc_define_symbol(s, "__DEFINED_va_list", "");
+	scc_define_symbol(s, "__DEFINED___isoc_va_list", "");
+	scc_define_symbol(s, "__isoc_va_list", "void *");
 # endif /* SCC_MUSL */
-    /* Some GCC builtins that are simple to express as macros.  */
-    scc_define_symbol(s, "__builtin_extract_return_addr(x)", "x");
+	/* Some GCC builtins that are simple to express as macros.  */
+	scc_define_symbol(s, "__builtin_extract_return_addr(x)", "x");
 #endif /* ndef SCC_TARGET_PE */
-    return s;
+	return s;
 }
 
 LIBSCCAPI void scc_delete(SCCState *s1)
@@ -1014,11 +1014,6 @@ ST_FUNC int scc_add_file_internal(SCCState *s1, const char *filename, int flags)
 			case AFF_BINTYPE_AR:
 				ret = scc_load_archive(s1, fd, !(flags & AFF_WHOLE_ARCHIVE));
 				break;
-				//#ifdef SCC_TARGET_COFF
-				//        case AFF_BINTYPE_C67:
-				//            ret = scc_load_coff(s1, fd);
-				//            break;
-				//#endif
 			default:
 #ifdef SCC_TARGET_PE
 				ret = pe_load_file(s1, filename, fd);
@@ -1326,10 +1321,6 @@ static int scc_set_linker(SCCState *s, const char *option)
                 s->output_format = SCC_OUTPUT_FORMAT_ELF;
             } else if (!SCC(strcmp,int)(p, "binary")) {
                 s->output_format = SCC_OUTPUT_FORMAT_BINARY;
-//#ifdef SCC_TARGET_COFF
-//            } else if (!SCC(strcmp,int)(p, "coff")) {
-//                s->output_format = SCC_OUTPUT_FORMAT_COFF;
-//#endif
             } else
                 goto err;
 
