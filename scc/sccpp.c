@@ -1988,6 +1988,7 @@ _line_num:
 			break;
 		case TOK_ERROR:
 		case TOK_WARNING:
+			//TODO the macro is not expanded...why?
 			c = tok;
 			tok_tmp = tok;
 			ch = file->buf_ptr[0];
@@ -2010,10 +2011,10 @@ _line_num:
 			SCC(memmove)(buf, buf + 1, len - 2);
 			buf[len - 2] = '\0';
 
-			if(tok_tmp==TOK_WARNING){
-				scc_warning("#%d %s", tok_tmp, buf);
-				goto include_done;
-			}
+			//if(tok_tmp==TOK_WARNING){
+			//	scc_warning("#%d %s", tok_tmp, buf);
+			//	goto include_done;
+			//}
 			if (tok_tmp == TOK_ERROR){
 				scc_error("#error %s", buf);
 			}else{

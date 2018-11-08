@@ -3,6 +3,8 @@
 #ifndef _SCC_PLATFORM_H
 #define _SCC_PLATFORM_H
 
+#include "scc_macro.h"
+
 //SCC_TARGET_I386
 //  => __SCC_TARGET_CPU__=X86, __SCC_TARGET_CPU_BIT__=32
 //SCC_TARGET_X86_64
@@ -12,25 +14,26 @@
 //SCC_TARGET_ARM64
 //  => __SCC_TARGET_CPU__=ARM, __SCC_TARGET_CPU_BIT__=64
 
-#if !defined(SCC_TARGET_I386) && !defined(SCC_TARGET_ARM) && \
-    !defined(SCC_TARGET_ARM64) && !defined(SCC_TARGET_X86_64)
-# if defined __x86_64__ || defined _AMD64_
-#  define SCC_TARGET_X86_64
-# elif defined __arm__
-#  define SCC_TARGET_ARM
-#  define SCC_ARM_EABI
-#  define SCC_ARM_HARDFLOAT
-# elif defined __aarch64__
-#  define SCC_TARGET_ARM64
-# else
-#  define SCC_TARGET_I386
-# endif
-#endif
+//TODO need to remove {
+//#if !defined(SCC_TARGET_I386) && !defined(SCC_TARGET_ARM) && !defined(SCC_TARGET_ARM64) && !defined(SCC_TARGET_X86_64)
+//# if defined __x86_64__ || defined _AMD64_
+//#  define SCC_TARGET_X86_64
+//# elif defined __arm__
+//#  define SCC_TARGET_ARM
+//#  define SCC_ARM_EABI
+//#  define SCC_ARM_HARDFLOAT
+//# elif defined __aarch64__
+//#  define SCC_TARGET_ARM64
+//# else
+//#  define SCC_TARGET_I386
+//# endif
+//#endif
 
 # if defined(_WIN32)
 #  undef  SCC_TARGET_PE
 #  define SCC_TARGET_PE 1
 # endif
+//TODO }
 
 ///////////////////////////////////////////////////////////////////////////
 #define __SCC_CPU_X86__  1
@@ -41,9 +44,8 @@
 
 //probe CPU CPU_ID CPU_BIT
 
-#if !defined(__SCC_CPU__)||!defined(__SCC_CPU_ID__)||!defined(__SCC_CPU_BIT__)//{
+#if !defined(__SCC_CPU__)||!defined(__SCC_CPU_BIT__)//{
 
-// __SCC_CPU__ : current cpu type
 #if defined(__X86__)||defined(_X86_)||defined(__i386__)||defined(__x86_64__)||defined(_AMD64_)
 # if (defined __x86_64__ || defined _AMD64_)
 #  define __SCC_CPU_BIT__ 64
@@ -51,16 +53,12 @@
 #  define __SCC_CPU_BIT__ 32
 # endif
 #	define __SCC_CPU__  X86
-# define __SCC_CPU_ID__  __SCC_CPU_X86__
 #elif defined(__PPC__)
 #	define __SCC_CPU__  PPC
-# define __SCC_CPU_ID__  __SCC_CPU_PPC__
 #elif defined(__MIPS__)
 #	define __SCC_CPU__  MIPS
-# define __SCC_CPU_ID__  __SCC_CPU_MIPS__
 #elif defined(__SH__)
 #	define __SCC_CPU__  SH
-# define __SCC_CPU_ID__  __SCC_CPU_SH__
 #elif defined(__arm__) || defined(__aarch64__)
 # if defined(__aarch64__)
 #  define __SCC_CPU_BIT__ 64
@@ -68,7 +66,6 @@
 #  define __SCC_CPU_BIT__ 32
 # endif
 #	define __SCC_CPU__  ARM
-# define __SCC_CPU_ID__  __SCC_CPU_ARM__
 #else
 # error "unknown cpu type"
 #endif
@@ -78,12 +75,13 @@
 # ifdef __SCC_CPU_BIT_DEFAULT__
 #  define __SCC_CPU_BIT__ __SCC_CPU_BIT_DEFAULT__
 # else
-//TODO should not get a default ... to fix it soon
-#  define __SCC_CPU_BIT__ 32
+#  warning "unknown CPU BIT" //TODO
 # endif
 #endif
 
 #endif //}
+
+# define __SCC_CPU_ID__  SCC_MCAT(__SCC_CPU_,__SCC_CPU__,__)
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -253,17 +251,23 @@
 
 ///////////////////////////////////////////////////////////////////////////
 
+//TODO remove {
 //probe SCC_IS_NATIVE for -run
-#if defined _WIN32 == defined SCC_TARGET_PE
-# if (defined __i386__ || defined _X86_) && defined SCC_TARGET_I386
+//#if defined _WIN32 == defined SCC_TARGET_PE
+//# if (defined __i386__ || defined _X86_) && (defined SCC_TARGET_I386)
+//#  define SCC_IS_NATIVE
+//# elif (defined __x86_64__ || defined _AMD64_) && defined SCC_TARGET_X86_64
+//#  define SCC_IS_NATIVE
+//# elif defined __arm__ && defined SCC_TARGET_ARM
+//#  define SCC_IS_NATIVE
+//# elif defined __aarch64__ && defined SCC_TARGET_ARM64
+//#  define SCC_IS_NATIVE
+//# endif
+//#endif
+//}
+
+#if (__SCC_CPU_ID__ == __SCC_TARGET_CPU_ID__) && (__SCC_CPU_BIT__==__SCC_TARGET_CPU_BIT__)
 #  define SCC_IS_NATIVE
-# elif (defined __x86_64__ || defined _AMD64_) && defined SCC_TARGET_X86_64
-#  define SCC_IS_NATIVE
-# elif defined __arm__ && defined SCC_TARGET_ARM
-#  define SCC_IS_NATIVE
-# elif defined __aarch64__ && defined SCC_TARGET_ARM64
-#  define SCC_IS_NATIVE
-# endif
 #endif
 
 #ifdef SCC_IS_NATIVE
@@ -271,5 +275,8 @@
 #else
 # define __SCC_TARGET_CROSS__ 0
 #endif
+
+//#pragma message "WJC.DEBUG=" SCC_QUOTE(__SCC_TARGET_CROSS__,__SCC_TARGET_CPU__,__SCC_TARGET_CPU_ID__,__SCC_TARGET_CPU_BIT__)
+//#warning "CPU/BIT/OS/FMT/PTR_SIZE:" SCC_QUOTE(__SCC_TARGET_CPU__,__SCC_TARGET_CPU_BIT__,__SCC_TARGET_OS__,__SCC_TARGET_FORMAT__,PTR_SIZE)
 
 #endif//_SCC_PLATFORM_H

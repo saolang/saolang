@@ -12,8 +12,7 @@ int main(int argc, char **argv)
 {
 	int n;
 	if (argc < 2) {
-		SCC(printf)("usage: fib n\n"
-				"Compute nth Fibonacci number\n");
+		SCC(printf)("usage: fib n\n" "Compute nth Fibonacci number\n");
 		return 1;
 	}
 
