@@ -5,27 +5,6 @@
 
 #include "scc_macro.h"
 
-//TODO need to remove {
-//#if !defined(SCC_TARGET_I386) && !defined(SCC_TARGET_ARM) && !defined(SCC_TARGET_ARM64) && !defined(SCC_TARGET_X86_64)
-//# if defined __x86_64__ || defined _AMD64_
-//#  define SCC_TARGET_X86_64
-//# elif defined __arm__
-//#  define SCC_TARGET_ARM
-//#  define SCC_ARM_EABI
-//#  define SCC_ARM_HARDFLOAT
-//# elif defined __aarch64__
-//#  define SCC_TARGET_ARM64
-//# else
-//#  define SCC_TARGET_I386
-//# endif
-//#endif
-
-//# if defined(_WIN32)
-//#  undef  SCC_TARGET_PE
-//#  define SCC_TARGET_PE 1
-//# endif
-//TODO }
-
 ///////////////////////////////////////////////////////////////////////////
 #define __SCC_CPU_X86__  1
 #define __SCC_CPU_PPC__  2
@@ -165,6 +144,7 @@
 ///////////////////////////////////////////////////////////////////////////
 #ifndef __SCC_TARGET_CPU__//{
 
+//TODO remove {
 #if defined(SCC_TARGET_I386)
 # define __SCC_TARGET_CPU__ X86
 # define __SCC_TARGET_CPU_BIT__  32
@@ -186,6 +166,7 @@
 #else
 # error "not yet support CPU"
 #endif
+//TODO remove }
 
 #endif//}__SCC_TARGET_CPU__
 
@@ -241,21 +222,6 @@
 #endif
 
 ///////////////////////////////////////////////////////////////////////////
-
-//TODO remove {
-//probe SCC_IS_NATIVE for -run
-//#if defined _WIN32 == defined SCC_TARGET_PE
-//# if (defined __i386__ || defined _X86_) && (defined SCC_TARGET_I386)
-//#  define SCC_IS_NATIVE
-//# elif (defined __x86_64__ || defined _AMD64_) && defined SCC_TARGET_X86_64
-//#  define SCC_IS_NATIVE
-//# elif defined __arm__ && defined SCC_TARGET_ARM
-//#  define SCC_IS_NATIVE
-//# elif defined __aarch64__ && defined SCC_TARGET_ARM64
-//#  define SCC_IS_NATIVE
-//# endif
-//#endif
-//}
 
 //regards native if cpu arch and bits remain same:
 #if (__SCC_CPU_ID__ == __SCC_TARGET_CPU_ID__) && (__SCC_CPU_BIT__==__SCC_TARGET_CPU_BIT__)

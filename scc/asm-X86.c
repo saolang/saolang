@@ -25,7 +25,7 @@
 
 #define OPC_0F        0x100 /* Is secondary map (0x0f prefix) */
 #define OPC_48        0x200 /* Always has REX prefix */
-#ifdef SCC_TARGET_X86_64
+#ifdef SCC_TARGET_X86_64 //{
 # define OPC_WLQ     0x1000  /* accepts w, l, q or no suffix */
 # define OPC_BWLQ    (OPC_B | OPC_WLQ) /* accepts b, w, l, q or no suffix */
 # define OPC_WLX     OPC_WLQ
@@ -33,7 +33,7 @@
 #else
 # define OPC_WLX     OPC_WL
 # define OPC_BWLX    OPC_BWL
-#endif
+#endif //}
 
 #define OPC_GROUP_SHIFT 13
 
