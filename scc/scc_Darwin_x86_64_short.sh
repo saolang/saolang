@@ -44,5 +44,7 @@ echo ./build_Darwin_x86_64/scc -B build_Darwin_x86_64/ -I. -I build_Darwin_x86_6
 #./build_Darwin_x86_64/scc -B build_Darwin_x86_64 -D__APPLE__ -D__SCC_TARGET_FORMAT__=MACHO -I include_osx -I . -DMAKE_DEBUG -run scc.c -I. -Wunsupported -c examples/test_scc_h.c 
 #./build_Darwin_x86_64/scc -B build_Darwin_x86_64 -D__APPLE__ -D__SCC_TARGET_FORMAT__=MACHO -I include_osx -I. -run scc.c -I. -Wunsupported -c examples/test_scc_h.c 
 #./build_Darwin_x86_64/scc -B build_Darwin_x86_64 -DSCC_TARGET_MACHO -D__APPLE__ -D__SCC_TARGET_FORMAT__=MACHO -I include_osx -I. -run scc.c
-./build_Darwin_x86_64/scc -B build_Darwin_x86_64 -D__APPLE__ -D__SCC_TARGET_FORMAT__=MACHO -I build_Darwin_x86_64 -I include_osx -I. -run scc.c
+#./build_Darwin_x86_64/scc -B build_Darwin_x86_64 -D__APPLE__ -D__SCC_TARGET_FORMAT__=MACHO -I build_Darwin_x86_64 -I include_osx -I. -run scc.c
+
+./build_Darwin_x86_64/scc -B build_Darwin_x86_64 -I build_Darwin_x86_64 -I include_osx -I. -run scc.c
 

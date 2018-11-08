@@ -2479,18 +2479,19 @@ static void gen_cast(CType *type)
                 if ((sbt & VT_BTYPE) != VT_LLONG &&
                     (sbt & VT_BTYPE) != VT_PTR &&
                     (sbt & VT_BTYPE) != VT_FUNC) {
-                    /* need to convert from 32bit to 64bit */
+
+                    // convert from 32bit to 64bit
                     gv(RC_INT);
                     if (sbt != (VT_INT | VT_UNSIGNED)) {
-#if defined(SCC_TARGET_ARM64)
+#ifdef SCC_TARGET_ARM64
                         gen_cvt_sxtw();
 #elif defined(SCC_TARGET_X86_64)
                         int r = gv(RC_INT);
                         /* x86_64 specific: movslq */
                         o(0x6348);
                         o(0xc0 + (REG_VALUE(r) << 3) + REG_VALUE(r));
-#else
-#error
+#else//??
+//TODO
 #endif
                     }
                 }

@@ -5,15 +5,6 @@
 
 #include "scc_macro.h"
 
-//SCC_TARGET_I386
-//  => __SCC_TARGET_CPU__=X86, __SCC_TARGET_CPU_BIT__=32
-//SCC_TARGET_X86_64
-//  => __SCC_TARGET_CPU__=X86, __SCC_TARGET_CPU_BIT__=64
-//SCC_TARGET_ARM
-//  => __SCC_TARGET_CPU__=ARM, __SCC_TARGET_CPU_BIT__=32
-//SCC_TARGET_ARM64
-//  => __SCC_TARGET_CPU__=ARM, __SCC_TARGET_CPU_BIT__=64
-
 //TODO need to remove {
 //#if !defined(SCC_TARGET_I386) && !defined(SCC_TARGET_ARM) && !defined(SCC_TARGET_ARM64) && !defined(SCC_TARGET_X86_64)
 //# if defined __x86_64__ || defined _AMD64_
@@ -29,10 +20,10 @@
 //# endif
 //#endif
 
-# if defined(_WIN32)
-#  undef  SCC_TARGET_PE
-#  define SCC_TARGET_PE 1
-# endif
+//# if defined(_WIN32)
+//#  undef  SCC_TARGET_PE
+//#  define SCC_TARGET_PE 1
+//# endif
 //TODO }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -266,6 +257,7 @@
 //#endif
 //}
 
+//regards native if cpu arch and bits remain same:
 #if (__SCC_CPU_ID__ == __SCC_TARGET_CPU_ID__) && (__SCC_CPU_BIT__==__SCC_TARGET_CPU_BIT__)
 #  define SCC_IS_NATIVE
 #endif
