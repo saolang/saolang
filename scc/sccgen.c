@@ -1321,11 +1321,6 @@ ST_FUNC int gv(int rc)
             }
         }
         vtop->r = r;
-//#ifdef SCC_TARGET_C67
-//        /* uses register pairs for doubles */
-//        if ((vtop->type.t & VT_BTYPE) == VT_DOUBLE) 
-//            vtop->r2 = r+1;
-//#endif
     }
     return r;
 }

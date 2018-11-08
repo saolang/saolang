@@ -765,8 +765,6 @@ LIBSCCAPI SCCState *scc_new(void)
 #endif
 #elif defined(SCC_TARGET_ARM64)
 	scc_define_symbol(s, "__aarch64__", NULL);
-#elif defined SCC_TARGET_C67
-	scc_define_symbol(s, "__C67__", NULL);
 #endif
 
 #ifdef SCC_TARGET_MACHO

@@ -126,8 +126,6 @@ static const char version[] =
         "i386"
 #elif defined SCC_TARGET_X86_64
         "x86_64"
-#elif defined SCC_TARGET_C67
-        "C67"
 #elif defined SCC_TARGET_ARM
         "ARM"
 #elif defined SCC_TARGET_ARM64

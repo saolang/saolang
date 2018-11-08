@@ -56,12 +56,10 @@
 /* #define SCC_TARGET_X86_64 *//* x86-64 code generator */
 /* #define SCC_TARGET_ARM    *//* ARMv4 code generator */
 /* #define SCC_TARGET_ARM64  *//* ARMv8 code generator */
-/* #define SCC_TARGET_C67    *//* TMS320C67xx code generator */
 
 /* default target is I386 */
 #if !defined(SCC_TARGET_I386) && !defined(SCC_TARGET_ARM) && \
-    !defined(SCC_TARGET_ARM64) && !defined(SCC_TARGET_C67) && \
-    !defined(SCC_TARGET_X86_64)
+    !defined(SCC_TARGET_ARM64) && !defined(SCC_TARGET_X86_64)
 # if defined __x86_64__ || defined _AMD64_
 #  define SCC_TARGET_X86_64
 # elif defined __arm__
@@ -1141,7 +1139,6 @@ ST_FUNC int scc_add_file_internal(SCCState *s1, const char *filename, int flags)
 #define AFF_BINTYPE_REL 1
 #define AFF_BINTYPE_DYN 2
 #define AFF_BINTYPE_AR  3
-#define AFF_BINTYPE_C67 4
 
 ST_FUNC int scc_add_crt(SCCState *s, const char *filename);
 ST_FUNC int scc_add_dll(SCCState *s, const char *filename, int flags);
@@ -1460,9 +1457,7 @@ ST_FUNC void gen_opf(int op);
 ST_FUNC void gen_cvt_ftoi(int t);
 ST_FUNC void gen_cvt_ftof(int t);
 ST_FUNC void ggoto(void);
-#ifndef SCC_TARGET_C67
 ST_FUNC void o(unsigned int c);
-#endif
 #ifndef SCC_TARGET_ARM
 ST_FUNC void gen_cvt_itof(int t);
 #endif

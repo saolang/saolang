@@ -233,15 +233,6 @@ DEF(TOK___fixdfdi, "__fixdfdi")
 # endif
 #endif
 
-//#if defined SCC_TARGET_C67
-//DEF(TOK__divi, "_divi")
-//DEF(TOK__divu, "_divu")
-//DEF(TOK__divf, "_divf")
-//DEF(TOK__divd, "_divd")
-//DEF(TOK__remi, "_remi")
-//DEF(TOK__remu, "_remu")
-//#endif
-
 #if defined SCC_TARGET_I386
 DEF(TOK___fixsfdi, "__fixsfdi")
 DEF(TOK___fixdfdi, "__fixdfdi")

@@ -2517,26 +2517,6 @@ typedef Elf32_Addr Elf32_Conflict;
 /* Keep this the last entry.  */
 #define R_ARM_NUM		256
 
-/* TMS320C67xx specific declarations */
-
-/* XXX: no ELF standard yet*/
-
-/* TMS320C67xx relocs. */
-#define R_C60_32       1
-#define R_C60_GOT32     3               /* 32 bit GOT entry */
-#define R_C60_PLT32     4               /* 32 bit PLT address */
-#define R_C60_COPY      5               /* Copy symbol at runtime */
-#define R_C60_GLOB_DAT  6               /* Create GOT entry */
-#define R_C60_JMP_SLOT  7               /* Create PLT entry */
-#define R_C60_RELATIVE  8               /* Adjust by program base */
-#define R_C60_GOTOFF    9               /* 32 bit offset to GOT */
-#define R_C60_GOTPC     10              /* 32 bit PC relative offset to GOT */
-
-#define R_C60LO16      0x54       /* low 16 bit MVKL embedded */
-#define R_C60HI16      0x55       /* high 16 bit MVKH embedded */
-/* Keep this the last entry.  */
-#define R_C60_NUM      0x56
-
 /* IA-64 specific declarations.  */
 
 /* Processor specific flags for the Ehdr e_flags field.  */
