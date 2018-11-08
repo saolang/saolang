@@ -1,4 +1,7 @@
 #ifdef CONFIG_SCC_BACKTRACE
+
+//#warning "TODO sccrun_debug_bt"
+
 # ifndef _WIN32//{
 
 //TODO maybe remove signal.h dependency in future...
@@ -11,6 +14,7 @@
 #  endif
 
 # else//}_WIN32
+//TODO
 #  define ucontext_t CONTEXT
 # endif//_WIN32
 

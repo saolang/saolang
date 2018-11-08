@@ -1719,6 +1719,10 @@ static void asm_compute_constraints(ASMOperand *operands, int nb_operands, int n
 static void subst_asm_operand(CString *add_str, SValue *sv, int modifier);
 static void asm_gen_code(ASMOperand *operands, int nb_operands, int nb_outputs, int is_output, uint8_t *clobber_regs, int out_reg);
 static void asm_clobber(uint8_t *clobber_regs, const char *str);
+static int rt_num_callers;
+static const char **rt_bound_error_msg;
+static void *rt_prog_main;
+static void scc_set_num_callers(int n);
 static void scc_run_free(SCCState *s1);
 static inline int scc_assert(char* R, char* F, int L){(scc_dlsym_("printf"))("%s %s %s",F,L,R);(scc_dlsym_("exit"))(-1);return -1;}
  void scc_error_internal_v(SCCState *s1, int is_warning, const char *fmt, va_list ap);
@@ -10689,6 +10693,951 @@ static void decl(int l)
 {
     decl0(l, 0, ((void*)0));
 }
+
+typedef char			__int8_t;
+typedef unsigned char		__uint8_t;
+typedef	short			__int16_t;
+typedef	unsigned short		__uint16_t;
+typedef int			__int32_t;
+typedef unsigned int		__uint32_t;
+typedef long long		__int64_t;
+typedef unsigned long long	__uint64_t;
+typedef long			__darwin_intptr_t;
+typedef unsigned int		__darwin_natural_t;
+typedef int			__darwin_ct_rune_t;
+typedef union {
+	char		__mbstate8[128];
+	long long	_mbstateL;
+} __mbstate_t;
+typedef __mbstate_t		__darwin_mbstate_t;
+typedef long	__darwin_ptrdiff_t;
+typedef unsigned long		__darwin_size_t;
+typedef void *			__darwin_va_list;
+typedef int		__darwin_wchar_t;
+typedef __darwin_wchar_t	__darwin_rune_t;
+typedef unsigned int		__darwin_wint_t;
+typedef unsigned long		__darwin_clock_t;
+typedef __uint32_t		__darwin_socklen_t;
+typedef long			__darwin_ssize_t;
+typedef long			__darwin_time_t;
+typedef	__int64_t	__darwin_blkcnt_t;
+typedef	__int32_t	__darwin_blksize_t;
+typedef __int32_t	__darwin_dev_t;
+typedef unsigned int	__darwin_fsblkcnt_t;
+typedef unsigned int	__darwin_fsfilcnt_t;
+typedef __uint32_t	__darwin_gid_t;
+typedef __uint32_t	__darwin_id_t;
+typedef __uint64_t	__darwin_ino64_t;
+typedef __darwin_ino64_t __darwin_ino_t;
+typedef __darwin_natural_t __darwin_mach_port_name_t;
+typedef __darwin_mach_port_name_t __darwin_mach_port_t;
+typedef __uint16_t	__darwin_mode_t;
+typedef __int64_t	__darwin_off_t;
+typedef __int32_t	__darwin_pid_t;
+typedef __uint32_t	__darwin_sigset_t;
+typedef __int32_t	__darwin_suseconds_t;
+typedef __uint32_t	__darwin_uid_t;
+typedef __uint32_t	__darwin_useconds_t;
+typedef	unsigned char	__darwin_uuid_t[16];
+typedef	char	__darwin_uuid_string_t[37];
+struct __darwin_pthread_handler_rec {
+	void (*__routine)(void *);
+	void *__arg;
+	struct __darwin_pthread_handler_rec *__next;
+};
+struct _opaque_pthread_attr_t {
+	long __sig;
+	char __opaque[56];
+};
+struct _opaque_pthread_cond_t {
+	long __sig;
+	char __opaque[40];
+};
+struct _opaque_pthread_condattr_t {
+	long __sig;
+	char __opaque[8];
+};
+struct _opaque_pthread_mutex_t {
+	long __sig;
+	char __opaque[56];
+};
+struct _opaque_pthread_mutexattr_t {
+	long __sig;
+	char __opaque[8];
+};
+struct _opaque_pthread_once_t {
+	long __sig;
+	char __opaque[8];
+};
+struct _opaque_pthread_rwlock_t {
+	long __sig;
+	char __opaque[192];
+};
+struct _opaque_pthread_rwlockattr_t {
+	long __sig;
+	char __opaque[16];
+};
+struct _opaque_pthread_t {
+	long __sig;
+	struct __darwin_pthread_handler_rec  *__cleanup_stack;
+	char __opaque[8176];
+};
+typedef struct _opaque_pthread_attr_t __darwin_pthread_attr_t;
+typedef struct _opaque_pthread_cond_t __darwin_pthread_cond_t;
+typedef struct _opaque_pthread_condattr_t __darwin_pthread_condattr_t;
+typedef unsigned long __darwin_pthread_key_t;
+typedef struct _opaque_pthread_mutex_t __darwin_pthread_mutex_t;
+typedef struct _opaque_pthread_mutexattr_t __darwin_pthread_mutexattr_t;
+typedef struct _opaque_pthread_once_t __darwin_pthread_once_t;
+typedef struct _opaque_pthread_rwlock_t __darwin_pthread_rwlock_t;
+typedef struct _opaque_pthread_rwlockattr_t __darwin_pthread_rwlockattr_t;
+typedef struct _opaque_pthread_t *__darwin_pthread_t;
+typedef	int		__darwin_nl_item;
+typedef	int		__darwin_wctrans_t;
+typedef	__uint32_t	__darwin_wctype_t;
+typedef int sig_atomic_t;
+typedef	signed char		int8_t;
+typedef	short			int16_t;
+typedef	int			int32_t;
+typedef	long long		int64_t;
+typedef	unsigned char		u_int8_t;
+typedef	unsigned short			u_int16_t;
+typedef	unsigned int		u_int32_t;
+typedef	unsigned long long	u_int64_t;
+typedef int64_t			register_t;
+typedef __darwin_intptr_t	intptr_t;
+typedef unsigned long		uintptr_t;
+typedef u_int64_t		user_addr_t;
+typedef u_int64_t		user_size_t;
+typedef int64_t			user_ssize_t;
+typedef int64_t			user_long_t;
+typedef u_int64_t		user_ulong_t;
+typedef int64_t			user_time_t;
+typedef int64_t			user_off_t;
+typedef u_int64_t		syscall_arg_t;
+struct __darwin_i386_thread_state
+{
+    unsigned int	__eax;
+    unsigned int	__ebx;
+    unsigned int	__ecx;
+    unsigned int	__edx;
+    unsigned int	__edi;
+    unsigned int	__esi;
+    unsigned int	__ebp;
+    unsigned int	__esp;
+    unsigned int	__ss;
+    unsigned int	__eflags;
+    unsigned int	__eip;
+    unsigned int	__cs;
+    unsigned int	__ds;
+    unsigned int	__es;
+    unsigned int	__fs;
+    unsigned int	__gs;
+};
+struct __darwin_fp_control
+{
+    unsigned short		__invalid	:1,
+    				__denorm	:1,
+				__zdiv		:1,
+				__ovrfl		:1,
+				__undfl		:1,
+				__precis	:1,
+						:2,
+				__pc		:2,
+				__rc		:2,
+					 	:1,
+						:3;
+};
+typedef struct __darwin_fp_control	__darwin_fp_control_t;
+struct __darwin_fp_status
+{
+    unsigned short		__invalid	:1,
+    				__denorm	:1,
+				__zdiv		:1,
+				__ovrfl		:1,
+				__undfl		:1,
+				__precis	:1,
+				__stkflt	:1,
+				__errsumm	:1,
+				__c0		:1,
+				__c1		:1,
+				__c2		:1,
+				__tos		:3,
+				__c3		:1,
+				__busy		:1;
+};
+typedef struct __darwin_fp_status	__darwin_fp_status_t;
+struct __darwin_mmst_reg
+{
+	char	__mmst_reg[10];
+	char	__mmst_rsrv[6];
+};
+struct __darwin_xmm_reg
+{
+	char		__xmm_reg[16];
+};
+struct __darwin_ymm_reg
+{
+	char		__ymm_reg[32];
+};
+struct __darwin_zmm_reg
+{
+	char		__zmm_reg[64];
+};
+struct __darwin_opmask_reg
+{
+	char		__opmask_reg[8];
+};
+struct __darwin_i386_float_state
+{
+	int 			__fpu_reserved[2];
+	struct __darwin_fp_control	__fpu_fcw;
+	struct __darwin_fp_status	__fpu_fsw;
+	__uint8_t		__fpu_ftw;
+	__uint8_t		__fpu_rsrv1;
+	__uint16_t		__fpu_fop;
+	__uint32_t		__fpu_ip;
+	__uint16_t		__fpu_cs;
+	__uint16_t		__fpu_rsrv2;
+	__uint32_t		__fpu_dp;
+	__uint16_t		__fpu_ds;
+	__uint16_t		__fpu_rsrv3;
+	__uint32_t		__fpu_mxcsr;
+	__uint32_t		__fpu_mxcsrmask;
+	struct __darwin_mmst_reg	__fpu_stmm0;
+	struct __darwin_mmst_reg	__fpu_stmm1;
+	struct __darwin_mmst_reg	__fpu_stmm2;
+	struct __darwin_mmst_reg	__fpu_stmm3;
+	struct __darwin_mmst_reg	__fpu_stmm4;
+	struct __darwin_mmst_reg	__fpu_stmm5;
+	struct __darwin_mmst_reg	__fpu_stmm6;
+	struct __darwin_mmst_reg	__fpu_stmm7;
+	struct __darwin_xmm_reg		__fpu_xmm0;
+	struct __darwin_xmm_reg		__fpu_xmm1;
+	struct __darwin_xmm_reg		__fpu_xmm2;
+	struct __darwin_xmm_reg		__fpu_xmm3;
+	struct __darwin_xmm_reg		__fpu_xmm4;
+	struct __darwin_xmm_reg		__fpu_xmm5;
+	struct __darwin_xmm_reg		__fpu_xmm6;
+	struct __darwin_xmm_reg		__fpu_xmm7;
+	char			__fpu_rsrv4[14*16];
+	int 			__fpu_reserved1;
+};
+struct __darwin_i386_avx_state
+{
+	int 			__fpu_reserved[2];
+	struct __darwin_fp_control	__fpu_fcw;
+	struct __darwin_fp_status	__fpu_fsw;
+	__uint8_t		__fpu_ftw;
+	__uint8_t		__fpu_rsrv1;
+	__uint16_t		__fpu_fop;
+	__uint32_t		__fpu_ip;
+	__uint16_t		__fpu_cs;
+	__uint16_t		__fpu_rsrv2;
+	__uint32_t		__fpu_dp;
+	__uint16_t		__fpu_ds;
+	__uint16_t		__fpu_rsrv3;
+	__uint32_t		__fpu_mxcsr;
+	__uint32_t		__fpu_mxcsrmask;
+	struct __darwin_mmst_reg	__fpu_stmm0;
+	struct __darwin_mmst_reg	__fpu_stmm1;
+	struct __darwin_mmst_reg	__fpu_stmm2;
+	struct __darwin_mmst_reg	__fpu_stmm3;
+	struct __darwin_mmst_reg	__fpu_stmm4;
+	struct __darwin_mmst_reg	__fpu_stmm5;
+	struct __darwin_mmst_reg	__fpu_stmm6;
+	struct __darwin_mmst_reg	__fpu_stmm7;
+	struct __darwin_xmm_reg		__fpu_xmm0;
+	struct __darwin_xmm_reg		__fpu_xmm1;
+	struct __darwin_xmm_reg		__fpu_xmm2;
+	struct __darwin_xmm_reg		__fpu_xmm3;
+	struct __darwin_xmm_reg		__fpu_xmm4;
+	struct __darwin_xmm_reg		__fpu_xmm5;
+	struct __darwin_xmm_reg		__fpu_xmm6;
+	struct __darwin_xmm_reg		__fpu_xmm7;
+	char			__fpu_rsrv4[14*16];
+	int 			__fpu_reserved1;
+	char			__avx_reserved1[64];
+	struct __darwin_xmm_reg		__fpu_ymmh0;
+	struct __darwin_xmm_reg		__fpu_ymmh1;
+	struct __darwin_xmm_reg		__fpu_ymmh2;
+	struct __darwin_xmm_reg		__fpu_ymmh3;
+	struct __darwin_xmm_reg		__fpu_ymmh4;
+	struct __darwin_xmm_reg		__fpu_ymmh5;
+	struct __darwin_xmm_reg		__fpu_ymmh6;
+	struct __darwin_xmm_reg		__fpu_ymmh7;
+};
+struct __darwin_i386_avx512_state
+{
+	int 			__fpu_reserved[2];
+	struct __darwin_fp_control	__fpu_fcw;
+	struct __darwin_fp_status	__fpu_fsw;
+	__uint8_t		__fpu_ftw;
+	__uint8_t		__fpu_rsrv1;
+	__uint16_t		__fpu_fop;
+	__uint32_t		__fpu_ip;
+	__uint16_t		__fpu_cs;
+	__uint16_t		__fpu_rsrv2;
+	__uint32_t		__fpu_dp;
+	__uint16_t		__fpu_ds;
+	__uint16_t		__fpu_rsrv3;
+	__uint32_t		__fpu_mxcsr;
+	__uint32_t		__fpu_mxcsrmask;
+	struct __darwin_mmst_reg	__fpu_stmm0;
+	struct __darwin_mmst_reg	__fpu_stmm1;
+	struct __darwin_mmst_reg	__fpu_stmm2;
+	struct __darwin_mmst_reg	__fpu_stmm3;
+	struct __darwin_mmst_reg	__fpu_stmm4;
+	struct __darwin_mmst_reg	__fpu_stmm5;
+	struct __darwin_mmst_reg	__fpu_stmm6;
+	struct __darwin_mmst_reg	__fpu_stmm7;
+	struct __darwin_xmm_reg		__fpu_xmm0;
+	struct __darwin_xmm_reg		__fpu_xmm1;
+	struct __darwin_xmm_reg		__fpu_xmm2;
+	struct __darwin_xmm_reg		__fpu_xmm3;
+	struct __darwin_xmm_reg		__fpu_xmm4;
+	struct __darwin_xmm_reg		__fpu_xmm5;
+	struct __darwin_xmm_reg		__fpu_xmm6;
+	struct __darwin_xmm_reg		__fpu_xmm7;
+	char			__fpu_rsrv4[14*16];
+	int 			__fpu_reserved1;
+	char			__avx_reserved1[64];
+	struct __darwin_xmm_reg		__fpu_ymmh0;
+	struct __darwin_xmm_reg		__fpu_ymmh1;
+	struct __darwin_xmm_reg		__fpu_ymmh2;
+	struct __darwin_xmm_reg		__fpu_ymmh3;
+	struct __darwin_xmm_reg		__fpu_ymmh4;
+	struct __darwin_xmm_reg		__fpu_ymmh5;
+	struct __darwin_xmm_reg		__fpu_ymmh6;
+	struct __darwin_xmm_reg		__fpu_ymmh7;
+	struct __darwin_opmask_reg	__fpu_k0;
+	struct __darwin_opmask_reg	__fpu_k1;
+	struct __darwin_opmask_reg	__fpu_k2;
+	struct __darwin_opmask_reg	__fpu_k3;
+	struct __darwin_opmask_reg	__fpu_k4;
+	struct __darwin_opmask_reg	__fpu_k5;
+	struct __darwin_opmask_reg	__fpu_k6;
+	struct __darwin_opmask_reg	__fpu_k7;
+	struct __darwin_ymm_reg		__fpu_zmmh0;
+	struct __darwin_ymm_reg		__fpu_zmmh1;
+	struct __darwin_ymm_reg		__fpu_zmmh2;
+	struct __darwin_ymm_reg		__fpu_zmmh3;
+	struct __darwin_ymm_reg		__fpu_zmmh4;
+	struct __darwin_ymm_reg		__fpu_zmmh5;
+	struct __darwin_ymm_reg		__fpu_zmmh6;
+	struct __darwin_ymm_reg		__fpu_zmmh7;
+};
+struct __darwin_i386_exception_state
+{
+	__uint16_t	__trapno;
+	__uint16_t	__cpu;
+	__uint32_t	__err;
+	__uint32_t	__faultvaddr;
+};
+struct __darwin_x86_debug_state32
+{
+	unsigned int	__dr0;
+	unsigned int	__dr1;
+	unsigned int	__dr2;
+	unsigned int	__dr3;
+	unsigned int	__dr4;
+	unsigned int	__dr5;
+	unsigned int	__dr6;
+	unsigned int	__dr7;
+};
+struct __darwin_x86_thread_state64
+{
+	__uint64_t	__rax;
+	__uint64_t	__rbx;
+	__uint64_t	__rcx;
+	__uint64_t	__rdx;
+	__uint64_t	__rdi;
+	__uint64_t	__rsi;
+	__uint64_t	__rbp;
+	__uint64_t	__rsp;
+	__uint64_t	__r8;
+	__uint64_t	__r9;
+	__uint64_t	__r10;
+	__uint64_t	__r11;
+	__uint64_t	__r12;
+	__uint64_t	__r13;
+	__uint64_t	__r14;
+	__uint64_t	__r15;
+	__uint64_t	__rip;
+	__uint64_t	__rflags;
+	__uint64_t	__cs;
+	__uint64_t	__fs;
+	__uint64_t	__gs;
+};
+struct __darwin_x86_float_state64
+{
+	int 			__fpu_reserved[2];
+	struct __darwin_fp_control	__fpu_fcw;
+	struct __darwin_fp_status	__fpu_fsw;
+	__uint8_t		__fpu_ftw;
+	__uint8_t		__fpu_rsrv1;
+	__uint16_t		__fpu_fop;
+	__uint32_t		__fpu_ip;
+	__uint16_t		__fpu_cs;
+	__uint16_t		__fpu_rsrv2;
+	__uint32_t		__fpu_dp;
+	__uint16_t		__fpu_ds;
+	__uint16_t		__fpu_rsrv3;
+	__uint32_t		__fpu_mxcsr;
+	__uint32_t		__fpu_mxcsrmask;
+	struct __darwin_mmst_reg	__fpu_stmm0;
+	struct __darwin_mmst_reg	__fpu_stmm1;
+	struct __darwin_mmst_reg	__fpu_stmm2;
+	struct __darwin_mmst_reg	__fpu_stmm3;
+	struct __darwin_mmst_reg	__fpu_stmm4;
+	struct __darwin_mmst_reg	__fpu_stmm5;
+	struct __darwin_mmst_reg	__fpu_stmm6;
+	struct __darwin_mmst_reg	__fpu_stmm7;
+	struct __darwin_xmm_reg		__fpu_xmm0;
+	struct __darwin_xmm_reg		__fpu_xmm1;
+	struct __darwin_xmm_reg		__fpu_xmm2;
+	struct __darwin_xmm_reg		__fpu_xmm3;
+	struct __darwin_xmm_reg		__fpu_xmm4;
+	struct __darwin_xmm_reg		__fpu_xmm5;
+	struct __darwin_xmm_reg		__fpu_xmm6;
+	struct __darwin_xmm_reg		__fpu_xmm7;
+	struct __darwin_xmm_reg		__fpu_xmm8;
+	struct __darwin_xmm_reg		__fpu_xmm9;
+	struct __darwin_xmm_reg		__fpu_xmm10;
+	struct __darwin_xmm_reg		__fpu_xmm11;
+	struct __darwin_xmm_reg		__fpu_xmm12;
+	struct __darwin_xmm_reg		__fpu_xmm13;
+	struct __darwin_xmm_reg		__fpu_xmm14;
+	struct __darwin_xmm_reg		__fpu_xmm15;
+	char			__fpu_rsrv4[6*16];
+	int 			__fpu_reserved1;
+};
+struct __darwin_x86_avx_state64
+{
+	int 			__fpu_reserved[2];
+	struct __darwin_fp_control	__fpu_fcw;
+	struct __darwin_fp_status	__fpu_fsw;
+	__uint8_t		__fpu_ftw;
+	__uint8_t		__fpu_rsrv1;
+	__uint16_t		__fpu_fop;
+	__uint32_t		__fpu_ip;
+	__uint16_t		__fpu_cs;
+	__uint16_t		__fpu_rsrv2;
+	__uint32_t		__fpu_dp;
+	__uint16_t		__fpu_ds;
+	__uint16_t		__fpu_rsrv3;
+	__uint32_t		__fpu_mxcsr;
+	__uint32_t		__fpu_mxcsrmask;
+	struct __darwin_mmst_reg	__fpu_stmm0;
+	struct __darwin_mmst_reg	__fpu_stmm1;
+	struct __darwin_mmst_reg	__fpu_stmm2;
+	struct __darwin_mmst_reg	__fpu_stmm3;
+	struct __darwin_mmst_reg	__fpu_stmm4;
+	struct __darwin_mmst_reg	__fpu_stmm5;
+	struct __darwin_mmst_reg	__fpu_stmm6;
+	struct __darwin_mmst_reg	__fpu_stmm7;
+	struct __darwin_xmm_reg		__fpu_xmm0;
+	struct __darwin_xmm_reg		__fpu_xmm1;
+	struct __darwin_xmm_reg		__fpu_xmm2;
+	struct __darwin_xmm_reg		__fpu_xmm3;
+	struct __darwin_xmm_reg		__fpu_xmm4;
+	struct __darwin_xmm_reg		__fpu_xmm5;
+	struct __darwin_xmm_reg		__fpu_xmm6;
+	struct __darwin_xmm_reg		__fpu_xmm7;
+	struct __darwin_xmm_reg		__fpu_xmm8;
+	struct __darwin_xmm_reg		__fpu_xmm9;
+	struct __darwin_xmm_reg		__fpu_xmm10;
+	struct __darwin_xmm_reg		__fpu_xmm11;
+	struct __darwin_xmm_reg		__fpu_xmm12;
+	struct __darwin_xmm_reg		__fpu_xmm13;
+	struct __darwin_xmm_reg		__fpu_xmm14;
+	struct __darwin_xmm_reg		__fpu_xmm15;
+	char			__fpu_rsrv4[6*16];
+	int 			__fpu_reserved1;
+	char			__avx_reserved1[64];
+	struct __darwin_xmm_reg		__fpu_ymmh0;
+	struct __darwin_xmm_reg		__fpu_ymmh1;
+	struct __darwin_xmm_reg		__fpu_ymmh2;
+	struct __darwin_xmm_reg		__fpu_ymmh3;
+	struct __darwin_xmm_reg		__fpu_ymmh4;
+	struct __darwin_xmm_reg		__fpu_ymmh5;
+	struct __darwin_xmm_reg		__fpu_ymmh6;
+	struct __darwin_xmm_reg		__fpu_ymmh7;
+	struct __darwin_xmm_reg		__fpu_ymmh8;
+	struct __darwin_xmm_reg		__fpu_ymmh9;
+	struct __darwin_xmm_reg		__fpu_ymmh10;
+	struct __darwin_xmm_reg		__fpu_ymmh11;
+	struct __darwin_xmm_reg		__fpu_ymmh12;
+	struct __darwin_xmm_reg		__fpu_ymmh13;
+	struct __darwin_xmm_reg		__fpu_ymmh14;
+	struct __darwin_xmm_reg		__fpu_ymmh15;
+};
+struct __darwin_x86_avx512_state64
+{
+	int 			__fpu_reserved[2];
+	struct __darwin_fp_control	__fpu_fcw;
+	struct __darwin_fp_status	__fpu_fsw;
+	__uint8_t		__fpu_ftw;
+	__uint8_t		__fpu_rsrv1;
+	__uint16_t		__fpu_fop;
+	__uint32_t		__fpu_ip;
+	__uint16_t		__fpu_cs;
+	__uint16_t		__fpu_rsrv2;
+	__uint32_t		__fpu_dp;
+	__uint16_t		__fpu_ds;
+	__uint16_t		__fpu_rsrv3;
+	__uint32_t		__fpu_mxcsr;
+	__uint32_t		__fpu_mxcsrmask;
+	struct __darwin_mmst_reg	__fpu_stmm0;
+	struct __darwin_mmst_reg	__fpu_stmm1;
+	struct __darwin_mmst_reg	__fpu_stmm2;
+	struct __darwin_mmst_reg	__fpu_stmm3;
+	struct __darwin_mmst_reg	__fpu_stmm4;
+	struct __darwin_mmst_reg	__fpu_stmm5;
+	struct __darwin_mmst_reg	__fpu_stmm6;
+	struct __darwin_mmst_reg	__fpu_stmm7;
+	struct __darwin_xmm_reg		__fpu_xmm0;
+	struct __darwin_xmm_reg		__fpu_xmm1;
+	struct __darwin_xmm_reg		__fpu_xmm2;
+	struct __darwin_xmm_reg		__fpu_xmm3;
+	struct __darwin_xmm_reg		__fpu_xmm4;
+	struct __darwin_xmm_reg		__fpu_xmm5;
+	struct __darwin_xmm_reg		__fpu_xmm6;
+	struct __darwin_xmm_reg		__fpu_xmm7;
+	struct __darwin_xmm_reg		__fpu_xmm8;
+	struct __darwin_xmm_reg		__fpu_xmm9;
+	struct __darwin_xmm_reg		__fpu_xmm10;
+	struct __darwin_xmm_reg		__fpu_xmm11;
+	struct __darwin_xmm_reg		__fpu_xmm12;
+	struct __darwin_xmm_reg		__fpu_xmm13;
+	struct __darwin_xmm_reg		__fpu_xmm14;
+	struct __darwin_xmm_reg		__fpu_xmm15;
+	char			__fpu_rsrv4[6*16];
+	int 			__fpu_reserved1;
+	char			__avx_reserved1[64];
+	struct __darwin_xmm_reg		__fpu_ymmh0;
+	struct __darwin_xmm_reg		__fpu_ymmh1;
+	struct __darwin_xmm_reg		__fpu_ymmh2;
+	struct __darwin_xmm_reg		__fpu_ymmh3;
+	struct __darwin_xmm_reg		__fpu_ymmh4;
+	struct __darwin_xmm_reg		__fpu_ymmh5;
+	struct __darwin_xmm_reg		__fpu_ymmh6;
+	struct __darwin_xmm_reg		__fpu_ymmh7;
+	struct __darwin_xmm_reg		__fpu_ymmh8;
+	struct __darwin_xmm_reg		__fpu_ymmh9;
+	struct __darwin_xmm_reg		__fpu_ymmh10;
+	struct __darwin_xmm_reg		__fpu_ymmh11;
+	struct __darwin_xmm_reg		__fpu_ymmh12;
+	struct __darwin_xmm_reg		__fpu_ymmh13;
+	struct __darwin_xmm_reg		__fpu_ymmh14;
+	struct __darwin_xmm_reg		__fpu_ymmh15;
+	struct __darwin_opmask_reg	__fpu_k0;
+	struct __darwin_opmask_reg	__fpu_k1;
+	struct __darwin_opmask_reg	__fpu_k2;
+	struct __darwin_opmask_reg	__fpu_k3;
+	struct __darwin_opmask_reg	__fpu_k4;
+	struct __darwin_opmask_reg	__fpu_k5;
+	struct __darwin_opmask_reg	__fpu_k6;
+	struct __darwin_opmask_reg	__fpu_k7;
+	struct __darwin_ymm_reg		__fpu_zmmh0;
+	struct __darwin_ymm_reg		__fpu_zmmh1;
+	struct __darwin_ymm_reg		__fpu_zmmh2;
+	struct __darwin_ymm_reg		__fpu_zmmh3;
+	struct __darwin_ymm_reg		__fpu_zmmh4;
+	struct __darwin_ymm_reg		__fpu_zmmh5;
+	struct __darwin_ymm_reg		__fpu_zmmh6;
+	struct __darwin_ymm_reg		__fpu_zmmh7;
+	struct __darwin_ymm_reg		__fpu_zmmh8;
+	struct __darwin_ymm_reg		__fpu_zmmh9;
+	struct __darwin_ymm_reg		__fpu_zmmh10;
+	struct __darwin_ymm_reg		__fpu_zmmh11;
+	struct __darwin_ymm_reg		__fpu_zmmh12;
+	struct __darwin_ymm_reg		__fpu_zmmh13;
+	struct __darwin_ymm_reg		__fpu_zmmh14;
+	struct __darwin_ymm_reg		__fpu_zmmh15;
+	struct __darwin_zmm_reg		__fpu_zmm16;
+	struct __darwin_zmm_reg		__fpu_zmm17;
+	struct __darwin_zmm_reg		__fpu_zmm18;
+	struct __darwin_zmm_reg		__fpu_zmm19;
+	struct __darwin_zmm_reg		__fpu_zmm20;
+	struct __darwin_zmm_reg		__fpu_zmm21;
+	struct __darwin_zmm_reg		__fpu_zmm22;
+	struct __darwin_zmm_reg		__fpu_zmm23;
+	struct __darwin_zmm_reg		__fpu_zmm24;
+	struct __darwin_zmm_reg		__fpu_zmm25;
+	struct __darwin_zmm_reg		__fpu_zmm26;
+	struct __darwin_zmm_reg		__fpu_zmm27;
+	struct __darwin_zmm_reg		__fpu_zmm28;
+	struct __darwin_zmm_reg		__fpu_zmm29;
+	struct __darwin_zmm_reg		__fpu_zmm30;
+	struct __darwin_zmm_reg		__fpu_zmm31;
+};
+struct __darwin_x86_exception_state64
+{
+    __uint16_t	__trapno;
+    __uint16_t	__cpu;
+    __uint32_t	__err;
+    __uint64_t	__faultvaddr;
+};
+struct __darwin_x86_debug_state64
+{
+	__uint64_t	__dr0;
+	__uint64_t	__dr1;
+	__uint64_t	__dr2;
+	__uint64_t	__dr3;
+	__uint64_t	__dr4;
+	__uint64_t	__dr5;
+	__uint64_t	__dr6;
+	__uint64_t	__dr7;
+};
+struct __darwin_x86_cpmu_state64
+{
+	__uint64_t __ctrs[16];
+};
+struct __darwin_mcontext32
+{
+	struct __darwin_i386_exception_state	__es;
+	struct __darwin_i386_thread_state	__ss;
+	struct __darwin_i386_float_state	__fs;
+};
+struct __darwin_mcontext_avx32
+{
+	struct __darwin_i386_exception_state	__es;
+	struct __darwin_i386_thread_state	__ss;
+	struct __darwin_i386_avx_state		__fs;
+};
+struct __darwin_mcontext_avx512_32
+{
+	struct __darwin_i386_exception_state	__es;
+	struct __darwin_i386_thread_state	__ss;
+	struct __darwin_i386_avx512_state	__fs;
+};
+struct __darwin_mcontext64
+{
+	struct __darwin_x86_exception_state64	__es;
+	struct __darwin_x86_thread_state64	__ss;
+	struct __darwin_x86_float_state64	__fs;
+};
+struct __darwin_mcontext_avx64
+{
+	struct __darwin_x86_exception_state64	__es;
+	struct __darwin_x86_thread_state64	__ss;
+	struct __darwin_x86_avx_state64		__fs;
+};
+struct __darwin_mcontext_avx512_64
+{
+	struct __darwin_x86_exception_state64	__es;
+	struct __darwin_x86_thread_state64	__ss;
+	struct __darwin_x86_avx512_state64	__fs;
+};
+typedef struct __darwin_mcontext64	*mcontext_t;
+typedef __darwin_pthread_attr_t pthread_attr_t;
+struct __darwin_sigaltstack
+{
+	void            *ss_sp;
+	__darwin_size_t ss_size;
+	int             ss_flags;
+};
+typedef struct __darwin_sigaltstack	stack_t;
+struct __darwin_ucontext
+{
+	int                     uc_onstack;
+	__darwin_sigset_t       uc_sigmask;
+	struct __darwin_sigaltstack     uc_stack;
+	struct __darwin_ucontext        *uc_link;
+	__darwin_size_t	        uc_mcsize;
+	struct __darwin_mcontext64        *uc_mcontext;
+};
+typedef struct __darwin_ucontext	ucontext_t;
+typedef __darwin_pid_t        pid_t;
+typedef __darwin_sigset_t		sigset_t;
+typedef __darwin_size_t        size_t;
+typedef __darwin_uid_t        uid_t;
+union sigval {
+	int	sival_int;
+	void	*sival_ptr;
+};
+struct sigevent {
+	int				sigev_notify;
+	int				sigev_signo;
+	union sigval	sigev_value;
+	void			(*sigev_notify_function)(union sigval);
+	pthread_attr_t	*sigev_notify_attributes;
+};
+typedef struct __siginfo {
+	int	si_signo;
+	int	si_errno;
+	int	si_code;
+	pid_t	si_pid;
+	uid_t	si_uid;
+	int	si_status;
+	void	*si_addr;
+	union sigval si_value;
+	long	si_band;
+	unsigned long	__pad[7];
+} siginfo_t;
+union __sigaction_u {
+	void    (*__sa_handler)(int);
+	void    (*__sa_sigaction)(int, struct __siginfo *,
+		       void *);
+};
+struct	__sigaction {
+	union __sigaction_u __sigaction_u;
+	void    (*sa_tramp)(void *, int, int, siginfo_t *, void *);
+	sigset_t sa_mask;
+	int	sa_flags;
+};
+struct	sigaction {
+	union __sigaction_u __sigaction_u;
+	sigset_t sa_mask;
+	int	sa_flags;
+};
+typedef	void (*sig_t)(int);
+struct	sigvec {
+	void	(*sv_handler)(int);
+	int	sv_mask;
+	int	sv_flags;
+};
+struct	sigstack {
+	char	*ss_sp;
+	int	ss_onstack;
+};
+void	(*signal(int, void (*)(int)))(int);
+typedef __darwin_pthread_t pthread_t;
+extern const char *const sys_signame[32];
+extern const char *const sys_siglist[32];
+int	raise(int);
+void	(*  bsd_signal(int, void (* )(int)))(int);
+int	kill(pid_t, int) __asm("_" "kill" );
+int	killpg(pid_t, int) __asm("_" "killpg" );
+int	pthread_kill(pthread_t, int);
+int	pthread_sigmask(int, const sigset_t *, sigset_t *) __asm("_" "pthread_sigmask" );
+int	sigaction(int, const struct sigaction * restrict,
+	    struct sigaction * restrict);
+int	sigaddset(sigset_t *, int);
+int	sigaltstack(const stack_t * restrict, stack_t * restrict)  __asm("_" "sigaltstack" )  ;
+int	sigdelset(sigset_t *, int);
+int	sigemptyset(sigset_t *);
+int	sigfillset(sigset_t *);
+int	sighold(int);
+int	sigignore(int);
+int	siginterrupt(int, int);
+int	sigismember(const sigset_t *, int);
+int	sigpause(int) __asm("_" "sigpause" );
+int	sigpending(sigset_t *);
+int	sigprocmask(int, const sigset_t * restrict, sigset_t * restrict);
+int	sigrelse(int);
+void    (*  sigset(int, void (* )(int)))(int);
+int	sigsuspend(const sigset_t *) __asm("_" "sigsuspend" );
+int	sigwait(const sigset_t * restrict, int * restrict) __asm("_" "sigwait" );
+void	psignal(unsigned int, const char *);
+int	sigblock(int);
+int	sigsetmask(int);
+int	sigvec(int, struct sigvec *, struct sigvec *);
+inline int
+__sigbits(int __signo)
+{
+    return __signo > 32 ? 0 : (1 << (__signo - 1));
+}
+static int rt_num_callers = 6;
+static const char **rt_bound_error_msg;
+static void *rt_prog_main;
+static int rt_get_caller_pc(Elf64_Addr *paddr, ucontext_t *uc, int level);
+static void set_exception_handler(void);
+static void scc_set_num_callers(int n)
+{
+    rt_num_callers = n;
+}
+static Elf64_Addr rt_printline(Elf64_Addr wanted_pc, const char *msg)
+{
+    char func_name[128], last_func_name[128];
+    Elf64_Addr func_addr, last_pc, pc;
+    const char *incl_files[32];
+    int incl_index, len, last_line_num, i;
+    const char *str, *p;
+    Stab_Sym *stab_sym = ((void*)0), *stab_sym_end, *sym;
+    int stab_len = 0;
+    char *stab_str = ((void*)0);
+    if (stab_section) {
+        stab_len = stab_section->data_offset;
+        stab_sym = (Stab_Sym *)stab_section->data;
+        stab_str = (char *) stabstr_section->data;
+    }
+    func_name[0] = '\0';
+    func_addr = 0;
+    incl_index = 0;
+    last_func_name[0] = '\0';
+    last_pc = (Elf64_Addr)-1;
+    last_line_num = 1;
+    if (!stab_sym)
+        goto no_stabs;
+    stab_sym_end = (Stab_Sym*)((char*)stab_sym + stab_len);
+    for (sym = stab_sym + 1; sym < stab_sym_end; ++sym) {
+        switch(sym->n_type) {
+        case N_FUN:
+            if (sym->n_strx == 0) {
+                pc = sym->n_value + func_addr;
+                if (wanted_pc >= last_pc && wanted_pc < pc)
+                    goto found;
+                func_name[0] = '\0';
+                func_addr = 0;
+            } else {
+                str = stab_str + sym->n_strx;
+                p = (scc_dlsym_("strchr"))(str, ':');
+                if (!p) {
+                    pstrcpy(func_name, sizeof(func_name), str);
+                } else {
+                    len = p - str;
+                    if (len > sizeof(func_name) - 1)
+                        len = sizeof(func_name) - 1;
+                    (scc_dlsym_("memcpy"))(func_name, str, len);
+                    func_name[len] = '\0';
+                }
+                func_addr = sym->n_value;
+            }
+            break;
+        case N_SLINE:
+            pc = sym->n_value + func_addr;
+            if (wanted_pc >= last_pc && wanted_pc < pc)
+                goto found;
+            last_pc = pc;
+            last_line_num = sym->n_desc;
+            (scc_dlsym_("strcpy"))(last_func_name, func_name);
+            break;
+        case N_BINCL:
+            str = stab_str + sym->n_strx;
+        add_incl:
+            if (incl_index < 32) {
+                incl_files[incl_index++] = str;
+            }
+            break;
+        case N_EINCL:
+            if (incl_index > 1)
+                incl_index--;
+            break;
+        case N_SO:
+            if (sym->n_strx == 0) {
+                incl_index = 0;
+            } else {
+                str = stab_str + sym->n_strx;
+                len = ((int(*)())scc_dlsym("strlen"))(str);
+                if (len > 0 && str[len - 1] != '/')
+                    goto add_incl;
+            }
+            break;
+        }
+    }
+no_stabs:
+    incl_index = 0;
+    if (symtab_section)
+    {
+        Elf64_Sym *sym, *sym_end;
+        int type;
+        sym_end = (Elf64_Sym *)(symtab_section->data + symtab_section->data_offset);
+        for(sym = (Elf64_Sym *)symtab_section->data + 1;
+            sym < sym_end;
+            sym++) {
+            type = ((sym->st_info) & 0xf);
+            if (type == 2 || type == 10) {
+                if (wanted_pc >= sym->st_value &&
+                    wanted_pc < sym->st_value + sym->st_size) {
+                    pstrcpy(last_func_name, sizeof(last_func_name),
+                            (char *) symtab_section->link->data + sym->st_name);
+                    func_addr = sym->st_value;
+                    goto found;
+                }
+            }
+        }
+    }
+    (scc_dlsym_("fprintf"))(scc_std(3), "%s %p ???\n", msg, (void*)wanted_pc);
+    (scc_dlsym_("fflush"))(scc_std(3));
+    return 0;
+ found:
+    i = incl_index;
+    if (i > 0)
+        (scc_dlsym_("fprintf"))(scc_std(3), "%s:%d: ", incl_files[--i], last_line_num);
+    (scc_dlsym_("fprintf"))(scc_std(3), "%s %p", msg, (void*)wanted_pc);
+    if (last_func_name[0] != '\0')
+        (scc_dlsym_("fprintf"))(scc_std(3), " %s()", last_func_name);
+    if (--i >= 0) {
+        (scc_dlsym_("fprintf"))(scc_std(3), " (included from ");
+        for (;;) {
+            (scc_dlsym_("fprintf"))(scc_std(3), "%s", incl_files[i]);
+            if (--i < 0)
+                break;
+            (scc_dlsym_("fprintf"))(scc_std(3), ", ");
+        }
+        (scc_dlsym_("fprintf"))(scc_std(3), ")");
+    }
+    (scc_dlsym_("fprintf"))(scc_std(3), "\n");
+    (scc_dlsym_("fflush"))(scc_std(3));
+    return func_addr;
+}
+static void sig_error(int signum, siginfo_t *siginf, void *puc)
+{
+    ucontext_t *uc = puc;
+    switch(signum) {
+    case 8:
+        switch(siginf->si_code) {
+        case 7:
+        case 1:
+            { Elf64_Addr pc; int i; (scc_dlsym_("fprintf"))(scc_std(3), "Runtime error: "); (scc_dlsym_("vfprintf"))(scc_std(3), "division by zero"); (scc_dlsym_("fprintf"))(scc_std(3), "\n"); for(i=0;i<rt_num_callers;i++) { if (rt_get_caller_pc(&pc, uc, i) < 0) break; pc = rt_printline(pc, i ? "by" : "at"); if (pc == (Elf64_Addr)rt_prog_main && pc) break; }};
+            break;
+        default:
+            { Elf64_Addr pc; int i; (scc_dlsym_("fprintf"))(scc_std(3), "Runtime error: "); (scc_dlsym_("vfprintf"))(scc_std(3), "floating point exception"); (scc_dlsym_("fprintf"))(scc_std(3), "\n"); for(i=0;i<rt_num_callers;i++) { if (rt_get_caller_pc(&pc, uc, i) < 0) break; pc = rt_printline(pc, i ? "by" : "at"); if (pc == (Elf64_Addr)rt_prog_main && pc) break; }};
+            break;
+        }
+        break;
+    case 10:
+    case 11:
+        if (rt_bound_error_msg && *rt_bound_error_msg){
+            { Elf64_Addr pc; int i; (scc_dlsym_("fprintf"))(scc_std(3), "Runtime error: "); (scc_dlsym_("vfprintf"))(scc_std(3), *rt_bound_error_msg); (scc_dlsym_("fprintf"))(scc_std(3), "\n"); for(i=0;i<rt_num_callers;i++) { if (rt_get_caller_pc(&pc, uc, i) < 0) break; pc = rt_printline(pc, i ? "by" : "at"); if (pc == (Elf64_Addr)rt_prog_main && pc) break; }};
+				}else{
+            { Elf64_Addr pc; int i; (scc_dlsym_("fprintf"))(scc_std(3), "Runtime error: "); (scc_dlsym_("vfprintf"))(scc_std(3), "dereferencing invalid pointer"); (scc_dlsym_("fprintf"))(scc_std(3), "\n"); for(i=0;i<rt_num_callers;i++) { if (rt_get_caller_pc(&pc, uc, i) < 0) break; pc = rt_printline(pc, i ? "by" : "at"); if (pc == (Elf64_Addr)rt_prog_main && pc) break; }};
+				}
+        break;
+    case 4:
+        { Elf64_Addr pc; int i; (scc_dlsym_("fprintf"))(scc_std(3), "Runtime error: "); (scc_dlsym_("vfprintf"))(scc_std(3), "illegal instruction"); (scc_dlsym_("fprintf"))(scc_std(3), "\n"); for(i=0;i<rt_num_callers;i++) { if (rt_get_caller_pc(&pc, uc, i) < 0) break; pc = rt_printline(pc, i ? "by" : "at"); if (pc == (Elf64_Addr)rt_prog_main && pc) break; }};
+        break;
+    case 6:
+        { Elf64_Addr pc; int i; (scc_dlsym_("fprintf"))(scc_std(3), "Runtime error: "); (scc_dlsym_("vfprintf"))(scc_std(3), "abort() called"); (scc_dlsym_("fprintf"))(scc_std(3), "\n"); for(i=0;i<rt_num_callers;i++) { if (rt_get_caller_pc(&pc, uc, i) < 0) break; pc = rt_printline(pc, i ? "by" : "at"); if (pc == (Elf64_Addr)rt_prog_main && pc) break; }};
+        break;
+    default:
+        { Elf64_Addr pc; int i; (scc_dlsym_("fprintf"))(scc_std(3), "Runtime error: "); (scc_dlsym_("vfprintf"))(scc_std(3), "caught signal %d", signum); (scc_dlsym_("fprintf"))(scc_std(3), "\n"); for(i=0;i<rt_num_callers;i++) { if (rt_get_caller_pc(&pc, uc, i) < 0) break; pc = rt_printline(pc, i ? "by" : "at"); if (pc == (Elf64_Addr)rt_prog_main && pc) break; }};
+        break;
+    }
+    (scc_dlsym_("exit"))(255);
+}
+static void set_exception_handler(void)
+{
+    struct sigaction sigact;
+    sigact.sa_flags = 0x0040 | 0x0004;
+    sigact.__sigaction_u.__sa_sigaction = sig_error;
+    (scc_dlsym_("sigemptyset"))(&sigact.sa_mask);
+    (scc_dlsym_("sigaction"))(8, &sigact, ((void*)0));
+    (scc_dlsym_("sigaction"))(4, &sigact, ((void*)0));
+    (scc_dlsym_("sigaction"))(11, &sigact, ((void*)0));
+    (scc_dlsym_("sigaction"))(10, &sigact, ((void*)0));
+    (scc_dlsym_("sigaction"))(6, &sigact, ((void*)0));
+}
+static int rt_get_caller_pc(Elf64_Addr *paddr, ucontext_t *uc, int level)
+{
+    Elf64_Addr fp;
+    int i;
+    if (level == 0) {
+        *paddr = uc->uc_mcontext->__ss.__rip;
+        return 0;
+    } else {
+        fp = uc->uc_mcontext->__ss.__rbp;
+        for(i=1;i<level;i++) {
+            if (fp <= 0x1000)
+                return -1;
+            fp = ((Elf64_Addr *)fp)[0];
+        }
+        *paddr = ((Elf64_Addr *)fp)[1];
+        return 0;
+    }
+}
 static void set_pages_executable(void *ptr, unsigned long length);
 static int scc_relocate_ex(SCCState *s1, void *ptr, Elf64_Addr ptr_diff);
  int scc_relocate(SCCState *s1, void *ptr)
@@ -10722,6 +11671,10 @@ static void scc_run_free(SCCState *s1)
     if (scc_relocate(s1, (void*)1) < 0)
         return -1;
     prog_main = scc_get_symbol_err(s1, s1->runtime_main);
+    if (s1->do_debug) {
+        set_exception_handler();
+        rt_prog_main = prog_main;
+    }
 		scc_errno(0);
     return (*prog_main)(argc, argv);
 }
@@ -18088,6 +19041,7 @@ static const SCCOption scc_options[] = {
     { "B", SCC_OPTION_B, 0x0001 },
     { "l", SCC_OPTION_l, 0x0001 | 0x0002 },
     { "bench", SCC_OPTION_bench, 0 },
+    { "bt", SCC_OPTION_bt, 0x0001 },
     { "g", SCC_OPTION_g, 0x0001 | 0x0002 },
     { "c", SCC_OPTION_c, 0 },
     { "dumpversion", SCC_OPTION_dumpversion, 0},
@@ -18302,6 +19256,9 @@ reparse:
 				break;
 			case SCC_OPTION_bench:
 				s->do_bench = 1;
+				break;
+			case SCC_OPTION_bt:
+				scc_set_num_callers(((int(*)())scc_dlsym("atoi"))(optarg));
 				break;
 			case SCC_OPTION_g:
 				s->do_debug = 1;
@@ -18785,6 +19742,7 @@ static const char help[] =
     "  -Wl,-opt[=val]  set linker option (see scc -hh)\n"
     "Debugger:\n"
     "  -g          generate runtime debug info\n"
+    "  -bt N       show N callers in stack traces\n"
     "Misc. options:\n"
     "  -x[c|a|b|s|n] specify type of the next infile (C,ASM,BIN,SAO,NONE)\n"
     "  -nostdinc   do not use standard system include paths\n"

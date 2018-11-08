@@ -1,5 +1,37 @@
+/* probes for platforms */
+
 #ifndef _SCC_PLATFORM_H
 #define _SCC_PLATFORM_H
+
+//TODO if target unclear should throw error to stop
+//SCC_TARGET_I386
+//  => __SCC_TARGET_CPU__=X86, __SCC_TARGET_CPU_BIT__=32
+//SCC_TARGET_X86_64
+//  => __SCC_TARGET_CPU__=X86, __SCC_TARGET_CPU_BIT__=64
+//SCC_TARGET_ARM
+//  => __SCC_TARGET_CPU__=ARM, __SCC_TARGET_CPU_BIT__=32
+//SCC_TARGET_ARM64
+//  => __SCC_TARGET_CPU__=ARM, __SCC_TARGET_CPU_BIT__=64
+
+#if !defined(SCC_TARGET_I386) && !defined(SCC_TARGET_ARM) && \
+    !defined(SCC_TARGET_ARM64) && !defined(SCC_TARGET_X86_64)
+# if defined __x86_64__ || defined _AMD64_
+#  define SCC_TARGET_X86_64
+# elif defined __arm__
+#  define SCC_TARGET_ARM
+#  define SCC_ARM_EABI
+#  define SCC_ARM_HARDFLOAT
+# elif defined __aarch64__
+#  define SCC_TARGET_ARM64
+# else
+#  define SCC_TARGET_I386
+# endif
+#endif
+
+# if defined(_WIN32)
+#  undef  SCC_TARGET_PE
+#  define SCC_TARGET_PE 1
+# endif
 
 ///////////////////////////////////////////////////////////////////////////
 // __SCC_CPU__ : current cpu type
@@ -33,9 +65,8 @@
 # endif
 #endif
 
-// __SCC_OS__ : current os
-
 ///////////////////////////////////////////////////////////////////////////
+/* probe runtime */
 #ifndef __SCC_OS__//{
 
 #if defined(_WIN32)||defined(_WIN64)
@@ -68,7 +99,7 @@
 
 #endif //}__SCC_OS__
 
-//TODO iOS@Darwin/Android@Linux?
+//TODO iOS@Darwin/Android@Linux..
 
 ///////////////////////////////////////////////////////////////////////////
 #ifndef __SCC_CC__//{
@@ -115,7 +146,13 @@
 #endif//}__SCC_TARGET_CPU__
 
 #ifndef __SCC_TARGET_CPU__
+# ifdef __SCC_CPU__
 # define __SCC_TARGET_CPU__ __SCC_CPU__
+# endif
+#endif
+
+#ifndef __SCC_TARGET_CPU__
+# error __SCC_TARGET_CPU__ unknown
 #endif
 ///////////////////////////////////////////////////////////////////////////
 #ifndef __SCC_TARGET_CPU_BIT__//{
@@ -124,7 +161,10 @@
 # define __SCC_TARGET_CPU_BIT__ 32
 #elif defined(SCC_TARGET_X86_64)
 # define __SCC_TARGET_CPU_BIT__ 64
-#elif defined(SCC_TARGET_X86_ARM)
+#elif defined(SCC_TARGET_ARM)
+# define __SCC_TARGET_CPU_BIT__ 32
+#elif defined(SCC_TARGET_ARM64)
+# define __SCC_TARGET_CPU_BIT__ 64
 #elif defined(SCC_TARGET_PPC)
 #elif defined(SCC_TARGET_MIPS)
 #elif defined(SCC_TARGET_SH)
@@ -137,44 +177,53 @@
 #endif
 
 ///////////////////////////////////////////////////////////////////////////
-#ifdef __SCC_TARGET_FORMAT__
-//SKIP THEN
-#elif defined(SCC_TARGET_MACHO)
-# define __SCC_TARGET_FORMAT__  MACHO
-# define __SCC_TARGET_OS__  OSX
-#elif defined(SCC_TARGET_PE)
-# define __SCC_TARGET_FORMAT__  PE
-# define __SCC_TARGET_OS__  WIN
-#else
-//#ifdef __SCC_OS_FORMAT__
-//# define __SCC_TARGET_FORMAT__ __SCC_OS_FORMAT__
-//#else
-//# define __SCC_TARGET_FORMAT__  ELF
-//#endif
-# define __SCC_TARGET_FORMAT__  ELF
-#endif
+#ifndef __SCC_TARGET_FORMAT__//{
+# if defined(SCC_TARGET_MACHO)
+#  define __SCC_TARGET_FORMAT__  MACHO
+#  define __SCC_TARGET_OS__  OSX
+# elif defined(SCC_TARGET_PE)
+#  define __SCC_TARGET_FORMAT__  PE
+#  define __SCC_TARGET_OS__  WIN
+# elif defined(SCC_TARGET_ELF)
+#  define __SCC_TARGET_FORMAT__  ELF
+# endif
+#endif//}!__SCC_TARGET_FORMAT__
+
+#ifndef __SCC_TARGET_FORMAT__//{
+# warning "unknown __SCC_TARGET_FORMAT__"
+#endif//}!__SCC_TARGET_FORMAT__
 
 ///////////////////////////////////////////////////////////////////////////
 //TODO not good, need to adjust Makefile better?
 #ifndef __SCC_TARGET_OS__
-//# define __SCC_TARGET_OS__ __SCC_OS__
-# define __SCC_TARGET_OS__ LNX
+# ifdef __SCC_OS__
+# define __SCC_TARGET_OS__ __SCC_OS__
+# else
+//# define __SCC_TARGET_OS__ LNX
+# warning "unknown __SCC_TARGET_OS__"
+# endif
+#else
 #endif
 
 ///////////////////////////////////////////////////////////////////////////
-//TODO
-//#define SCC_CPU_X86  1
-//#define SCC_CPU_ARM  2
-//#define SCC_CPU_MIPS 3
-//#define SCC_CPU_PPC  4
-//#define SCC_CPU_SH   5
-//#if (EXPAND(SCC_CPU_##__SCC_TARGET_CPU__)==EXPAND(SCC_CPU_##__SCC_CPU__))
-//# define __SCC_TARGET_CROSS__ 0
-//#else
-//# define __SCC_TARGET_CROSS__ 1
-//#endif
-# define __SCC_TARGET_CROSS__  TODO
 
-//TODO redefine for cross build... for scc_define_symbol later
+//probe SCC_IS_NATIVE for -run
+#if defined _WIN32 == defined SCC_TARGET_PE
+# if (defined __i386__ || defined _X86_) && defined SCC_TARGET_I386
+#  define SCC_IS_NATIVE
+# elif (defined __x86_64__ || defined _AMD64_) && defined SCC_TARGET_X86_64
+#  define SCC_IS_NATIVE
+# elif defined __arm__ && defined SCC_TARGET_ARM
+#  define SCC_IS_NATIVE
+# elif defined __aarch64__ && defined SCC_TARGET_ARM64
+#  define SCC_IS_NATIVE
+# endif
+#endif
+
+#ifdef SCC_IS_NATIVE
+# define __SCC_TARGET_CROSS__ 1
+#else
+# define __SCC_TARGET_CROSS__ 0
+#endif
 
 #endif//_SCC_PLATFORM_H

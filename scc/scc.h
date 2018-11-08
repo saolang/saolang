@@ -51,49 +51,10 @@
 /* assembler debug */
 /* #define ASM_DEBUG */
 
-/* target selection */
-/* #define SCC_TARGET_I386   *//* i386 code generator */
-/* #define SCC_TARGET_X86_64 *//* x86-64 code generator */
-/* #define SCC_TARGET_ARM    *//* ARMv4 code generator */
-/* #define SCC_TARGET_ARM64  *//* ARMv8 code generator */
-
-/* default target is I386 */
-#if !defined(SCC_TARGET_I386) && !defined(SCC_TARGET_ARM) && \
-    !defined(SCC_TARGET_ARM64) && !defined(SCC_TARGET_X86_64)
-# if defined __x86_64__ || defined _AMD64_
-#  define SCC_TARGET_X86_64
-# elif defined __arm__
-#  define SCC_TARGET_ARM
-#  define SCC_ARM_EABI
-#  define SCC_ARM_HARDFLOAT
-# elif defined __aarch64__
-#  define SCC_TARGET_ARM64
-# else
-#  define SCC_TARGET_I386
-# endif
-# ifdef _WIN32
-#  define SCC_TARGET_PE 1
-# endif
-#endif
-
-/* only native compiler supports -run */
-#if defined _WIN32 == defined SCC_TARGET_PE
-# if (defined __i386__ || defined _X86_) && defined SCC_TARGET_I386
-#  define SCC_IS_NATIVE
-# elif (defined __x86_64__ || defined _AMD64_) && defined SCC_TARGET_X86_64
-#  define SCC_IS_NATIVE
-# elif defined __arm__ && defined SCC_TARGET_ARM
-#  define SCC_IS_NATIVE
-# elif defined __aarch64__ && defined SCC_TARGET_ARM64
-#  define SCC_IS_NATIVE
-# endif
-#endif
-
 #if defined SCC_IS_NATIVE && !defined CONFIG_SCCBOOT
-//TODO WIN32 some problem for the headers...
-#ifndef _WIN32
-//# define CONFIG_SCC_BACKTRACE
-#endif
+//#ifndef _WIN32
+# define CONFIG_SCC_BACKTRACE
+//#endif
 #endif
 
 /* ------------ path configuration ------------ */
