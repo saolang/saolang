@@ -786,7 +786,7 @@ LIBSCCAPI SCCState *scc_new(void)
 
 #ifdef SCC_TARGET_PE
 	scc_define_symbol(s, "_WIN32", NULL);
-# ifdef SCC_TARGET_X86_64
+# if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
 	scc_define_symbol(s, "_WIN64", NULL);
 # endif
 #else
@@ -1553,7 +1553,7 @@ static const FlagDef options_f[] = {
 
 static const FlagDef options_m[] = {
     { offsetof(SCCState, ms_bitfields), 0, "ms-bitfields" },
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
     { offsetof(SCCState, nosse), FD_INVERT, "sse" },
 #endif
     { 0, 0, NULL }

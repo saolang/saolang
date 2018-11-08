@@ -9,7 +9,7 @@
 //#include <sys/stat.h> /* chmod() */
 #endif
 
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
 # define ADDR3264 ULONGLONG
 # define PE_IMAGE_REL IMAGE_REL_BASED_DIR64
 # define REL_TYPE_DIRECT R_X86_64_64
@@ -102,7 +102,8 @@ typedef struct _IMAGE_OPTIONAL_HEADER {
     DWORD   SizeOfUninitializedData;
     DWORD   AddressOfEntryPoint;
     DWORD   BaseOfCode;
-#ifndef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#else
     DWORD   BaseOfData;
 #endif
     /* NT additional fields. */
@@ -228,7 +229,7 @@ struct pe_header
     BYTE dosstub[0x40];
     DWORD nt_sig;
     IMAGE_FILE_HEADER filehdr;
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
     IMAGE_OPTIONAL_HEADER64 opthdr;
 #else
 #ifdef _WIN64
@@ -510,7 +511,7 @@ static int pe_write(struct pe_info *pe)
     0x00000000, /*DWORD   TimeDateStamp; */
     0x00000000, /*DWORD   PointerToSymbolTable; */
     0x00000000, /*DWORD   NumberOfSymbols; */
-#if defined(SCC_TARGET_X86_64)
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
     0x00F0, /*WORD    SizeOfOptionalHeader; */
     0x022F  /*WORD    Characteristics; */
 #define CHARACTERISTICS_DLL 0x222E
@@ -526,7 +527,7 @@ static int pe_write(struct pe_info *pe)
 },{
     /* IMAGE_OPTIONAL_HEADER opthdr */
     /* Standard fields. */
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
     0x020B, /*WORD    Magic; */
 #else
     0x010B, /*WORD    Magic; */
@@ -538,7 +539,8 @@ static int pe_write(struct pe_info *pe)
     0x00000000, /*DWORD   SizeOfUninitializedData; */
     0x00000000, /*DWORD   AddressOfEntryPoint; */
     0x00000000, /*DWORD   BaseOfCode; */
-#ifndef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#else
     0x00000000, /*DWORD   BaseOfData; */
 #endif
     /* NT additional fields. */
@@ -617,7 +619,8 @@ static int pe_write(struct pe_info *pe)
                 break;
 
             case sec_data:
-#ifndef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#else
                 pe_header.opthdr.BaseOfData = addr;
 #endif
                 break;
@@ -1231,7 +1234,7 @@ static int pe_check_symbols(struct pe_info *pe)
 #else
                     p = section_ptr_add(text_section, 8);
                     *p = 0x25FF;
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
                     *(DWORD*)(p+1) = (DWORD)-4;
 #endif
 #endif
@@ -1736,7 +1739,7 @@ ST_FUNC int pe_load_file(struct SCCState *s1, const char *filename, int fd)
 }
 
 /* ------------------------------------------------------------- */
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
 static unsigned pe_add_uwwind_info(SCCState *s1)
 {
     if (NULL == s1->uw_pdata) {
@@ -1797,7 +1800,7 @@ ST_FUNC void pe_add_unwind_data(unsigned start, unsigned end, unsigned stack)
 }
 #endif
 /* ------------------------------------------------------------- */
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
 #define PE_STDSYM(n,s) n
 #else
 #define PE_STDSYM(n,s) "_" n s
@@ -1965,7 +1968,7 @@ ST_FUNC int pe_output_file(SCCState *s1, const char *filename)
         pe.thunk = data_section;
         pe_build_imports(&pe);
         s1->runtime_main = pe.start_symbol;
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
         s1->uw_pdata = find_section(s1, ".pdata");
 #endif
 #endif

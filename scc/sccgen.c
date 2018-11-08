@@ -1216,7 +1216,7 @@ ST_FUNC int gv(int rc)
 #ifndef SCC_TARGET_ARM64
         if (rc == RC_IRET)
             rc2 = RC_LRET;
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
         else if (rc == RC_FRET)
             rc2 = RC_QRET;
 #endif
@@ -1360,7 +1360,7 @@ ST_FUNC void gv2(int rc1, int rc2)
 /* wrapper around RC_FRET to return a register by type */
 static int rc_fret(int t)
 {
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
     if (t == VT_LDOUBLE) {
         return RC_ST0;
     }
@@ -1372,7 +1372,7 @@ static int rc_fret(int t)
 /* wrapper around REG_FRET to return a register by type */
 static int reg_fret(int t)
 {
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
     if (t == VT_LDOUBLE) {
         return TREG_ST0;
     }
@@ -1477,7 +1477,7 @@ static void gv_dup(void)
         sv.type.t = VT_INT;
         if (is_float(t)) {
             rc = RC_FLOAT;
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
             if ((t & VT_BTYPE) == VT_LDOUBLE) {
                 rc = RC_ST0;
             }
@@ -2485,7 +2485,7 @@ static void gen_cast(CType *type)
                     if (sbt != (VT_INT | VT_UNSIGNED)) {
 #ifdef SCC_TARGET_ARM64
                         gen_cvt_sxtw();
-#elif defined(SCC_TARGET_X86_64)
+#elif (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
                         int r = gv(RC_INT);
                         /* x86_64 specific: movslq */
                         o(0x6348);
@@ -3060,7 +3060,7 @@ ST_FUNC void vstore(void)
             rc = RC_INT;
             if (is_float(ft)) {
                 rc = RC_FLOAT;
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
                 if ((ft & VT_BTYPE) == VT_LDOUBLE) {
                     rc = RC_ST0;
                 } else if ((ft & VT_BTYPE) == VT_QFLOAT) {
@@ -4778,7 +4778,7 @@ ST_FUNC void unary(void)
             }
         }
         break;
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
 #ifdef SCC_TARGET_PE
     case TOK_builtin_va_start:
 	parse_builtin_params(0, "ee");
@@ -5102,13 +5102,13 @@ special_math_val:
                 /* return in register */
                 if (is_float(ret.type.t)) {
                     ret.r = reg_fret(ret.type.t);
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
                     if ((ret.type.t & VT_BTYPE) == VT_QFLOAT)
                       ret.r2 = REG_QRET;
 #endif
                 } else {
 #ifndef SCC_TARGET_ARM64
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
                     if ((ret.type.t & VT_BTYPE) == VT_QLONG)
 #else
                     if ((ret.type.t & VT_BTYPE) == VT_LLONG)
@@ -5381,7 +5381,7 @@ static void expr_cond(void)
                each branch */
             if (is_float(vtop->type.t)) {
                 rc = RC_FLOAT;
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
                 if ((vtop->type.t & VT_BTYPE) == VT_LDOUBLE) {
                     rc = RC_ST0;
                 }
@@ -5498,7 +5498,7 @@ static void expr_cond(void)
             rc = RC_INT;
             if (is_float(type.t)) {
                 rc = RC_FLOAT;
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
                 if ((type.t & VT_BTYPE) == VT_LDOUBLE) {
                     rc = RC_ST0;
                 }
@@ -6873,7 +6873,7 @@ static void decl_initializer_alloc(CType *type, AttributeDef *ad, int r,
 
 		vla_runtime_type_size(type, &a);
 		gen_vla_alloc(type, a);
-#if defined SCC_TARGET_PE && defined SCC_TARGET_X86_64
+#if defined SCC_TARGET_PE && (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
 		/* on _WIN64, because of the function args scratch area, the
 			 result of alloca differs from RSP and is returned in RAX.  */
 		gen_vla_result(addr), addr = (loc -= PTR_SIZE);

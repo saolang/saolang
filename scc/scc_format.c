@@ -111,7 +111,7 @@ ST_FUNC void scc_format_begin_file(SCCState *s1)
     }
     /* disable symbol hashing during compilation */
     s = s1->symtab, s->reloc = s->hash, s->hash = NULL;
-#if defined SCC_TARGET_X86_64 && defined SCC_TARGET_PE
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64) && defined SCC_TARGET_PE
     s1->uw_sym = 0;
 #endif
 }
@@ -1045,7 +1045,7 @@ ST_FUNC void build_got_entries(SCCState *s1)
                     continue;
             }
 
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
             if ((type == R_X86_64_PLT32 || type == R_X86_64_PC32) &&
                 (ELFW(ST_VISIBILITY)(sym->st_other) != STV_DEFAULT ||
 		 ELFW(ST_BIND)(sym->st_info) == STB_LOCAL)) {
@@ -1271,7 +1271,7 @@ ST_FUNC void fill_got_entry(SCCState *s1, ElfW_Rel *rel)
     if (0 == offset)
         return;
     section_reserve(s1->got, offset + PTR_SIZE);
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
     write64le(s1->got->data + offset, sym->st_value);
 #else
     write32le(s1->got->data + offset, sym->st_value);

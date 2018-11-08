@@ -486,7 +486,7 @@ zero_pad:
 			ind += size;
 			break;
 		case TOK_ASMDIR_quad:
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
 			size = 8;
 			goto asm_data;
 #else
@@ -535,7 +535,7 @@ asm_data:
 				if (sec->sh_type != SHT_NOBITS) {
 					if (size == 4) {
 						gen_expr32(&e);
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
 					} else if (size == 8) {
 						gen_expr64(&e);
 #endif

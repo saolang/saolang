@@ -144,9 +144,9 @@ DEF(TOK_builtin_frame_address, "__builtin_frame_address")
 DEF(TOK_builtin_return_address, "__builtin_return_address")
 DEF(TOK_builtin_expect, "__builtin_expect")
 /*DEF(TOK_builtin_va_list, "__builtin_va_list")*/
-#if defined SCC_TARGET_PE && defined SCC_TARGET_X86_64
+#if defined SCC_TARGET_PE && (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
 DEF(TOK_builtin_va_start, "__builtin_va_start")
-#elif defined SCC_TARGET_X86_64
+#elif (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
 DEF(TOK_builtin_va_arg_types, "__builtin_va_arg_types")
 #elif defined SCC_TARGET_ARM64
 DEF(TOK___va_start, "__va_start")

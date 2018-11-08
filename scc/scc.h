@@ -115,7 +115,7 @@
 # if defined __FreeBSD__
 #  define CONFIG_SCC_ELFINTERP "/libexec/ld-elf.so.1"
 # elif defined __FreeBSD_kernel__
-#  if defined(SCC_TARGET_X86_64)
+#  if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
 #   define CONFIG_SCC_ELFINTERP "/lib/ld-kfreebsd-x86-64.so.1"
 #  else
 #   define CONFIG_SCC_ELFINTERP "/lib/ld.so.1"
@@ -136,7 +136,7 @@
 #  else
 #   define CONFIG_SCC_ELFINTERP "/lib/ld-linux-aarch64.so.1"
 #  endif
-# elif defined(SCC_TARGET_X86_64)
+# elif (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
 #  if defined(SCC_MUSL)
 #   define CONFIG_SCC_ELFINTERP "/lib/ld-musl-x86_64.so.1"
 #  else
@@ -724,7 +724,7 @@ struct SCCState {
     unsigned pe_file_align;
     unsigned pe_stack_size;
     addr_t pe_imagebase;
-# ifdef SCC_TARGET_X86_64
+# if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
     Section *uw_pdata;
     int uw_sym;
     unsigned uw_offs;
@@ -927,7 +927,7 @@ struct filespec {
  DEF(TOK_ASM_ ## x ## w, #x "w") \
  DEF(TOK_ASM_ ## x ## l, #x "l") \
  DEF(TOK_ASM_ ## x, #x)
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
 # define DEF_BWLQ(x) \
  DEF(TOK_ASM_ ## x ## b, #x "b") \
  DEF(TOK_ASM_ ## x ## w, #x "w") \
@@ -1276,7 +1276,7 @@ ST_FUNC void expr_prod(void);
 ST_FUNC void expr_sum(void);
 ST_FUNC void gexpr(void);
 ST_FUNC int expr_const(void);
-#if defined SCC_TARGET_X86_64 && !defined SCC_TARGET_PE
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64) && !defined SCC_TARGET_PE
 ST_FUNC int classify_x86_64_va_arg(CType *ty);
 #endif
 
@@ -1500,7 +1500,7 @@ ST_FUNC int scc_assemble(SCCState *s1, int do_preprocess);
 
 /* ------------ asm-X86.c ------------ */
 ST_FUNC void gen_expr32(ExprValue *pe);
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
 ST_FUNC void gen_expr64(ExprValue *pe);
 #endif
 ST_FUNC void asm_opcode(SCCState *s1, int opcode);

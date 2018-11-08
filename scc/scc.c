@@ -89,7 +89,7 @@ static const char help2[] =
 #ifdef SCC_TARGET_ARM
     "  float-abi                     hard/softfp on arm\n"
 #endif
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
     "  no-sse                        disable floats on x86_64\n"
 #endif
     "-Wl,... linker options:\n"
