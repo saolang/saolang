@@ -693,9 +693,13 @@ LIBSCCAPI SCCState *scc_new(void)
 #ifdef CHAR_IS_UNSIGNED
 	s->char_is_unsigned = 1;
 #endif
-#ifdef SCC_TARGET_I386
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ //{
+# if __SCC_TARGET_CPU_BIT__==32
 	s->seg_size = 32;
-#endif
+# elif __SCC_TARGET_CPU_BIT__==64
+	//s->seg_size = 64;//TODO
+# endif
+#endif //}
 	/* enable this if you want symbols with leading underscore on windows: */
 #if 0 /* def SCC_TARGET_PE */
 	s->leading_underscore = 1;
@@ -737,14 +741,23 @@ LIBSCCAPI SCCState *scc_new(void)
 	scc_define_symbol(s, "__STDC_VERSION__", "199901L");
 	scc_define_symbol(s, "__STDC_HOSTED__", NULL);
 
+#if __SCC_TARGET_CROSS__==1
+	scc_define_symbol(s, "__SCC_TARGET_CPU__", SCC_QUOTE(__SCC_TARGET_CPU__));
+	scc_define_symbol(s, "__SCC_TARGET_CPU_BIT__", SCC_QUOTE(__SCC_TARGET_CPU_BIT__));
+#endif
+	
 	/* target defines */
-#if defined(SCC_TARGET_I386)
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__
+# if __SCC_TARGET_CPU_BIT__==32
 	scc_define_symbol(s, "__i386__", NULL);
 	scc_define_symbol(s, "__i386", NULL);
 	scc_define_symbol(s, "i386", NULL);
-#elif defined(SCC_TARGET_X86_64)
+# elif __SCC_TARGET_CPU_BIT__==64
 	scc_define_symbol(s, "__x86_64__", NULL);
-#elif defined(SCC_TARGET_ARM)
+# endif
+#endif
+
+#if defined(SCC_TARGET_ARM)
 	scc_define_symbol(s, "__ARM_ARCH_4__", NULL);
 	scc_define_symbol(s, "__arm_elf__", NULL);
 	scc_define_symbol(s, "__arm_elf", NULL);
@@ -767,7 +780,7 @@ LIBSCCAPI SCCState *scc_new(void)
 	scc_define_symbol(s, "__aarch64__", NULL);
 #endif
 
-#ifdef SCC_TARGET_MACHO
+#if __SCC_OS_ID__==__SCC_OS_OSX__
 	scc_define_symbol(s, "__APPLE__", NULL);
 #endif
 
@@ -932,8 +945,8 @@ LIBSCCAPI int scc_set_output_type(SCCState *s, int output_type)
 	/* paths for crt objects */
 	scc_split_path(s, &s->crt_paths, &s->nb_crt_paths, CONFIG_SCC_CRTPREFIX);
 	/* add libc crt1/crti objects */
-#ifdef SCC_TARGET_MACHO
-	//TODO for apple??
+#if __SCC_OS_ID__==__SCC_OS_OSX__ //{
+	//TODO
 #else
 	if ((output_type == SCC_OUTPUT_EXE || output_type == SCC_OUTPUT_DLL) &&
 			!s->nostdlib)
@@ -943,7 +956,7 @@ LIBSCCAPI int scc_set_output_type(SCCState *s, int output_type)
 		}
 		scc_add_crt(s, "crti.o");
 	}
-#endif//SCC_TARGET_MACHO
+#endif//}
 #endif
 	return 0;
 }
@@ -983,10 +996,10 @@ ST_FUNC int scc_add_file_internal(SCCState *s1, const char *filename, int flags)
 		obj_type = scc_object_type(fd, &ehdr);
 		SCC(lseek)(fd, 0, SEEK_SET);
 
-#ifdef SCC_TARGET_MACHO
+#if __SCC_OS_ID__==__SCC_OS_OSX__ //{
 		if (0 == obj_type && 0 == SCC(strcmp,int)(scc_fileextension(filename), ".dylib"))
 			obj_type = AFF_BINTYPE_DYN;
-#endif
+#endif //}
 
 		switch (obj_type) {
 			case AFF_BINTYPE_REL:
@@ -1097,7 +1110,7 @@ LIBSCCAPI int scc_add_library(SCCState *s, const char *libraryname)
 #if defined SCC_TARGET_PE
     const char *libs[] = { "%s/%s.def", "%s/lib%s.def", "%s/%s.dll", "%s/lib%s.dll", "%s/lib%s.a", NULL };
     const char **pp = s->static_link ? libs + 4 : libs;
-#elif defined SCC_TARGET_MACHO
+#elif __SCC_OS_ID__==__SCC_OS_OSX__
     const char *libs[] = { "%s/lib%s.dylib", "%s/lib%s.a", NULL };
     const char **pp = s->static_link ? libs + 1 : libs;
 #else
@@ -1287,108 +1300,111 @@ static void copy_linker_arg(char **pp, const char *s, int sep)
 /* set linker options */
 static int scc_set_linker(SCCState *s, const char *option)
 {
-    while (*option) {
+	while (*option) {
 
-        const char *p = NULL;
-        char *end = NULL;
-        int ignoring = 0;
-        int ret;
+		const char *p = NULL;
+		char *end = NULL;
+		int ignoring = 0;
+		int ret;
 
-        if (link_option(option, "Bsymbolic", &p)) {
-            s->symbolic = 1;
-        } else if (link_option(option, "nostdlib", &p)) {
-            s->nostdlib = 1;
-        } else if (link_option(option, "fini=", &p)) {
-            copy_linker_arg(&s->fini_symbol, p, 0);
-            ignoring = 1;
-        } else if (link_option(option, "image-base=", &p)
-                || link_option(option, "Ttext=", &p)) {
-            s->text_addr = SCC(strtoull,unsigned long long)(p, &end, 16);
-            s->has_text_addr = 1;
-        } else if (link_option(option, "init=", &p)) {
-            copy_linker_arg(&s->init_symbol, p, 0);
-            ignoring = 1;
-        } else if (link_option(option, "oformat=", &p)) {
+		if (link_option(option, "Bsymbolic", &p)) {
+			s->symbolic = 1;
+		} else if (link_option(option, "nostdlib", &p)) {
+			s->nostdlib = 1;
+		} else if (link_option(option, "fini=", &p)) {
+			copy_linker_arg(&s->fini_symbol, p, 0);
+			ignoring = 1;
+		} else if (link_option(option, "image-base=", &p)
+				|| link_option(option, "Ttext=", &p)) {
+			s->text_addr = SCC(strtoull,unsigned long long)(p, &end, 16);
+			s->has_text_addr = 1;
+		} else if (link_option(option, "init=", &p)) {
+			copy_linker_arg(&s->init_symbol, p, 0);
+			ignoring = 1;
+		} else if (link_option(option, "oformat=", &p)) {
+			if(
 #if defined(SCC_TARGET_PE)
-            if (strstart("pe-", &p)) {
+					strstart("pe-", &p)
 #elif PTR_SIZE == 8
-            if (strstart("elf64-", &p)) {
+					strstart("elf64-", &p)
 #else
-            if (strstart("elf32-", &p)) {
+					strstart("elf32-", &p)
 #endif
-                s->output_format = SCC_OUTPUT_FORMAT_ELF;
-            } else if (!SCC(strcmp,int)(p, "binary")) {
-                s->output_format = SCC_OUTPUT_FORMAT_BINARY;
-            } else
-                goto err;
+				){ 
+				s->output_format = SCC_OUTPUT_FORMAT_ELF;
+			} else if (!SCC(strcmp,int)(p, "binary")) {
+				s->output_format = SCC_OUTPUT_FORMAT_BINARY;
+			} else
+				goto err;
 
-        } else if (link_option(option, "as-needed", &p)) {
-            ignoring = 1;
-        } else if (link_option(option, "O", &p)) {
-            ignoring = 1;
-        } else if (link_option(option, "export-all-symbols", &p)) {
-            s->rdynamic = 1;
-        } else if (link_option(option, "export-dynamic", &p)) {
-            s->rdynamic = 1;
-        } else if (link_option(option, "rpath=", &p)) {
-            copy_linker_arg(&s->rpath, p, ':');
-        } else if (link_option(option, "enable-new-dtags", &p)) {
-            s->enable_new_dtags = 1;
-        } else if (link_option(option, "section-alignment=", &p)) {
-            s->section_align = SCC(strtoul,unsigned)(p, &end, 16);
-        } else if (link_option(option, "soname=", &p)) {
-            copy_linker_arg(&s->soname, p, 0);
+		} else if (link_option(option, "as-needed", &p)) {
+			ignoring = 1;
+		} else if (link_option(option, "O", &p)) {
+			ignoring = 1;
+		} else if (link_option(option, "export-all-symbols", &p)) {
+			s->rdynamic = 1;
+		} else if (link_option(option, "export-dynamic", &p)) {
+			s->rdynamic = 1;
+		} else if (link_option(option, "rpath=", &p)) {
+			copy_linker_arg(&s->rpath, p, ':');
+		} else if (link_option(option, "enable-new-dtags", &p)) {
+			s->enable_new_dtags = 1;
+		} else if (link_option(option, "section-alignment=", &p)) {
+			s->section_align = SCC(strtoul,unsigned)(p, &end, 16);
+		} else if (link_option(option, "soname=", &p)) {
+			copy_linker_arg(&s->soname, p, 0);
 #ifdef SCC_TARGET_PE
-        } else if (link_option(option, "large-address-aware", &p)) {
-            s->pe_characteristics |= 0x20;
-        } else if (link_option(option, "file-alignment=", &p)) {
-            s->pe_file_align = SCC(strtoul,unsigned)(p, &end, 16);
-        } else if (link_option(option, "stack=", &p)) {
-            s->pe_stack_size = SCC(strtoul,unsigned)(p, &end, 10);
-        } else if (link_option(option, "subsystem=", &p)) {
-#if defined(SCC_TARGET_I386) || defined(SCC_TARGET_X86_64)
-            if (!SCC(strcmp,int)(p, "native")) {
-                s->pe_subsystem = 1;
-            } else if (!SCC(strcmp,int)(p, "console")) {
-                s->pe_subsystem = 3;
-            } else if (!SCC(strcmp,int)(p, "gui") || !SCC(strcmp,int)(p, "windows")) {
-                s->pe_subsystem = 2;
-            } else if (!SCC(strcmp,int)(p, "posix")) {
-                s->pe_subsystem = 7;
-            } else if (!SCC(strcmp,int)(p, "efiapp")) {
-                s->pe_subsystem = 10;
-            } else if (!SCC(strcmp,int)(p, "efiboot")) {
-                s->pe_subsystem = 11;
-            } else if (!SCC(strcmp,int)(p, "efiruntime")) {
-                s->pe_subsystem = 12;
-            } else if (!SCC(strcmp,int)(p, "efirom")) {
-                s->pe_subsystem = 13;
+		} else if (link_option(option, "large-address-aware", &p)) {
+			s->pe_characteristics |= 0x20;
+		} else if (link_option(option, "file-alignment=", &p)) {
+			s->pe_file_align = SCC(strtoul,unsigned)(p, &end, 16);
+		} else if (link_option(option, "stack=", &p)) {
+			s->pe_stack_size = SCC(strtoul,unsigned)(p, &end, 10);
+		} else if (link_option(option, "subsystem=", &p)) {
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ //{
+			if (!SCC(strcmp,int)(p, "native")) {
+				s->pe_subsystem = 1;
+			} else if (!SCC(strcmp,int)(p, "console")) {
+				s->pe_subsystem = 3;
+			} else if (!SCC(strcmp,int)(p, "gui") || !SCC(strcmp,int)(p, "windows")) {
+				s->pe_subsystem = 2;
+			} else if (!SCC(strcmp,int)(p, "posix")) {
+				s->pe_subsystem = 7;
+			} else if (!SCC(strcmp,int)(p, "efiapp")) {
+				s->pe_subsystem = 10;
+			} else if (!SCC(strcmp,int)(p, "efiboot")) {
+				s->pe_subsystem = 11;
+			} else if (!SCC(strcmp,int)(p, "efiruntime")) {
+				s->pe_subsystem = 12;
+			} else if (!SCC(strcmp,int)(p, "efirom")) {
+				s->pe_subsystem = 13;
+			}
 #elif defined(SCC_TARGET_ARM)
-            if (!SCC(strcmp,int)(p, "wince")) {
-                s->pe_subsystem = 9;
+			else if (!SCC(strcmp,int)(p, "wince")) {
+				s->pe_subsystem = 9;
+			}
 #endif
-            } else
-                goto err;
-#endif
-        } else if (ret = link_option(option, "?whole-archive", &p), ret) {
-            if (ret > 0)
-                s->filetype |= AFF_WHOLE_ARCHIVE;
-            else
-                s->filetype &= ~AFF_WHOLE_ARCHIVE;
-        } else if (p) {
-            return 0;
-        } else {
-    err:
-            scc_error("unsupported linker option '%s'", option);
-        }
+			else goto err;
+#endif //}
+		} else if (ret = link_option(option, "?whole-archive", &p), ret) {
+			if (ret > 0)
+				s->filetype |= AFF_WHOLE_ARCHIVE;
+			else
+				s->filetype &= ~AFF_WHOLE_ARCHIVE;
+		} else if (p) {
+			return 0;
+		} else {
+err:
+			scc_error("unsupported linker option '%s'", option);
+		}
 
-        if (ignoring && s->warn_unsupported)
-            scc_warning("unsupported linker option '%s'", option);
+		if (ignoring && s->warn_unsupported)
+			scc_warning("unsupported linker option '%s'", option);
 
-        option = skip_linker_arg(&p);
-    }
-    return 1;
-}
+		option = skip_linker_arg(&p);
+	}//while
+	return 1;
+}//scc_set_linker
 
 typedef struct SCCOption {
     const char *name;

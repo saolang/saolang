@@ -27,7 +27,7 @@
 # define IMAGE_FILE_MACHINE 0x01C0
 # define RSRC_RELTYPE 7 /* ??? (not tested) */
 
-#elif defined SCC_TARGET_I386
+#elif __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==32 //{
 # define ADDR3264 DWORD
 # define PE_IMAGE_REL IMAGE_REL_BASED_HIGHLOW
 # define REL_TYPE_DIRECT R_386_32
@@ -36,7 +36,7 @@
 # define IMAGE_FILE_MACHINE 0x014C
 # define RSRC_RELTYPE 7 /* DIR32NB */
 
-#endif
+#endif //}
 
 #ifndef IMAGE_NT_SIGNATURE
 /* ----------------------------------------------------------- */
@@ -514,7 +514,7 @@ static int pe_write(struct pe_info *pe)
     0x00F0, /*WORD    SizeOfOptionalHeader; */
     0x022F  /*WORD    Characteristics; */
 #define CHARACTERISTICS_DLL 0x222E
-#elif defined(SCC_TARGET_I386)
+#elif __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==32 //{
     0x00E0, /*WORD    SizeOfOptionalHeader; */
     0x030F  /*WORD    Characteristics; */
 #define CHARACTERISTICS_DLL 0x230E
@@ -1428,7 +1428,7 @@ static void pe_print_sections(SCCState *s1, const char *fname)
 /* ------------------------------------------------------------- */
 /* helper function for load/store to insert one more indirection */
 
-#if defined SCC_TARGET_I386 || defined SCC_TARGET_X86_64
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ //{
 ST_FUNC SValue *pe_getimport(SValue *sv, SValue *v2)
 {
     int r2;

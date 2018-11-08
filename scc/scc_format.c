@@ -830,49 +830,49 @@ static void relocate_rel(SCCState *s1, Section *sr)
    their space */
 static int prepare_dynamic_rel(SCCState *s1, Section *sr)
 {
-    ElfW_Rel *rel;
-    int sym_index, type, count;
+	ElfW_Rel *rel;
+	int sym_index, type, count;
 
-    count = 0;
-    for_each_elem(sr, 0, rel, ElfW_Rel) {
-        sym_index = ELFW(R_SYM)(rel->r_info);
-        type = ELFW(R_TYPE)(rel->r_info);
-        switch(type) {
-#if defined(SCC_TARGET_I386) || defined(SCC_TARGET_X86_64)
-#if defined(SCC_TARGET_I386)
-        case R_386_32:
-            if (!get_sym_attr(s1, sym_index, 0)->dyn_index
-                && ((ElfW(Sym)*)symtab_section->data + sym_index)->st_shndx == SHN_UNDEF) {
-                /* don't fixup unresolved (weak) symbols */
-                rel->r_info = ELFW(R_INFO)(sym_index, R_386_RELATIVE);
-                break;
-            }
-#elif defined(SCC_TARGET_X86_64)
-        case R_X86_64_32:
-        case R_X86_64_32S:
-        case R_X86_64_64:
-#endif
-            count++;
-            break;
-#if defined(SCC_TARGET_I386)
-        case R_386_PC32:
-#elif defined(SCC_TARGET_X86_64)
-        case R_X86_64_PC32:
-#endif
-            if (get_sym_attr(s1, sym_index, 0)->dyn_index)
-                count++;
-            break;
-#endif
-        default:
-            break;
-        }
-    }
-    if (count) {
-        /* allocate the section */
-        sr->sh_flags |= SHF_ALLOC;
-        sr->sh_size = count * sizeof(ElfW_Rel);
-    }
-    return count;
+	count = 0;
+	for_each_elem(sr, 0, rel, ElfW_Rel) {
+		sym_index = ELFW(R_SYM)(rel->r_info);
+		type = ELFW(R_TYPE)(rel->r_info);
+		switch(type) {
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ //{
+#if __SCC_TARGET_CPU_BIT__==32 //{
+			case R_386_32:
+				if (!get_sym_attr(s1, sym_index, 0)->dyn_index
+						&& ((ElfW(Sym)*)symtab_section->data + sym_index)->st_shndx == SHN_UNDEF) {
+					/* don't fixup unresolved (weak) symbols */
+					rel->r_info = ELFW(R_INFO)(sym_index, R_386_RELATIVE);
+					break;
+				}
+#elif __SCC_TARGET_CPU_BIT__==64 //}{
+			case R_X86_64_32:
+			case R_X86_64_32S:
+			case R_X86_64_64:
+#endif //}
+				count++;
+				break;
+#if __SCC_TARGET_CPU_BIT__==32 //{
+			case R_386_PC32:
+#elif __SCC_TARGET_CPU_BIT__==64 //}{
+			case R_X86_64_PC32:
+#endif //}
+				if (get_sym_attr(s1, sym_index, 0)->dyn_index)
+					count++;
+				break;
+#endif //}
+			default:
+				break;
+		}
+	}
+	if (count) {
+		/* allocate the section */
+		sr->sh_flags |= SHF_ALLOC;
+		sr->sh_size = count * sizeof(ElfW_Rel);
+	}
+	return count;
 }
 
 static void build_got(SCCState *s1)

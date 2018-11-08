@@ -122,27 +122,13 @@ static const char help2[] =
 
 static const char version[] =
     "scc version "SCC_VERSION" ("
-#ifdef SCC_TARGET_I386
-        "i386"
-#elif defined SCC_TARGET_X86_64
-        "x86_64"
-#elif defined SCC_TARGET_ARM
-        "ARM"
-#elif defined SCC_TARGET_ARM64
-        "AArch64"
-#endif
 #ifdef SCC_ARM_HARDFLOAT
         " Hard Float"
 #endif
-#ifdef SCC_TARGET_PE
-        " Windows"
-#elif defined(SCC_TARGET_MACHO)
-        " Darwin"
-#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
-        " FreeBSD"
-#else
-        " Linux"
-#endif
+				//
+				" "SCC_QUOTE(__SCC_TARGET_OS__)
+				" "SCC_QUOTE(__SCC_TARGET_CPU_BIT__)
+				" "SCC_QUOTE(__SCC_TARGET_FORMAT__)
     ")\n"
     ;
 
@@ -160,18 +146,8 @@ static void print_search_dirs(SCCState *s)
 	/* print_dirs("programs", NULL, 0); */
 	print_dirs("include", s->sysinclude_paths, s->nb_sysinclude_paths);
 	print_dirs("libraries", s->library_paths, s->nb_library_paths);
-#ifdef SCC_TARGET_PE
-#ifdef SCC_LIBSCC1
-	SCC(printf)("libscc1(win):\n  %s/"SCC_LIBSCC1"\n", s->scc_lib_path);
-#endif
-#elif defined(SCC_TARGET_MACHO)
-#ifdef SCC_LIBSCC1
-	SCC(printf)("libscc1(osx):\n  %s/"SCC_LIBSCC1"\n", s->scc_lib_path);
-#endif
-#else //assume ELF
-#ifdef SCC_LIBSCC1
-	SCC(printf)("libscc1(elf):\n  %s/"SCC_LIBSCC1"\n", s->scc_lib_path);
-#endif
+	SCC(printf)("libscc1("SCC_QUOTE(__SCC_OS__)"):\n  %s/"SCC_LIBSCC1"\n", s->scc_lib_path);
+#if __SCC_OS_FORMAT_ID__==__SCC_OS_FORMAT_ELF
 	print_dirs("crt", s->crt_paths, s->nb_crt_paths);
 	SCC(printf)("elfinterp:\n  %s\n",  DEFAULT_ELFINTERP(s));
 #endif

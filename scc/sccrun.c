@@ -102,14 +102,14 @@ LIBSCCAPI int scc_run(SCCState *s1, int argc, char **argv)
     return (*prog_main)(argc, argv);
 }
 
-#if defined SCC_TARGET_I386 || defined SCC_TARGET_X86_64
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ //{
 /* To avoid that x86 processors would reload cached instructions
-   each time when data is written in the near, we need to make
-   sure that code and data do not share the same 64 byte unit */
- #define RUN_SECTION_ALIGNMENT 63
-#else
- #define RUN_SECTION_ALIGNMENT 0
-#endif
+	 each time when data is written in the near, we need to make
+	 sure that code and data do not share the same 64 byte unit */
+#define RUN_SECTION_ALIGNMENT 63
+#else //}:{
+#define RUN_SECTION_ALIGNMENT 0
+#endif //}
 
 /* relocate code. Return -1 on error, required size if ptr is NULL,
    otherwise copy code into buffer passed by the caller */

@@ -94,7 +94,8 @@ ST_FUNC int expect(const char *msg)
 /* ------------------------------------------------------------------------- */
 /* Custom allocator for tiny objects */
 
-//#define USE_TAL
+//TODO USE_TAL tune
+#define USE_TAL
 
 #ifndef USE_TAL
 #define tal_free(al, p) scc_free(p)

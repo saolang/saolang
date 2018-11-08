@@ -94,16 +94,16 @@
 //99% SOLUTION FOR MCAT(): Variable Argument Macro (VA_MACRO) up to 9 arguments 
 #define SCC_NUM_ARGS_(_1, _2, _3, _4, _5, _6, _7, _8, _9, TOTAL, ...) TOTAL
 #define SCC_NUM_ARGS(...) SCC_NUM_ARGS_(__VA_ARGS__, 9, 8, 7, 6, 5, 4, 3, 2, 1)
-#define SCC_MCAT(...) SCC_CAT(MCAT, SCC_NUM_ARGS(__VA_ARGS__))(__VA_ARGS__)
+#define SCC_MCAT(...) SCC_CAT(SCC_MCAT, SCC_NUM_ARGS(__VA_ARGS__))(__VA_ARGS__)
 #define SCC_MCAT1(_1) _1
-#define SCC_MCAT2(_1, _2) SCC_CAT(MCAT1(_1),_2)
-#define SCC_MCAT3(_1, _2, _3) SCC_CAT(MCAT2(_1,_2),_3)
-#define SCC_MCAT4(_1, _2, _3, _4) SCC_CAT(MCAT3(_1,_2,_3),_4)
-#define SCC_MCAT5(_1, _2, _3, _4, _5) SCC_CAT(MCAT4(_1,_2,_3,_4),_5)
-#define SCC_MCAT6(_1, _2, _3, _4, _5, _6) SCC_CAT(MCAT5(_1,_2,_3,_4,_5),_6)
-#define SCC_MCAT7(_1, _2, _3, _4, _5, _6,_7) SCC_CAT(MCAT5(_1,_2,_3,_4,_5),_6)
-#define SCC_MCAT8(_1, _2, _3, _4, _5, _6,_7,_8) SCC_CAT(MCAT5(_1,_2,_3,_4,_5,_6),_7)
-#define SCC_MCAT9(_1, _2, _3, _4, _5, _6,_7,_8,_9) SCC_CAT(MCAT5(_1,_2,_3,_4,_5,_6,_7),_8)
+#define SCC_MCAT2(_1, _2)  SCC_CAT(SCC_MCAT1(_1),_2)
+#define SCC_MCAT3(_1, _2, _3)  SCC_CAT(SCC_MCAT2(_1,_2),_3)
+#define SCC_MCAT4(_1, _2, _3, _4)  SCC_CAT(SCC_MCAT3(_1,_2,_3),_4)
+#define SCC_MCAT5(_1, _2, _3, _4, _5)  SCC_CAT(SCC_MCAT4(_1,_2,_3,_4),_5)
+#define SCC_MCAT6(_1, _2, _3, _4, _5, _6) SCC_CAT(SCC_MCAT5(_1,_2,_3,_4,_5),_6)
+#define SCC_MCAT7(_1, _2, _3, _4, _5, _6,_7) SCC_CAT(SCC_MCAT6(_1,_2,_3,_4,_5,_6),_7)
+#define SCC_MCAT8(_1, _2, _3, _4, _5, _6,_7,_8) SCC_CAT(SCC_MCAT7(_1,_2,_3,_4,_5,_6,_7),_8)
+#define SCC_MCAT9(_1, _2, _3, _4, _5, _6,_7,_8,_9) SCC_CAT(SCC_MCAT8(_1,_2,_3,_4,_5,_6,_7,_8),_9)
 
 
 //@ref:

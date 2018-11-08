@@ -857,7 +857,7 @@ asm_data:
 			next();
 			pop_section(s1);
 			break;
-#ifdef SCC_TARGET_I386
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==32 //{
 		case TOK_ASMDIR_code16:
 			{
 				next();
@@ -870,8 +870,8 @@ asm_data:
 				s1->seg_size = 32;
 			}
 			break;
-#endif
-#ifdef SCC_TARGET_X86_64
+#endif //}
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64 //{
 			/* added for compatibility with GAS */
 		case TOK_ASMDIR_code64:
 			next();

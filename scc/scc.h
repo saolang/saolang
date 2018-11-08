@@ -4,7 +4,7 @@
 //#define _GNU_SOURCE
 
 #include "config.h"//which from ./configure
-//#define SCC_VERSION "SCCOS_0_0_10"
+//#define SCC_VERSION "SAOOS_0_0_10"
 
 #include "scc_platform.h"
 #include "scc_libc.h"
@@ -622,13 +622,13 @@ struct SCCState {
     char *init_symbol; /* symbols to call at load-time (not used currently) */
     char *fini_symbol; /* symbols to call at unload-time (not used currently) */
 
-#ifdef SCC_TARGET_I386
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__
+# if __SCC_TARGET_CPU_BIT__==32
+# elif __SCC_TARGET_CPU_BIT__==64
+    int nosse; /* For -mno-sse support. */
+# endif
     int seg_size; /* 32. Can be 16 with i386 assembler (.code16) */
 #endif
-#ifdef SCC_TARGET_X86_64
-    int nosse; /* For -mno-sse support. */
-#endif
-
     /* array of all loaded dlls (including those referenced by loaded dlls) */
     DLLReference **loaded_dlls;
     int nb_loaded_dlls;
@@ -921,7 +921,7 @@ struct filespec {
 #define TOK_ASMDIR_FIRST TOK_ASMDIR_byte
 #define TOK_ASMDIR_LAST TOK_ASMDIR_section
 
-#if defined SCC_TARGET_I386 || defined SCC_TARGET_X86_64
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ //{
 /* only used for i386 asm opcodes definitions */
 #define DEF_BWL(x) \
  DEF(TOK_ASM_ ## x ## b, #x "b") \
@@ -998,7 +998,7 @@ struct filespec {
  DEF_ASM(x ## nle ## suffix) \
  DEF_ASM(x ## g ## suffix)
 
-#endif /* defined SCC_TARGET_I386 || defined SCC_TARGET_X86_64 */
+#endif //}__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__
 
 //WARNING: the sequence does matter.
 //@ref scc_keywords in pp.c
@@ -1408,9 +1408,10 @@ ST_FUNC void gen_fill_nops(int);
 ST_FUNC int gjmp(int t);
 ST_FUNC void gjmp_addr(int a);
 ST_FUNC int gtst(int inv, int t);
-#if defined SCC_TARGET_I386 || defined SCC_TARGET_X86_64
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__
 ST_FUNC void gtst_addr(int inv, int a);
 #else
+//TODO
 #define gtst_addr(inv, a) gsym_addr(gtst(inv, 0), a)
 #endif
 ST_FUNC void gen_opi(int op);
@@ -1452,7 +1453,7 @@ static inline void add64le(unsigned char *p, int64_t x) {
 }
 
 /* ------------ i386-gen.c ------------ */
-#if defined SCC_TARGET_I386 || defined SCC_TARGET_X86_64
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__
 ST_FUNC void g(int c);
 ST_FUNC void gen_le16(int c);
 ST_FUNC void gen_le32(int c);
@@ -1461,12 +1462,14 @@ ST_FUNC void gen_addrpc32(int r, Sym *sym, int c);
 #endif
 
 /* ------------ gen-X86-?.c ------------ */
-#ifdef SCC_TARGET_X86_64
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__
+# if __SCC_TARGET_CPU_BIT__==64
 ST_FUNC void gen_addr64(int r, Sym *sym, int64_t c);
 ST_FUNC void gen_opl(int op);
-#ifdef SCC_TARGET_PE
+#  ifdef SCC_TARGET_PE
 ST_FUNC void gen_vla_result(int addr);
-#endif
+#  endif
+# endif
 #endif
 
 /* ------------ arm-gen.c ------------ */
@@ -1514,22 +1517,22 @@ ST_FUNC void asm_clobber(uint8_t *clobber_regs, const char *str);
 #endif
 
 /* ------------ sccpe.c -------------- */
-#ifdef SCC_TARGET_PE
+#ifdef SCC_TARGET_PE //{
 ST_FUNC int pe_load_file(struct SCCState *s1, const char *filename, int fd);
 ST_FUNC int pe_output_file(SCCState * s1, const char *filename);
 ST_FUNC int pe_putimport(SCCState *s1, int dllindex, const char *name, addr_t value);
-#if defined SCC_TARGET_I386 || defined SCC_TARGET_X86_64
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__
 ST_FUNC SValue *pe_getimport(SValue *sv, SValue *v2);
-#endif
-#ifdef SCC_TARGET_X86_64
+# if __SCC_TARGET_CPU_BIT__==64
 ST_FUNC void pe_add_unwind_data(unsigned start, unsigned end, unsigned stack);
+# endif
 #endif
 PUB_FUNC int scc_get_dllexports(const char *filename, char **pp);
 /* symbol properties stored in Elf32_Sym->st_other */
 # define ST_PE_EXPORT 0x10
 # define ST_PE_IMPORT 0x20
 # define ST_PE_STDCALL 0x40
-#endif
+#endif //}
 #define ST_ASM_SET 0x04
 
 /* ------------ sccrun.c ----------------- */

@@ -94,10 +94,9 @@ ST_FUNC int ieee_finite(double d)
 }
 
 /* compiling intel long double natively */
-#if (defined __i386__ || defined __x86_64__) \
-    && (defined SCC_TARGET_I386 || defined SCC_TARGET_X86_64)
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ //{
 # define SCC_IS_NATIVE_387
-#endif
+#endif //}
 
 ST_FUNC void test_lvalue(void)
 {
@@ -614,12 +613,12 @@ ST_FUNC void vpop(void)
 {
     int v;
     v = vtop->r & VT_VALMASK;
-#if defined(SCC_TARGET_I386) || defined(SCC_TARGET_X86_64)
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ //{
     /* for x86, we need to pop the FP stack */
     if (v == TREG_ST0) {
         o(0xd8dd); /* fstp %st(0) */
     } else
-#endif
+#endif //}
     if (v == VT_JMP || v == VT_JMPI) {
         /* need to put correct jump if && or || without test */
         gsym(vtop->c.i);
@@ -937,12 +936,12 @@ ST_FUNC void save_reg_upstack(int r, int n)
                 sv.r = VT_LOCAL | VT_LVAL;
                 sv.c.i = loc;
                 store(r, &sv);
-#if defined(SCC_TARGET_I386) || defined(SCC_TARGET_X86_64)
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ //{
                 /* x86 specific: need to pop fp register ST0 if saved */
                 if (r == TREG_ST0) {
                     o(0xd8dd); /* fstp %st(0) */
                 }
-#endif
+#endif //}
 #if PTR_SIZE == 4
                 /* special long long case */
                 if ((type->t & VT_BTYPE) == VT_LLONG) {
@@ -2567,21 +2566,21 @@ ST_FUNC int type_size(CType *type, int *a)
         *a = LDOUBLE_ALIGN;
         return LDOUBLE_SIZE;
     } else if (bt == VT_DOUBLE || bt == VT_LLONG) {
-#ifdef SCC_TARGET_I386
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==32 //{
+# ifdef SCC_TARGET_PE
         *a = 8;
-#else
+# else
         *a = 4;
-#endif
+# endif
 #elif defined(SCC_TARGET_ARM)
-#ifdef SCC_ARM_EABI
+# ifdef SCC_ARM_EABI
         *a = 8; 
-#else
+# else
         *a = 4;
-#endif
+# endif
 #else
         *a = 8;
-#endif
+#endif //}
         return 8;
     } else if (bt == VT_INT || bt == VT_FLOAT) {
         *a = 4;
@@ -3255,7 +3254,7 @@ redo:
         case TOK_STDCALL3:
             ad->f.func_call = FUNC_STDCALL;
             break;
-#ifdef SCC_TARGET_I386
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==32//{
         case TOK_REGPARM1:
         case TOK_REGPARM2:
             skip('(');
@@ -3273,7 +3272,7 @@ redo:
         case TOK_FASTCALL3:
             ad->f.func_call = FUNC_FASTCALLW;
             break;            
-#endif
+#endif //}
         case TOK_MODE:
             skip('(');
             switch(tok) {

@@ -155,7 +155,7 @@ DEF(TOK___va_arg, "__va_arg")
 
 /* pragma */
 DEF(TOK_pack, "pack")
-#if !defined(SCC_TARGET_I386) && !defined(SCC_TARGET_X86_64)
+#if __SCC_TARGET_CPU_ID__!=__SCC_CPU_X86__
 /* already defined for assembler */
 DEF(TOK_ASM_push, "push")
 DEF(TOK_ASM_pop, "pop")
@@ -233,13 +233,12 @@ DEF(TOK___fixdfdi, "__fixdfdi")
 # endif
 #endif
 
-#if defined SCC_TARGET_I386
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__
+# if __SCC_TARGET_CPU_BIT__==32
 DEF(TOK___fixsfdi, "__fixsfdi")
 DEF(TOK___fixdfdi, "__fixdfdi")
 DEF(TOK___fixxfdi, "__fixxfdi")
-#endif
-
-#if defined SCC_TARGET_I386 || defined SCC_TARGET_X86_64
+# endif
 DEF(TOK_alloca, "alloca")
 #endif
 
@@ -313,20 +312,22 @@ DEF(TOK___getf2, "__getf2")
 	DEF_ASMDIR(endr)
 	DEF_ASMDIR(org)
 DEF_ASMDIR(quad)
-#if defined(SCC_TARGET_I386)
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__//{
+# if __SCC_TARGET_CPU_BIT__==32
 	DEF_ASMDIR(code16)
-DEF_ASMDIR(code32)
-#elif defined(SCC_TARGET_X86_64)
-DEF_ASMDIR(code64)
-#endif
+	DEF_ASMDIR(code32)
+# elif __SCC_TARGET_CPU_BIT__==64
+	DEF_ASMDIR(code64)
+# endif
+#endif//}
 	DEF_ASMDIR(short)
 	DEF_ASMDIR(long)
 	DEF_ASMDIR(int)
 DEF_ASMDIR(section)            /* must be last directive */
 
-#if defined SCC_TARGET_I386 || defined SCC_TARGET_X86_64
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__//{
 #include "tok-X86.h"
-#endif
+#endif//}
 
 DEF(TOK_message, "message")
 DEF(TOK_warning, "warning")

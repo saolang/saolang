@@ -116,25 +116,12 @@ extern char *dlerror (void);
 #define RTLD_DEFAULT ((void *)0)
 #endif
 
-//#define scc_dlsym dlsym
-//TODO make scc_dlsym() more clever with scc_dl.c ?
-//TODO make scc_dlopen dlopen( #LIB , RTLD_GLOBAL | RTLD_LAZY)
-//TODO prepare function if speedup?
 #endif/* __DLFCN_H__ */
 #endif
 
-//TODO maybe improve scc_dlsym() with somehou caching?
-
 // SCC( SM, TYPE=void*, LIB=c)
 // cast the symbol as a function that returns type-specified or void* as default.
-//#define SCC(SYM,...) ((SCC_OR_ELSE(void*,__VA_ARGS__)(*)())scc_dlsym(#SYM))//OK
-//typedef void*(*scc_func_ptr_void)();
-//#define SCC(SYM,...) (SCC_IF_ELSE(__VA_ARGS__)((__VA_ARGS__(*)())scc_dlsym(#SYM),scc_dlsym_(#SYM)))//OK
 #define SCC(SYM,...) (SCC_IF_ELSE(__VA_ARGS__)((__VA_ARGS__(*)())scc_dlsym(#SYM),scc_dlsym_(#SYM)))
-//TODO make SCC(SYM,TYPE,LIB) which LIB is not c....
-
-//TODO....
-//#define SCC_DL_IMPORT(LIB) SCC_DL_dlopen( lib##LIB##SCC_DL_EXT )
 
 //#ifndef _WIN32
 #ifndef __STDIO_H_
@@ -167,10 +154,10 @@ extern FILE *stdin;		/* Standard input stream.  */
 extern FILE *stdout;		/* Standard output stream.  */
 extern FILE *stderr;		/* Standard error output stream.  */
 
-///* C89/C99 say they're macros.  Make them happy.  */
-//#define stdin stdin
-//#define stdout stdout
-//#define stderr stderr
+/* C89/C99 say they're macros.  Make them happy.  */
+#define stdin stdin
+#define stdout stdout
+#define stderr stderr
 
 #endif//__APPLE__
 
@@ -180,19 +167,12 @@ static inline typeof(void*(*)()) scc_dlsym_(const char* sym){return (void*(*)())
 
 static inline void* scc_dlopen(const char* lib){return dlopen(lib,RTLD_GLOBAL|RTLD_LAZY);}
 
-//FILE* scc_stdfile[3]=NULL;//={stdin,stdout,stderr};
-
-//enum{
-//    SCC_C_stdin,
-//    SCC_C_stdout,
-//    SCC_C_stderr,
-//};
-
 #define SCC_C_stdin 1
 #define SCC_C_stdout 2
 #define SCC_C_stderr 3
 
-////TODO improve later, try my_dlsym later...
+//FILE* scc_stdfile[3]={stdin,stdout,stderr};//ERR: initializer element is not a compile-time constant
+
 static inline FILE* scc_std(int std){
 	if(SCC_C_stdin==std)return stdin;
 	if(SCC_C_stdout==std)return stdout;

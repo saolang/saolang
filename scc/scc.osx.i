@@ -719,6 +719,7 @@ struct SCCState {
     char *init_symbol;
     char *fini_symbol;
     int nosse;
+    int seg_size;
     DLLReference **loaded_dlls;
     int nb_loaded_dlls;
     char **include_paths;
@@ -969,7 +970,7 @@ enum
 	,TOK_ASMDIR_endr
 	,TOK_ASMDIR_org
 ,TOK_ASMDIR_quad
-,TOK_ASMDIR_code64
+	,TOK_ASMDIR_code64
 	,TOK_ASMDIR_short
 	,TOK_ASMDIR_long
 	,TOK_ASMDIR_int
@@ -1937,7 +1938,7 @@ static const char scc_keywords[] =
 	"." "endr" "\0"
 	"." "org" "\0"
 "." "quad" "\0"
-"." "code64" "\0"
+	"." "code64" "\0"
 	"." "short" "\0"
 	"." "long" "\0"
 	"." "int" "\0"
@@ -15597,31 +15598,31 @@ static void relocate_rel(SCCState *s1, Section *sr)
 }
 static int prepare_dynamic_rel(SCCState *s1, Section *sr)
 {
-    Elf64_Rela *rel;
-    int sym_index, type, count;
-    count = 0;
-    for (rel = (Elf64_Rela *) sr->data + 0; rel < (Elf64_Rela *) (sr->data + sr->data_offset); rel++) {
-        sym_index = ((rel->r_info) >> 32);
-        type = ((rel->r_info) & 0xffffffff);
-        switch(type) {
-        case 10:
-        case 11:
-        case 1:
-            count++;
-            break;
-        case 2:
-            if (get_sym_attr(s1, sym_index, 0)->dyn_index)
-                count++;
-            break;
-        default:
-            break;
-        }
-    }
-    if (count) {
-        sr->sh_flags |= (1 << 1);
-        sr->sh_size = count * sizeof(Elf64_Rela);
-    }
-    return count;
+	Elf64_Rela *rel;
+	int sym_index, type, count;
+	count = 0;
+	for (rel = (Elf64_Rela *) sr->data + 0; rel < (Elf64_Rela *) (sr->data + sr->data_offset); rel++) {
+		sym_index = ((rel->r_info) >> 32);
+		type = ((rel->r_info) & 0xffffffff);
+		switch(type) {
+			case 10:
+			case 11:
+			case 1:
+				count++;
+				break;
+			case 2:
+				if (get_sym_attr(s1, sym_index, 0)->dyn_index)
+					count++;
+				break;
+			default:
+				break;
+		}
+	}
+	if (count) {
+		sr->sh_flags |= (1 << 1);
+		sr->sh_size = count * sizeof(Elf64_Rela);
+	}
+	return count;
 }
 static void build_got(SCCState *s1)
 {
@@ -18591,7 +18592,10 @@ static void scc_cleanup(void)
 	scc_define_symbol(s, "__STDC__", ((void*)0));
 	scc_define_symbol(s, "__STDC_VERSION__", "199901L");
 	scc_define_symbol(s, "__STDC_HOSTED__", ((void*)0));
+	scc_define_symbol(s, "__SCC_TARGET_CPU__", "X86");
+	scc_define_symbol(s, "__SCC_TARGET_CPU_BIT__", "64");
 	scc_define_symbol(s, "__x86_64__", ((void*)0));
+	scc_define_symbol(s, "__APPLE__", ((void*)0));
 	scc_define_symbol(s, "__unix__", ((void*)0));
 	scc_define_symbol(s, "__unix", ((void*)0));
 	scc_define_symbol(s, "unix", ((void*)0));
@@ -18648,14 +18652,6 @@ static void scc_cleanup(void)
 	}
 	scc_add_library_path(s, "" "/usr/" "lib" ":" "" "/" "lib" ":" "" "/usr/local/" "lib");
 	scc_split_path(s, &s->crt_paths, &s->nb_crt_paths, "" "/usr/" "lib");
-	if ((output_type == 2 || output_type == 3) &&
-			!s->nostdlib)
-	{
-		if (output_type != 3){
-			scc_add_crt(s, "crt1.o");
-		}
-		scc_add_crt(s, "crti.o");
-	}
 	return 0;
 }
  int scc_add_include_path(SCCState *s, const char *pathname)
@@ -18684,6 +18680,8 @@ static int scc_add_file_internal(SCCState *s1, const char *filename, int flags)
 		fd = file->fd;
 		obj_type = scc_object_type(fd, &ehdr);
 		(scc_dlsym_("lseek"))(fd, 0, 0);
+		if (0 == obj_type && 0 == ((int(*)())scc_dlsym("strcmp"))(scc_fileextension(filename), ".dylib"))
+			obj_type = 2;
 		switch (obj_type) {
 			case 1:
 				ret = scc_load_object_file(s1, fd, 0);
@@ -18766,7 +18764,7 @@ static int scc_add_crt(SCCState *s, const char *filename)
 }
  int scc_add_library(SCCState *s, const char *libraryname)
 {
-    const char *libs[] = { "%s/lib%s.so", "%s/lib%s.a", ((void*)0) };
+    const char *libs[] = { "%s/lib%s.dylib", "%s/lib%s.a", ((void*)0) };
     const char **pp = s->static_link ? libs + 1 : libs;
     int flags = s->filetype & 0x800;
     while (*pp) {
@@ -18910,64 +18908,66 @@ static void copy_linker_arg(char **pp, const char *s, int sep)
 }
 static int scc_set_linker(SCCState *s, const char *option)
 {
-    while (*option) {
-        const char *p = ((void*)0);
-        char *end = ((void*)0);
-        int ignoring = 0;
-        int ret;
-        if (link_option(option, "Bsymbolic", &p)) {
-            s->symbolic = 1;
-        } else if (link_option(option, "nostdlib", &p)) {
-            s->nostdlib = 1;
-        } else if (link_option(option, "fini=", &p)) {
-            copy_linker_arg(&s->fini_symbol, p, 0);
-            ignoring = 1;
-        } else if (link_option(option, "image-base=", &p)
-                || link_option(option, "Ttext=", &p)) {
-            s->text_addr = ((unsigned long long(*)())scc_dlsym("strtoull"))(p, &end, 16);
-            s->has_text_addr = 1;
-        } else if (link_option(option, "init=", &p)) {
-            copy_linker_arg(&s->init_symbol, p, 0);
-            ignoring = 1;
-        } else if (link_option(option, "oformat=", &p)) {
-            if (strstart("elf64-", &p)) {
-                s->output_format = 0;
-            } else if (!((int(*)())scc_dlsym("strcmp"))(p, "binary")) {
-                s->output_format = 1;
-            } else
-                goto err;
-        } else if (link_option(option, "as-needed", &p)) {
-            ignoring = 1;
-        } else if (link_option(option, "O", &p)) {
-            ignoring = 1;
-        } else if (link_option(option, "export-all-symbols", &p)) {
-            s->rdynamic = 1;
-        } else if (link_option(option, "export-dynamic", &p)) {
-            s->rdynamic = 1;
-        } else if (link_option(option, "rpath=", &p)) {
-            copy_linker_arg(&s->rpath, p, ':');
-        } else if (link_option(option, "enable-new-dtags", &p)) {
-            s->enable_new_dtags = 1;
-        } else if (link_option(option, "section-alignment=", &p)) {
-            s->section_align = ((unsigned(*)())scc_dlsym("strtoul"))(p, &end, 16);
-        } else if (link_option(option, "soname=", &p)) {
-            copy_linker_arg(&s->soname, p, 0);
-        } else if (ret = link_option(option, "?whole-archive", &p), ret) {
-            if (ret > 0)
-                s->filetype |= 0x800;
-            else
-                s->filetype &= ~0x800;
-        } else if (p) {
-            return 0;
-        } else {
-    err:
-            scc_error("unsupported linker option '%s'", option);
-        }
-        if (ignoring && s->warn_unsupported)
-            scc_warning("unsupported linker option '%s'", option);
-        option = skip_linker_arg(&p);
-    }
-    return 1;
+	while (*option) {
+		const char *p = ((void*)0);
+		char *end = ((void*)0);
+		int ignoring = 0;
+		int ret;
+		if (link_option(option, "Bsymbolic", &p)) {
+			s->symbolic = 1;
+		} else if (link_option(option, "nostdlib", &p)) {
+			s->nostdlib = 1;
+		} else if (link_option(option, "fini=", &p)) {
+			copy_linker_arg(&s->fini_symbol, p, 0);
+			ignoring = 1;
+		} else if (link_option(option, "image-base=", &p)
+				|| link_option(option, "Ttext=", &p)) {
+			s->text_addr = ((unsigned long long(*)())scc_dlsym("strtoull"))(p, &end, 16);
+			s->has_text_addr = 1;
+		} else if (link_option(option, "init=", &p)) {
+			copy_linker_arg(&s->init_symbol, p, 0);
+			ignoring = 1;
+		} else if (link_option(option, "oformat=", &p)) {
+			if(
+					strstart("elf64-", &p)
+				){
+				s->output_format = 0;
+			} else if (!((int(*)())scc_dlsym("strcmp"))(p, "binary")) {
+				s->output_format = 1;
+			} else
+				goto err;
+		} else if (link_option(option, "as-needed", &p)) {
+			ignoring = 1;
+		} else if (link_option(option, "O", &p)) {
+			ignoring = 1;
+		} else if (link_option(option, "export-all-symbols", &p)) {
+			s->rdynamic = 1;
+		} else if (link_option(option, "export-dynamic", &p)) {
+			s->rdynamic = 1;
+		} else if (link_option(option, "rpath=", &p)) {
+			copy_linker_arg(&s->rpath, p, ':');
+		} else if (link_option(option, "enable-new-dtags", &p)) {
+			s->enable_new_dtags = 1;
+		} else if (link_option(option, "section-alignment=", &p)) {
+			s->section_align = ((unsigned(*)())scc_dlsym("strtoul"))(p, &end, 16);
+		} else if (link_option(option, "soname=", &p)) {
+			copy_linker_arg(&s->soname, p, 0);
+		} else if (ret = link_option(option, "?whole-archive", &p), ret) {
+			if (ret > 0)
+				s->filetype |= 0x800;
+			else
+				s->filetype &= ~0x800;
+		} else if (p) {
+			return 0;
+		} else {
+err:
+			scc_error("unsupported linker option '%s'", option);
+		}
+		if (ignoring && s->warn_unsupported)
+			scc_warning("unsupported linker option '%s'", option);
+		option = skip_linker_arg(&p);
+	}
+	return 1;
 }
 typedef struct SCCOption {
     const char *name;
@@ -19677,18 +19677,9 @@ the_end:
 		(scc_dlsym_("remove"))(tfile);
     return ret;
 }
-static void scc_tool_cross(SCCState *s, char **argv, int target)
+static void scc_tool_cross(SCCState *s, char **argv, int option)
 {
-    char program[4096];
-    char *a0 = argv[0];
-    int prefix = scc_basename(a0) - a0;
-    (scc_dlsym_("snprintf"))(program, sizeof program,
-        "%.*s%s"
-        "-scc"
-        , prefix, a0, target == 64 ? "x86_64" : "i386");
-    if (((int(*)())scc_dlsym("strcmp"))(a0, program))
-        (scc_dlsym_("execvp"))(argv[0] = program, argv);
-    scc_error("could not run '%s'", program);
+    scc_error("-m%d not implemented.", option);
 }
 static void gen_makedeps(SCCState *s, const char *target, const char *filename)
 {
@@ -19805,8 +19796,9 @@ static const char help2[] =
     ;
 static const char version[] =
     "scc version ""SCC-0927-001"" ("
-        "x86_64"
-        " Linux"
+				" ""OSX"
+				" ""64"
+				" ""MACHO"
     ")\n"
     ;
 static void print_dirs(const char *msg, char **paths, int nb_paths)
@@ -19821,9 +19813,7 @@ static void print_search_dirs(SCCState *s)
 	(scc_dlsym_("printf"))("install(scc_lib_path): %s\n", s->scc_lib_path);
 	print_dirs("include", s->sysinclude_paths, s->nb_sysinclude_paths);
 	print_dirs("libraries", s->library_paths, s->nb_library_paths);
-	(scc_dlsym_("printf"))("libscc1(elf):\n  %s/""libscc1.a""\n", s->scc_lib_path);
-	print_dirs("crt", s->crt_paths, s->nb_crt_paths);
-	(scc_dlsym_("printf"))("elfinterp:\n  %s\n",  "/lib64/ld-linux-x86-64.so.2");
+	(scc_dlsym_("printf"))("libscc1(""OSX""):\n  %s/""libscc1.a""\n", s->scc_lib_path);
 }
 static void set_environment(SCCState *s)
 {

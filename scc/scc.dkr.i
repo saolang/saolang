@@ -719,6 +719,7 @@ struct SCCState {
     char *init_symbol;
     char *fini_symbol;
     int nosse;
+    int seg_size;
     DLLReference **loaded_dlls;
     int nb_loaded_dlls;
     char **include_paths;
@@ -969,7 +970,7 @@ enum
 	,TOK_ASMDIR_endr
 	,TOK_ASMDIR_org
 ,TOK_ASMDIR_quad
-,TOK_ASMDIR_code64
+	,TOK_ASMDIR_code64
 	,TOK_ASMDIR_short
 	,TOK_ASMDIR_long
 	,TOK_ASMDIR_int
@@ -1719,6 +1720,10 @@ static void asm_compute_constraints(ASMOperand *operands, int nb_operands, int n
 static void subst_asm_operand(CString *add_str, SValue *sv, int modifier);
 static void asm_gen_code(ASMOperand *operands, int nb_operands, int nb_outputs, int is_output, uint8_t *clobber_regs, int out_reg);
 static void asm_clobber(uint8_t *clobber_regs, const char *str);
+static int rt_num_callers;
+static const char **rt_bound_error_msg;
+static void *rt_prog_main;
+static void scc_set_num_callers(int n);
 static void scc_run_free(SCCState *s1);
 static inline int scc_assert(char* R, char* F, int L){(scc_dlsym_("printf"))("%s %s %s",F,L,R);(scc_dlsym_("exit"))(-1);return -1;}
  void scc_error_internal_v(SCCState *s1, int is_warning, const char *fmt, va_list ap);
@@ -1933,7 +1938,7 @@ static const char scc_keywords[] =
 	"." "endr" "\0"
 	"." "org" "\0"
 "." "quad" "\0"
-"." "code64" "\0"
+	"." "code64" "\0"
 	"." "short" "\0"
 	"." "long" "\0"
 	"." "int" "\0"
@@ -2420,105 +2425,6 @@ static int expect(const char *msg)
     scc_error("%s expected", msg);
 		return -1;
 }
-typedef struct TinyAlloc {
-    unsigned  limit;
-    unsigned  size;
-    uint8_t *buffer;
-    uint8_t *p;
-    unsigned  nb_allocs;
-    struct TinyAlloc *next, *top;
-} TinyAlloc;
-typedef struct tal_header_t {
-    unsigned  size;
-} tal_header_t;
-static TinyAlloc *tal_new(TinyAlloc **pal, unsigned limit, unsigned size)
-{
-    TinyAlloc *al = scc_mallocz(sizeof(TinyAlloc));
-    al->p = al->buffer = scc_malloc(size);
-    al->limit = limit;
-    al->size = size;
-    if (pal) *pal = al;
-    return al;
-}
-static void tal_delete(TinyAlloc *al)
-{
-    TinyAlloc *next;
-tail_call:
-    if (!al)
-        return;
-    next = al->next;
-    scc_free(al->buffer);
-    scc_free(al);
-    al = next;
-    goto tail_call;
-}
-static void tal_free_impl(TinyAlloc *al, void *p )
-{
-    if (!p)
-        return;
-tail_call:
-    if (al->buffer <= (uint8_t *)p && (uint8_t *)p < al->buffer + al->size) {
-        al->nb_allocs--;
-        if (!al->nb_allocs)
-            al->p = al->buffer;
-    } else if (al->next) {
-        al = al->next;
-        goto tail_call;
-    }
-    else
-        scc_free(p);
-}
-static void *tal_realloc_impl(TinyAlloc **pal, void *p, unsigned size )
-{
-    tal_header_t *header;
-    void *ret;
-    int is_own;
-    unsigned adj_size = (size + 3) & -4;
-    TinyAlloc *al = *pal;
-tail_call:
-    is_own = (al->buffer <= (uint8_t *)p && (uint8_t *)p < al->buffer + al->size);
-    if ((!p || is_own) && size <= al->limit) {
-        if (al->p + adj_size + sizeof(tal_header_t) < al->buffer + al->size) {
-            header = (tal_header_t *)al->p;
-            header->size = adj_size;
-            ret = al->p + sizeof(tal_header_t);
-            al->p += adj_size + sizeof(tal_header_t);
-            if (is_own) {
-                header = (((tal_header_t *)p) - 1);
-                (scc_dlsym_("memcpy"))(ret, p, header->size);
-            } else {
-                al->nb_allocs++;
-            }
-            return ret;
-        } else if (is_own) {
-            al->nb_allocs--;
-            ret = tal_realloc_impl(&*pal, 0, size);
-            header = (((tal_header_t *)p) - 1);
-            (scc_dlsym_("memcpy"))(ret, p, header->size);
-            return ret;
-        }
-        if (al->next) {
-            al = al->next;
-        } else {
-            TinyAlloc *bottom = al, *next = al->top ? al->top : al;
-            al = tal_new(pal, next->limit, next->size * 2);
-            al->next = next;
-            bottom->top = al;
-        }
-        goto tail_call;
-    }
-    if (is_own) {
-        al->nb_allocs--;
-        ret = scc_malloc(size);
-        header = (((tal_header_t *)p) - 1);
-        (scc_dlsym_("memcpy"))(ret, p, header->size);
-    } else if (al->next) {
-        al = al->next;
-        goto tail_call;
-    } else
-        ret = scc_realloc(p, size);
-    return ret;
-}
 static void cstr_realloc(CString *cstr, int new_size)
 {
     int size;
@@ -2527,7 +2433,7 @@ static void cstr_realloc(CString *cstr, int new_size)
         size = 8;
     while (size < new_size)
         size = size * 2;
-    cstr->data = tal_realloc_impl(&cstr_alloc, cstr->data, size);
+    cstr->data = scc_realloc(cstr->data, size);
     cstr->size_allocated = size;
 }
 static inline void cstr_ccat(CString *cstr, int ch)
@@ -2565,7 +2471,7 @@ static void cstr_new(CString *cstr)
 }
 static void cstr_free(CString *cstr)
 {
-    tal_free_impl(cstr_alloc, cstr->data);
+    scc_free(cstr->data);
     cstr_new(cstr);
 }
 static void cstr_reset(CString *cstr)
@@ -2601,7 +2507,7 @@ static TokenSym *tok_alloc_new(TokenSym **pts, const char *str, int len)
         ptable = scc_realloc(table_ident, (i + 512) * sizeof(TokenSym *));
         table_ident = ptable;
     }
-    ts = tal_realloc_impl(&toksym_alloc, 0, sizeof(TokenSym) + len);
+    ts = scc_realloc(0, sizeof(TokenSym) + len);
     table_ident[i] = ts;
     ts->tok = tok_ident++;
     ts->sym_define = ((void*)0);
@@ -3093,25 +2999,25 @@ static inline void tok_str_new(TokenString *s)
 }
 static TokenString *tok_str_alloc(void)
 {
-    TokenString *str = tal_realloc_impl(&tokstr_alloc, 0, sizeof *str);
+    TokenString *str = scc_realloc(0, sizeof *str);
     tok_str_new(str);
     return str;
 }
 static int *tok_str_dup(TokenString *s)
 {
     int *str;
-    str = tal_realloc_impl(&tokstr_alloc, 0, s->len * sizeof(int));
+    str = scc_realloc(0, s->len * sizeof(int));
     (scc_dlsym_("memcpy"))(str, s->str, s->len * sizeof(int));
     return str;
 }
 static void tok_str_free_str(int *str)
 {
-    tal_free_impl(tokstr_alloc, str);
+    scc_free(str);
 }
 static void tok_str_free(TokenString *str)
 {
     tok_str_free_str(str->str);
-    tal_free_impl(tokstr_alloc, str);
+    scc_free(str);
 }
 static int *tok_str_realloc(TokenString *s, int new_size)
 {
@@ -3122,7 +3028,7 @@ static int *tok_str_realloc(TokenString *s, int new_size)
     while (size < new_size)
         size = size * 2;
     if (size > s->allocated_len) {
-        str = tal_realloc_impl(&tokstr_alloc, s->str, size * sizeof(int));
+        str = scc_realloc(s->str, size * sizeof(int));
         s->allocated_len = size;
         s->str = str;
     }
@@ -3306,22 +3212,21 @@ static inline Sym *define_find(int v)
 }
 static void free_defines(Sym *b)
 {
-    while (define_stack != b) {
-        Sym *top = define_stack;
-        define_stack = top->prev;
-        tok_str_free_str(top->d);
-        define_undef(top);
-        sym_free(top);
-    }
-    while (b) {
-        int v = b->v;
-        if (v >= 256 && v < tok_ident) {
-            Sym **d = &table_ident[v - 256]->sym_define;
-            if (!*d)
-                *d = b;
-        }
-        b = b->prev;
-    }
+	while (define_stack != b) {
+		Sym *top = define_stack;
+		define_stack = top->prev;
+		tok_str_free_str(top->d);
+		define_undef(top);
+		sym_free(top);
+	}
+	while (b) {
+		int v = b->v;
+		if (v >= 256 && v < tok_ident) {
+			Sym **d = &table_ident[v - 256]->sym_define;
+			if (!*d) *d = b;
+		}
+		b = b->prev;
+	}
 }
 static Sym *label_find(int v)
 {
@@ -5182,37 +5087,39 @@ no_subst:
 }
 static void next(void)
 {
- redo:
-    if (parse_flags & 0x0010)
-        next_nomacro_spc();
-    else
-        next_nomacro();
-    if (macro_ptr) {
-        if (tok == 0xcc || tok == 0xcb) {
-            goto redo;
-        } else if (tok == 0) {
-            end_macro();
-            goto redo;
-        }
-    } else if (tok >= 256 && (parse_flags & 0x0001)) {
-        Sym *s;
-        s = define_find(tok);
-        if (s) {
-            Sym *nested_list = ((void*)0);
-            tokstr_buf.len = 0;
-            macro_subst_tok(&tokstr_buf, &nested_list, s);
-            tok_str_add(&tokstr_buf, 0);
-            begin_macro(&tokstr_buf, 2);
-            goto redo;
-        }
-    }
-    if (tok == 0xbe) {
-        if  (parse_flags & 0x0002)
-            parse_number((char *)tokc.str.data);
-    } else if (tok == 0xbf) {
-        if (parse_flags & 0x0040)
-            parse_string((char *)tokc.str.data, tokc.str.size - 1);
-    }
+redo:
+	if (parse_flags & 0x0010)
+		next_nomacro_spc();
+	else
+		next_nomacro();
+	if (macro_ptr) {
+		if (tok == 0xcc || tok == 0xcb) {
+			goto redo;
+		} else if (tok == 0) {
+			end_macro();
+			goto redo;
+		}
+	} else if (tok >= 256 && (parse_flags & 0x0001)) {
+		Sym *s;
+		s = define_find(tok);
+		if (s) {
+			Sym *nested_list = ((void*)0);
+			tokstr_buf.len = 0;
+			macro_subst_tok(&tokstr_buf, &nested_list, s);
+			tok_str_add(&tokstr_buf, 0);
+			begin_macro(&tokstr_buf, 2);
+			goto redo;
+		}
+	}
+	if (tok == 0xbe) {
+		if  (parse_flags & 0x0002){
+			parse_number((char *)tokc.str.data);
+		}
+	} else if (tok == 0xbf) {
+		if (parse_flags & 0x0040){
+			parse_string((char *)tokc.str.data, tokc.str.size - 1);
+		}
+	}
 }
 static inline void unget_tok(int last_tok)
 {
@@ -5281,9 +5188,9 @@ static void sccpp_new(SCCState *s)
             : 0);
     for(i = 128; i<256; i++)
         set_idnum(i, 2);
-    tal_new(&toksym_alloc, 256, (768 * 1024));
-    tal_new(&tokstr_alloc, 128, (768 * 1024));
-    tal_new(&cstr_alloc, 1024, (256 * 1024));
+    ;
+    ;
+    ;
 		hash_ident = ((TokenSym**(*)())scc_dlsym("malloc"))(16384 * sizeof(TokenSym *));
     (scc_dlsym_("memset"))(hash_ident, 0, 16384 * sizeof(TokenSym *));
     cstr_new(&cstr_buf);
@@ -5311,18 +5218,18 @@ static void sccpp_delete(SCCState *s)
 		hash_ident = ((void*)0);
     n = tok_ident - 256;
     for(i = 0; i < n; i++)
-        tal_free_impl(toksym_alloc, table_ident[i]);
+        scc_free(table_ident[i]);
     scc_free(table_ident);
     table_ident = ((void*)0);
     cstr_free(&tokcstr);
     cstr_free(&cstr_buf);
     cstr_free(&macro_equal_buf);
     tok_str_free_str(tokstr_buf.str);
-    tal_delete(toksym_alloc);
+    ;
     toksym_alloc = ((void*)0);
-    tal_delete(tokstr_alloc);
+    ;
     tokstr_alloc = ((void*)0);
-    tal_delete(cstr_alloc);
+    ;
     cstr_alloc = ((void*)0);
 }
 static void tok_print(const char *msg, const int *str)
@@ -5566,23 +5473,23 @@ static void check_vstack(void)
 }
 static void scc_debug_start(SCCState *s1)
 {
-    if (s1->do_debug) {
-        char buf[512];
-        section_sym = put_elf_sym(symtab_section, 0, 0,
-                                  ((((0)) << 4) + (((3)) & 0xf)), 0,
-                                  text_section->sh_num, ((void*)0));
-        (scc_dlsym_("getcwd"))(buf, sizeof(buf));
-        pstrcat(buf, sizeof(buf), "/");
-        put_stabs_r(buf, N_SO, 0, 0,
-                    text_section->data_offset, text_section, section_sym);
-        put_stabs_r(file->filename, N_SO, 0, 0,
-                    text_section->data_offset, text_section, section_sym);
-        last_ind = 0;
-        last_line_num = 0;
-    }
-    put_elf_sym(symtab_section, 0, 0,
-                ((((0)) << 4) + (((4)) & 0xf)), 0,
-                0xfff1, file->filename);
+	if (s1->do_debug) {
+		char buf[512];
+		section_sym = put_elf_sym(symtab_section, 0, 0,
+				((((0)) << 4) + (((3)) & 0xf)), 0,
+				text_section->sh_num, ((void*)0));
+		(scc_dlsym_("getcwd"))(buf, sizeof(buf));
+		pstrcat(buf, sizeof(buf), "/");
+		put_stabs_r(buf, N_SO, 0, 0,
+				text_section->data_offset, text_section, section_sym);
+		put_stabs_r(file->filename, N_SO, 0, 0,
+				text_section->data_offset, text_section, section_sym);
+		last_ind = 0;
+		last_line_num = 0;
+	}
+	put_elf_sym(symtab_section, 0, 0,
+			((((0)) << 4) + (((4)) & 0xf)), 0,
+			0xfff1, file->filename);
 }
 static void scc_debug_end(SCCState *s1)
 {
@@ -5638,7 +5545,7 @@ static int sccgen_compile(SCCState *s1)
     func_old_type.ref->f.func_call = 0;
     func_old_type.ref->f.func_type = 2;
     scc_debug_start(s1);
-    parse_flags = 0x0001 | 0x0002 | 0x0040;
+    parse_flags= 0x0001 |0x0002 |0x0040;
     next();
     decl(0x0030);
     gen_inline_functions(s1);
@@ -5803,10 +5710,7 @@ static Sym *sym_push(int v, CType *type, int r, int c)
 {
     Sym *s, **ps;
     TokenSym *ts;
-    if (local_stack)
-        ps = &local_stack;
-    else
-        ps = &global_stack;
+		ps = (local_stack) ? &local_stack : & global_stack;
     s = sym_push2(ps, v, type->t, c);
     s->type.ref = type->ref;
     s->r = r;
@@ -9591,58 +9495,58 @@ static int case_cmp(const void *pa, const void *pb)
 }
 static void gcase(struct case_t **base, int len, int *bsym)
 {
-    struct case_t *p;
-    int e;
-    int ll = (vtop->type.t & 0x000f) == 4;
-    gv(0x0001);
-    while (len > 4) {
-        p = base[len/2];
-        vdup();
-	if (ll)
-	    vpushll(p->v2);
-	else
-	    vpushi(p->v2);
-        gen_op(0x9e);
-        e = gtst(1, 0);
-        vdup();
-	if (ll)
-	    vpushll(p->v1);
-	else
-	    vpushi(p->v1);
-        gen_op(0x9d);
-        gtst_addr(0, p->sym);
-        gcase(base, len/2, bsym);
-        if (cur_switch->def_sym)
-            gjmp_addr(cur_switch->def_sym);
-        else
-            *bsym = gjmp(*bsym);
-        gsym(e);
-        e = len/2 + 1;
-        base += e; len -= e;
-    }
-    while (len--) {
-        p = *base++;
-        vdup();
-	if (ll)
-	    vpushll(p->v2);
-	else
-	    vpushi(p->v2);
-        if (p->v1 == p->v2) {
-            gen_op(0x94);
-            gtst_addr(0, p->sym);
-        } else {
-            gen_op(0x9e);
-            e = gtst(1, 0);
-            vdup();
-	    if (ll)
-	        vpushll(p->v1);
-	    else
-	        vpushi(p->v1);
-            gen_op(0x9d);
-            gtst_addr(0, p->sym);
-            gsym(e);
-        }
-    }
+	struct case_t *p;
+	int e;
+	int ll = (vtop->type.t & 0x000f) == 4;
+	gv(0x0001);
+	while (len > 4) {
+		p = base[len/2];
+		vdup();
+		if (ll)
+			vpushll(p->v2);
+		else
+			vpushi(p->v2);
+		gen_op(0x9e);
+		e = gtst(1, 0);
+		vdup();
+		if (ll)
+			vpushll(p->v1);
+		else
+			vpushi(p->v1);
+		gen_op(0x9d);
+		gtst_addr(0, p->sym);
+		gcase(base, len/2, bsym);
+		if (cur_switch->def_sym)
+			gjmp_addr(cur_switch->def_sym);
+		else
+			*bsym = gjmp(*bsym);
+		gsym(e);
+		e = len/2 + 1;
+		base += e; len -= e;
+	}
+	while (len--) {
+		p = *base++;
+		vdup();
+		if (ll)
+			vpushll(p->v2);
+		else
+			vpushi(p->v2);
+		if (p->v1 == p->v2) {
+			gen_op(0x94);
+			gtst_addr(0, p->sym);
+		} else {
+			gen_op(0x9e);
+			e = gtst(1, 0);
+			vdup();
+			if (ll)
+				vpushll(p->v1);
+			else
+				vpushi(p->v1);
+			gen_op(0x9d);
+			gtst_addr(0, p->sym);
+			gsym(e);
+		}
+	}
 }
 static void block(int *bsym, int *csym, int is_expr)
 {
@@ -10790,6 +10694,385 @@ static void decl(int l)
 {
     decl0(l, 0, ((void*)0));
 }
+typedef long time_t;
+typedef struct { union { int __i[14]; volatile int __vi[14]; unsigned long __s[7]; } __u; } pthread_attr_t;
+typedef unsigned long size_t;
+typedef long clock_t;
+struct timespec { time_t tv_sec; long tv_nsec; };
+typedef int pid_t;
+typedef unsigned uid_t;
+typedef struct __pthread * pthread_t;
+typedef struct __sigset_t { unsigned long __bits[128/sizeof(long)]; } sigset_t;
+typedef struct sigaltstack stack_t;
+enum { REG_R8 = 0 };
+enum { REG_R9 = 1 };
+enum { REG_R10 = 2 };
+enum { REG_R11 = 3 };
+enum { REG_R12 = 4 };
+enum { REG_R13 = 5 };
+enum { REG_R14 = 6 };
+enum { REG_R15 = 7 };
+enum { REG_RDI = 8 };
+enum { REG_RSI = 9 };
+enum { REG_RBP = 10 };
+enum { REG_RBX = 11 };
+enum { REG_RDX = 12 };
+enum { REG_RAX = 13 };
+enum { REG_RCX = 14 };
+enum { REG_RSP = 15 };
+enum { REG_RIP = 16 };
+enum { REG_EFL = 17 };
+enum { REG_CSGSFS = 18 };
+enum { REG_ERR = 19 };
+enum { REG_TRAPNO = 20 };
+enum { REG_OLDMASK = 21 };
+enum { REG_CR2 = 22 };
+typedef long long greg_t, gregset_t[23];
+typedef struct _fpstate {
+	unsigned short cwd, swd, ftw, fop;
+	unsigned long long rip, rdp;
+	unsigned mxcsr, mxcr_mask;
+	struct {
+		unsigned short significand[4], exponent, padding[3];
+	} _st[8];
+	struct {
+		unsigned element[4];
+	} _xmm[16];
+	unsigned padding[24];
+} *fpregset_t;
+struct sigcontext {
+	unsigned long r8, r9, r10, r11, r12, r13, r14, r15;
+	unsigned long rdi, rsi, rbp, rbx, rdx, rax, rcx, rsp, rip, eflags;
+	unsigned short cs, gs, fs, __pad0;
+	unsigned long err, trapno, oldmask, cr2;
+	struct _fpstate *fpstate;
+	unsigned long __reserved1[8];
+};
+typedef struct {
+	gregset_t gregs;
+	fpregset_t fpregs;
+	unsigned long long __reserved1[8];
+} mcontext_t;
+struct sigaltstack {
+	void *ss_sp;
+	int ss_flags;
+	size_t ss_size;
+};
+typedef struct ucontext {
+	unsigned long uc_flags;
+	struct ucontext *uc_link;
+	stack_t uc_stack;
+	mcontext_t uc_mcontext;
+	sigset_t uc_sigmask;
+	unsigned long __fpregs_mem[64];
+} ucontext_t;
+union sigval {
+	int sival_int;
+	void *sival_ptr;
+};
+typedef struct {
+	int si_signo, si_errno, si_code;
+	union {
+		char __pad[128 - 2*sizeof(int) - sizeof(long)];
+		struct {
+			union {
+				struct {
+					pid_t si_pid;
+					uid_t si_uid;
+				} __piduid;
+				struct {
+					int si_timerid;
+					int si_overrun;
+				} __timer;
+			} __first;
+			union {
+				union sigval si_value;
+				struct {
+					int si_status;
+					clock_t si_utime, si_stime;
+				} __sigchld;
+			} __second;
+		} __si_common;
+		struct {
+			void *si_addr;
+			short si_addr_lsb;
+			union {
+				struct {
+					void *si_lower;
+					void *si_upper;
+				} __addr_bnd;
+				unsigned si_pkey;
+			} __first;
+		} __sigfault;
+		struct {
+			long si_band;
+			int si_fd;
+		} __sigpoll;
+		struct {
+			void *si_call_addr;
+			int si_syscall;
+			unsigned si_arch;
+		} __sigsys;
+	} __si_fields;
+} siginfo_t;
+struct sigaction {
+	union {
+		void (*sa_handler)(int);
+		void (*sa_sigaction)(int, siginfo_t *, void *);
+	} __sa_handler;
+	sigset_t sa_mask;
+	int sa_flags;
+	void (*sa_restorer)(void);
+};
+struct sigevent {
+	union sigval sigev_value;
+	int sigev_signo;
+	int sigev_notify;
+	void (*sigev_notify_function)(union sigval);
+	pthread_attr_t *sigev_notify_attributes;
+	char __pad[56-3*sizeof(long)];
+};
+int __libc_current_sigrtmin(void);
+int __libc_current_sigrtmax(void);
+int kill(pid_t, int);
+int sigemptyset(sigset_t *);
+int sigfillset(sigset_t *);
+int sigaddset(sigset_t *, int);
+int sigdelset(sigset_t *, int);
+int sigismember(const sigset_t *, int);
+int sigprocmask(int, const sigset_t *restrict, sigset_t *restrict);
+int sigsuspend(const sigset_t *);
+int sigaction(int, const struct sigaction *restrict, struct sigaction *restrict);
+int sigpending(sigset_t *);
+int sigwait(const sigset_t *restrict, int *restrict);
+int sigwaitinfo(const sigset_t *restrict, siginfo_t *restrict);
+int sigtimedwait(const sigset_t *restrict, siginfo_t *restrict, const struct timespec *restrict);
+int sigqueue(pid_t, int, const union sigval);
+int pthread_sigmask(int, const sigset_t *restrict, sigset_t *restrict);
+int pthread_kill(pthread_t, int);
+void psiginfo(const siginfo_t *, const char *);
+void psignal(int, const char *);
+int killpg(pid_t, int);
+int sigaltstack(const stack_t *restrict, stack_t *restrict);
+int sighold(int);
+int sigignore(int);
+int siginterrupt(int, int);
+int sigpause(int);
+int sigrelse(int);
+void (*sigset(int, void (*)(int)))(int);
+typedef void (*sig_t)(int);
+typedef void (*sighandler_t)(int);
+void (*bsd_signal(int, void (*)(int)))(int);
+int sigisemptyset(const sigset_t *);
+int sigorset (sigset_t *, const sigset_t *, const sigset_t *);
+int sigandset(sigset_t *, const sigset_t *, const sigset_t *);
+typedef int sig_atomic_t;
+void (*signal(int, void (*)(int)))(int);
+int raise(int);
+struct ucontext;
+int  getcontext(struct ucontext *);
+void makecontext(struct ucontext *, void (*)(void), int, ...);
+int  setcontext(const struct ucontext *);
+int  swapcontext(struct ucontext *, const struct ucontext *);
+static int rt_num_callers = 6;
+static const char **rt_bound_error_msg;
+static void *rt_prog_main;
+static int rt_get_caller_pc(Elf64_Addr *paddr, ucontext_t *uc, int level);
+static void set_exception_handler(void);
+static void scc_set_num_callers(int n)
+{
+    rt_num_callers = n;
+}
+static Elf64_Addr rt_printline(Elf64_Addr wanted_pc, const char *msg)
+{
+    char func_name[128], last_func_name[128];
+    Elf64_Addr func_addr, last_pc, pc;
+    const char *incl_files[32];
+    int incl_index, len, last_line_num, i;
+    const char *str, *p;
+    Stab_Sym *stab_sym = ((void*)0), *stab_sym_end, *sym;
+    int stab_len = 0;
+    char *stab_str = ((void*)0);
+    if (stab_section) {
+        stab_len = stab_section->data_offset;
+        stab_sym = (Stab_Sym *)stab_section->data;
+        stab_str = (char *) stabstr_section->data;
+    }
+    func_name[0] = '\0';
+    func_addr = 0;
+    incl_index = 0;
+    last_func_name[0] = '\0';
+    last_pc = (Elf64_Addr)-1;
+    last_line_num = 1;
+    if (!stab_sym)
+        goto no_stabs;
+    stab_sym_end = (Stab_Sym*)((char*)stab_sym + stab_len);
+    for (sym = stab_sym + 1; sym < stab_sym_end; ++sym) {
+        switch(sym->n_type) {
+        case N_FUN:
+            if (sym->n_strx == 0) {
+                pc = sym->n_value + func_addr;
+                if (wanted_pc >= last_pc && wanted_pc < pc)
+                    goto found;
+                func_name[0] = '\0';
+                func_addr = 0;
+            } else {
+                str = stab_str + sym->n_strx;
+                p = (scc_dlsym_("strchr"))(str, ':');
+                if (!p) {
+                    pstrcpy(func_name, sizeof(func_name), str);
+                } else {
+                    len = p - str;
+                    if (len > sizeof(func_name) - 1)
+                        len = sizeof(func_name) - 1;
+                    (scc_dlsym_("memcpy"))(func_name, str, len);
+                    func_name[len] = '\0';
+                }
+                func_addr = sym->n_value;
+            }
+            break;
+        case N_SLINE:
+            pc = sym->n_value + func_addr;
+            if (wanted_pc >= last_pc && wanted_pc < pc)
+                goto found;
+            last_pc = pc;
+            last_line_num = sym->n_desc;
+            (scc_dlsym_("strcpy"))(last_func_name, func_name);
+            break;
+        case N_BINCL:
+            str = stab_str + sym->n_strx;
+        add_incl:
+            if (incl_index < 32) {
+                incl_files[incl_index++] = str;
+            }
+            break;
+        case N_EINCL:
+            if (incl_index > 1)
+                incl_index--;
+            break;
+        case N_SO:
+            if (sym->n_strx == 0) {
+                incl_index = 0;
+            } else {
+                str = stab_str + sym->n_strx;
+                len = ((int(*)())scc_dlsym("strlen"))(str);
+                if (len > 0 && str[len - 1] != '/')
+                    goto add_incl;
+            }
+            break;
+        }
+    }
+no_stabs:
+    incl_index = 0;
+    if (symtab_section)
+    {
+        Elf64_Sym *sym, *sym_end;
+        int type;
+        sym_end = (Elf64_Sym *)(symtab_section->data + symtab_section->data_offset);
+        for(sym = (Elf64_Sym *)symtab_section->data + 1;
+            sym < sym_end;
+            sym++) {
+            type = ((sym->st_info) & 0xf);
+            if (type == 2 || type == 10) {
+                if (wanted_pc >= sym->st_value &&
+                    wanted_pc < sym->st_value + sym->st_size) {
+                    pstrcpy(last_func_name, sizeof(last_func_name),
+                            (char *) symtab_section->link->data + sym->st_name);
+                    func_addr = sym->st_value;
+                    goto found;
+                }
+            }
+        }
+    }
+    (scc_dlsym_("fprintf"))(scc_std(3), "%s %p ???\n", msg, (void*)wanted_pc);
+    (scc_dlsym_("fflush"))(scc_std(3));
+    return 0;
+ found:
+    i = incl_index;
+    if (i > 0)
+        (scc_dlsym_("fprintf"))(scc_std(3), "%s:%d: ", incl_files[--i], last_line_num);
+    (scc_dlsym_("fprintf"))(scc_std(3), "%s %p", msg, (void*)wanted_pc);
+    if (last_func_name[0] != '\0')
+        (scc_dlsym_("fprintf"))(scc_std(3), " %s()", last_func_name);
+    if (--i >= 0) {
+        (scc_dlsym_("fprintf"))(scc_std(3), " (included from ");
+        for (;;) {
+            (scc_dlsym_("fprintf"))(scc_std(3), "%s", incl_files[i]);
+            if (--i < 0)
+                break;
+            (scc_dlsym_("fprintf"))(scc_std(3), ", ");
+        }
+        (scc_dlsym_("fprintf"))(scc_std(3), ")");
+    }
+    (scc_dlsym_("fprintf"))(scc_std(3), "\n");
+    (scc_dlsym_("fflush"))(scc_std(3));
+    return func_addr;
+}
+static void sig_error(int signum, siginfo_t *siginf, void *puc)
+{
+    ucontext_t *uc = puc;
+    switch(signum) {
+    case 8:
+        switch(siginf->si_code) {
+        case 1:
+        case 3:
+            { Elf64_Addr pc; int i; (scc_dlsym_("fprintf"))(scc_std(3), "Runtime error: "); (scc_dlsym_("vfprintf"))(scc_std(3), "division by zero"); (scc_dlsym_("fprintf"))(scc_std(3), "\n"); for(i=0;i<rt_num_callers;i++) { if (rt_get_caller_pc(&pc, uc, i) < 0) break; pc = rt_printline(pc, i ? "by" : "at"); if (pc == (Elf64_Addr)rt_prog_main && pc) break; }};
+            break;
+        default:
+            { Elf64_Addr pc; int i; (scc_dlsym_("fprintf"))(scc_std(3), "Runtime error: "); (scc_dlsym_("vfprintf"))(scc_std(3), "floating point exception"); (scc_dlsym_("fprintf"))(scc_std(3), "\n"); for(i=0;i<rt_num_callers;i++) { if (rt_get_caller_pc(&pc, uc, i) < 0) break; pc = rt_printline(pc, i ? "by" : "at"); if (pc == (Elf64_Addr)rt_prog_main && pc) break; }};
+            break;
+        }
+        break;
+    case 7:
+    case 11:
+        if (rt_bound_error_msg && *rt_bound_error_msg){
+            { Elf64_Addr pc; int i; (scc_dlsym_("fprintf"))(scc_std(3), "Runtime error: "); (scc_dlsym_("vfprintf"))(scc_std(3), *rt_bound_error_msg); (scc_dlsym_("fprintf"))(scc_std(3), "\n"); for(i=0;i<rt_num_callers;i++) { if (rt_get_caller_pc(&pc, uc, i) < 0) break; pc = rt_printline(pc, i ? "by" : "at"); if (pc == (Elf64_Addr)rt_prog_main && pc) break; }};
+				}else{
+            { Elf64_Addr pc; int i; (scc_dlsym_("fprintf"))(scc_std(3), "Runtime error: "); (scc_dlsym_("vfprintf"))(scc_std(3), "dereferencing invalid pointer"); (scc_dlsym_("fprintf"))(scc_std(3), "\n"); for(i=0;i<rt_num_callers;i++) { if (rt_get_caller_pc(&pc, uc, i) < 0) break; pc = rt_printline(pc, i ? "by" : "at"); if (pc == (Elf64_Addr)rt_prog_main && pc) break; }};
+				}
+        break;
+    case 4:
+        { Elf64_Addr pc; int i; (scc_dlsym_("fprintf"))(scc_std(3), "Runtime error: "); (scc_dlsym_("vfprintf"))(scc_std(3), "illegal instruction"); (scc_dlsym_("fprintf"))(scc_std(3), "\n"); for(i=0;i<rt_num_callers;i++) { if (rt_get_caller_pc(&pc, uc, i) < 0) break; pc = rt_printline(pc, i ? "by" : "at"); if (pc == (Elf64_Addr)rt_prog_main && pc) break; }};
+        break;
+    case 6:
+        { Elf64_Addr pc; int i; (scc_dlsym_("fprintf"))(scc_std(3), "Runtime error: "); (scc_dlsym_("vfprintf"))(scc_std(3), "abort() called"); (scc_dlsym_("fprintf"))(scc_std(3), "\n"); for(i=0;i<rt_num_callers;i++) { if (rt_get_caller_pc(&pc, uc, i) < 0) break; pc = rt_printline(pc, i ? "by" : "at"); if (pc == (Elf64_Addr)rt_prog_main && pc) break; }};
+        break;
+    default:
+        { Elf64_Addr pc; int i; (scc_dlsym_("fprintf"))(scc_std(3), "Runtime error: "); (scc_dlsym_("vfprintf"))(scc_std(3), "caught signal %d", signum); (scc_dlsym_("fprintf"))(scc_std(3), "\n"); for(i=0;i<rt_num_callers;i++) { if (rt_get_caller_pc(&pc, uc, i) < 0) break; pc = rt_printline(pc, i ? "by" : "at"); if (pc == (Elf64_Addr)rt_prog_main && pc) break; }};
+        break;
+    }
+    (scc_dlsym_("exit"))(255);
+}
+static void set_exception_handler(void)
+{
+    struct sigaction sigact;
+    sigact.sa_flags = 4 | 0x80000000;
+    sigact.__sa_handler.sa_sigaction = sig_error;
+    (scc_dlsym_("sigemptyset"))(&sigact.sa_mask);
+    (scc_dlsym_("sigaction"))(8, &sigact, ((void*)0));
+    (scc_dlsym_("sigaction"))(4, &sigact, ((void*)0));
+    (scc_dlsym_("sigaction"))(11, &sigact, ((void*)0));
+    (scc_dlsym_("sigaction"))(7, &sigact, ((void*)0));
+    (scc_dlsym_("sigaction"))(6, &sigact, ((void*)0));
+}
+static int rt_get_caller_pc(Elf64_Addr *paddr, ucontext_t *uc, int level)
+{
+    Elf64_Addr fp;
+    int i;
+    if (level == 0) {
+        *paddr = uc->uc_mcontext.gregs[REG_RIP];
+        return 0;
+    } else {
+        fp = uc->uc_mcontext.gregs[REG_RBP];
+        for(i=1;i<level;i++) {
+            if (fp <= 0x1000)
+                return -1;
+            fp = ((Elf64_Addr *)fp)[0];
+        }
+        *paddr = ((Elf64_Addr *)fp)[1];
+        return 0;
+    }
+}
 static void set_pages_executable(void *ptr, unsigned long length);
 static int scc_relocate_ex(SCCState *s1, void *ptr, Elf64_Addr ptr_diff);
  int scc_relocate(SCCState *s1, void *ptr)
@@ -10823,6 +11106,10 @@ static void scc_run_free(SCCState *s1)
     if (scc_relocate(s1, (void*)1) < 0)
         return -1;
     prog_main = scc_get_symbol_err(s1, s1->runtime_main);
+    if (s1->do_debug) {
+        set_exception_handler();
+        rt_prog_main = prog_main;
+    }
 		scc_errno(0);
     return (*prog_main)(argc, argv);
 }
@@ -14163,12 +14450,12 @@ static void scc_format_new(SCCState *s)
 }
 static void scc_format_stab_new(SCCState *s)
 {
-    stab_section = new_section(s, ".stab", 1, 0);
-    stab_section->sh_entsize = sizeof(Stab_Sym);
-    stabstr_section = new_section(s, ".stabstr", 3, 0);
-    put_elf_str(stabstr_section, "");
-    stab_section->link = stabstr_section;
-    put_stabs("", 0, 0, 0, 0);
+	stab_section = new_section(s, ".stab", 1, 0);
+	stab_section->sh_entsize = sizeof(Stab_Sym);
+	stabstr_section = new_section(s, ".stabstr", 3, 0);
+	put_elf_str(stabstr_section, "");
+	stab_section->link = stabstr_section;
+	put_stabs("", 0, 0, 0, 0);
 }
 static void free_section(Section *s)
 {
@@ -14745,31 +15032,31 @@ static void relocate_rel(SCCState *s1, Section *sr)
 }
 static int prepare_dynamic_rel(SCCState *s1, Section *sr)
 {
-    Elf64_Rela *rel;
-    int sym_index, type, count;
-    count = 0;
-    for (rel = (Elf64_Rela *) sr->data + 0; rel < (Elf64_Rela *) (sr->data + sr->data_offset); rel++) {
-        sym_index = ((rel->r_info) >> 32);
-        type = ((rel->r_info) & 0xffffffff);
-        switch(type) {
-        case 10:
-        case 11:
-        case 1:
-            count++;
-            break;
-        case 2:
-            if (get_sym_attr(s1, sym_index, 0)->dyn_index)
-                count++;
-            break;
-        default:
-            break;
-        }
-    }
-    if (count) {
-        sr->sh_flags |= (1 << 1);
-        sr->sh_size = count * sizeof(Elf64_Rela);
-    }
-    return count;
+	Elf64_Rela *rel;
+	int sym_index, type, count;
+	count = 0;
+	for (rel = (Elf64_Rela *) sr->data + 0; rel < (Elf64_Rela *) (sr->data + sr->data_offset); rel++) {
+		sym_index = ((rel->r_info) >> 32);
+		type = ((rel->r_info) & 0xffffffff);
+		switch(type) {
+			case 10:
+			case 11:
+			case 1:
+				count++;
+				break;
+			case 2:
+				if (get_sym_attr(s1, sym_index, 0)->dyn_index)
+					count++;
+				break;
+			default:
+				break;
+		}
+	}
+	if (count) {
+		sr->sh_flags |= (1 << 1);
+		sr->sh_size = count * sizeof(Elf64_Rela);
+	}
+	return count;
 }
 static void build_got(SCCState *s1)
 {
@@ -15987,48 +16274,48 @@ static int scc_load_alacarte(SCCState *s1, int fd, int size, int entrysize)
 }
 static int scc_load_archive(SCCState *s1, int fd, int alacarte)
 {
-    ArchiveHeader hdr;
-    char ar_size[11];
-    char ar_name[17];
-    char magic[8];
-    int size, len, i;
-    unsigned long file_offset;
-    (scc_dlsym_("read"))(fd, magic, sizeof(magic));
-    for(;;) {
-        len = ((int(*)())scc_dlsym("read"))(fd, &hdr, sizeof(hdr));
-        if (len == 0)
-            break;
-        if (len != sizeof(hdr)) {
-            scc_error_noabort("invalid archive");
-            return -1;
-        }
-        (scc_dlsym_("memcpy"))(ar_size, hdr.ar_size, sizeof(hdr.ar_size));
-        ar_size[sizeof(hdr.ar_size)] = '\0';
-        size = ((int(*)())scc_dlsym("strtol"))(ar_size, ((void*)0), 0);
-        (scc_dlsym_("memcpy"))(ar_name, hdr.ar_name, sizeof(hdr.ar_name));
-        for(i = sizeof(hdr.ar_name) - 1; i >= 0; i--) {
-            if (ar_name[i] != ' ')
-                break;
-        }
-        ar_name[i + 1] = '\0';
-        file_offset = ((unsigned long(*)())scc_dlsym("lseek"))(fd, 0, 1);
-        size = (size + 1) & ~1;
-        if (!((int(*)())scc_dlsym("strcmp"))(ar_name, "/")) {
-            if (alacarte)
-                return scc_load_alacarte(s1, fd, size, 4);
-	} else if (!((int(*)())scc_dlsym("strcmp"))(ar_name, "/SYM64/")) {
-            if (alacarte)
-                return scc_load_alacarte(s1, fd, size, 8);
-        } else {
-            Elf64_Ehdr ehdr;
-            if (scc_object_type(fd, &ehdr) == 1) {
-                if (scc_load_object_file(s1, fd, file_offset) < 0)
-                    return -1;
-            }
-        }
-        (scc_dlsym_("lseek"))(fd, file_offset + size, 0);
-    }
-    return 0;
+	ArchiveHeader hdr;
+	char ar_size[11];
+	char ar_name[17];
+	char magic[8];
+	int size, len, i;
+	unsigned long file_offset;
+	(scc_dlsym_("read"))(fd, magic, sizeof(magic));
+	for(;;) {
+		len = ((int(*)())scc_dlsym("read"))(fd, &hdr, sizeof(hdr));
+		if (len == 0)
+			break;
+		if (len != sizeof(hdr)) {
+			scc_error_noabort("invalid archive");
+			return -1;
+		}
+		(scc_dlsym_("memcpy"))(ar_size, hdr.ar_size, sizeof(hdr.ar_size));
+		ar_size[sizeof(hdr.ar_size)] = '\0';
+		size = ((int(*)())scc_dlsym("strtol"))(ar_size, ((void*)0), 0);
+		(scc_dlsym_("memcpy"))(ar_name, hdr.ar_name, sizeof(hdr.ar_name));
+		for(i = sizeof(hdr.ar_name) - 1; i >= 0; i--) {
+			if (ar_name[i] != ' ')
+				break;
+		}
+		ar_name[i + 1] = '\0';
+		file_offset = ((unsigned long(*)())scc_dlsym("lseek"))(fd, 0, 1);
+		size = (size + 1) & ~1;
+		if (!((int(*)())scc_dlsym("strcmp"))(ar_name, "/")) {
+			if (alacarte)
+				return scc_load_alacarte(s1, fd, size, 4);
+		} else if (!((int(*)())scc_dlsym("strcmp"))(ar_name, "/SYM64/")) {
+			if (alacarte)
+				return scc_load_alacarte(s1, fd, size, 8);
+		} else {
+			Elf64_Ehdr ehdr;
+			if (scc_object_type(fd, &ehdr) == 1) {
+				if (scc_load_object_file(s1, fd, file_offset) < 0)
+					return -1;
+			}
+		}
+		(scc_dlsym_("lseek"))(fd, file_offset + size, 0);
+	}
+	return 0;
 }
 static int scc_load_dll(SCCState *s1, int fd, const char *filename, int level)
 {
@@ -17712,50 +17999,52 @@ static void scc_cleanup(void)
 }
  SCCState *scc_new(void)
 {
-    SCCState *s;
-    scc_cleanup();
-    s = scc_mallocz(sizeof(SCCState));
-    if (!s)
-        return ((void*)0);
-    scc_state = s;
-    ++nb_states;
-    s->nocommon = 1;
-    s->warn_implicit_function_declaration = 1;
-    s->ms_extensions = 1;
-    scc_set_lib_path(s, ".");
-    scc_format_new(s);
-    sccpp_new(s);
-    define_push(TOK___LINE__, 0, ((void*)0), ((void*)0));
-    define_push(TOK___FILE__, 0, ((void*)0), ((void*)0));
-    define_push(TOK___DATE__, 0, ((void*)0), ((void*)0));
-    define_push(TOK___TIME__, 0, ((void*)0), ((void*)0));
-    define_push(TOK___COUNTER__, 0, ((void*)0), ((void*)0));
-    {
-        char buffer[32]; int a,b,c;
-        (scc_dlsym_("sscanf"))("SCC-0927-001", "%d.%d.%d", &a, &b, &c);
-        (scc_dlsym_("sprintf"))(buffer, "%d", a*10000 + b*100 + c);
-        scc_define_symbol(s, "__SAOCC__", buffer);
-    }
-    scc_define_symbol(s, "__STDC__", ((void*)0));
-    scc_define_symbol(s, "__STDC_VERSION__", "199901L");
-    scc_define_symbol(s, "__STDC_HOSTED__", ((void*)0));
-    scc_define_symbol(s, "__x86_64__", ((void*)0));
-    scc_define_symbol(s, "__unix__", ((void*)0));
-    scc_define_symbol(s, "__unix", ((void*)0));
-    scc_define_symbol(s, "unix", ((void*)0));
-    scc_define_symbol(s, "__linux__", ((void*)0));
-    scc_define_symbol(s, "__linux", ((void*)0));
-    scc_define_symbol(s, "__SIZE_TYPE__", "unsigned long");
-    scc_define_symbol(s, "__PTRDIFF_TYPE__", "long");
-    scc_define_symbol(s, "__LP64__", ((void*)0));
-    scc_define_symbol(s, "__WCHAR_TYPE__", "int");
-    scc_define_symbol(s, "__WINT_TYPE__", "unsigned int");
-    scc_define_symbol(s, "__REDIRECT(name, proto, alias)",
-        "name proto __asm__ (#alias)");
-    scc_define_symbol(s, "__REDIRECT_NTH(name, proto, alias)",
-        "name proto __asm__ (#alias) __THROW");
-    scc_define_symbol(s, "__builtin_extract_return_addr(x)", "x");
-    return s;
+	SCCState *s;
+	scc_cleanup();
+	s = scc_mallocz(sizeof(SCCState));
+	if (!s)
+		return ((void*)0);
+	scc_state = s;
+	++nb_states;
+	s->nocommon = 1;
+	s->warn_implicit_function_declaration = 1;
+	s->ms_extensions = 1;
+	scc_set_lib_path(s, ".");
+	scc_format_new(s);
+	sccpp_new(s);
+	define_push(TOK___LINE__, 0, ((void*)0), ((void*)0));
+	define_push(TOK___FILE__, 0, ((void*)0), ((void*)0));
+	define_push(TOK___DATE__, 0, ((void*)0), ((void*)0));
+	define_push(TOK___TIME__, 0, ((void*)0), ((void*)0));
+	define_push(TOK___COUNTER__, 0, ((void*)0), ((void*)0));
+	{
+		char buffer[32]; int a,b,c;
+		(scc_dlsym_("sscanf"))("SCC-0927-001", "%d.%d.%d", &a, &b, &c);
+		(scc_dlsym_("sprintf"))(buffer, "%d", a*10000 + b*100 + c);
+		scc_define_symbol(s, "__SAOCC__", buffer);
+	}
+	scc_define_symbol(s, "__STDC__", ((void*)0));
+	scc_define_symbol(s, "__STDC_VERSION__", "199901L");
+	scc_define_symbol(s, "__STDC_HOSTED__", ((void*)0));
+	scc_define_symbol(s, "__SCC_TARGET_CPU__", "X86");
+	scc_define_symbol(s, "__SCC_TARGET_CPU_BIT__", "64");
+	scc_define_symbol(s, "__x86_64__", ((void*)0));
+	scc_define_symbol(s, "__unix__", ((void*)0));
+	scc_define_symbol(s, "__unix", ((void*)0));
+	scc_define_symbol(s, "unix", ((void*)0));
+	scc_define_symbol(s, "__linux__", ((void*)0));
+	scc_define_symbol(s, "__linux", ((void*)0));
+	scc_define_symbol(s, "__SIZE_TYPE__", "unsigned long");
+	scc_define_symbol(s, "__PTRDIFF_TYPE__", "long");
+	scc_define_symbol(s, "__LP64__", ((void*)0));
+	scc_define_symbol(s, "__WCHAR_TYPE__", "int");
+	scc_define_symbol(s, "__WINT_TYPE__", "unsigned int");
+	scc_define_symbol(s, "__REDIRECT(name, proto, alias)",
+			"name proto __asm__ (#alias)");
+	scc_define_symbol(s, "__REDIRECT_NTH(name, proto, alias)",
+			"name proto __asm__ (#alias) __THROW");
+	scc_define_symbol(s, "__builtin_extract_return_addr(x)", "x");
+	return s;
 }
  void scc_delete(SCCState *s1)
 {
@@ -17785,28 +18074,28 @@ static void scc_cleanup(void)
 }
  int scc_set_output_type(SCCState *s, int output_type)
 {
-    s->output_type = output_type;
-    if (output_type == 4)
-        s->output_format = 0;
-    if (s->char_is_unsigned)
-        scc_define_symbol(s, "__CHAR_UNSIGNED__", ((void*)0));
-    if (!s->nostdinc) {
-        scc_add_sysinclude_path(s, "{B}/include" ":" "" "/usr/local/include" ":" "" "/usr/include");
-    }
-    if (s->do_debug) {
-        scc_format_stab_new(s);
-    }
-    scc_add_library_path(s, "" "/usr/" "lib" ":" "" "/" "lib" ":" "" "/usr/local/" "lib");
-    scc_split_path(s, &s->crt_paths, &s->nb_crt_paths, "" "/usr/" "lib");
-    if ((output_type == 2 || output_type == 3) &&
-        !s->nostdlib)
-		{
-			if (output_type != 3){
-				scc_add_crt(s, "crt1.o");
-			}
-			scc_add_crt(s, "crti.o");
-    }
-    return 0;
+	s->output_type = output_type;
+	if (output_type == 4)
+		s->output_format = 0;
+	if (s->char_is_unsigned)
+		scc_define_symbol(s, "__CHAR_UNSIGNED__", ((void*)0));
+	if (!s->nostdinc) {
+		scc_add_sysinclude_path(s, "{B}/include" ":" "" "/usr/local/include" ":" "" "/usr/include");
+	}
+	if (s->do_debug) {
+		scc_format_stab_new(s);
+	}
+	scc_add_library_path(s, "" "/usr/" "lib" ":" "" "/" "lib" ":" "" "/usr/local/" "lib");
+	scc_split_path(s, &s->crt_paths, &s->nb_crt_paths, "" "/usr/" "lib");
+	if ((output_type == 2 || output_type == 3) &&
+			!s->nostdlib)
+	{
+		if (output_type != 3){
+			scc_add_crt(s, "crt1.o");
+		}
+		scc_add_crt(s, "crti.o");
+	}
+	return 0;
 }
  int scc_add_include_path(SCCState *s, const char *pathname)
 {
@@ -17827,8 +18116,7 @@ static int scc_add_file_internal(SCCState *s1, const char *filename, int flags)
 			scc_error_noabort("scc_add_file_internal() file '%s' not found", filename);
 		return ret;
 	}
-	dynarray_add(&s1->target_deps, &s1->nb_target_deps,
-			scc_strdup(filename));
+	dynarray_add(&s1->target_deps, &s1->nb_target_deps, scc_strdup(filename));
 	if (flags & 0x400) {
 		Elf64_Ehdr ehdr;
 		int fd, obj_type;
@@ -18061,64 +18349,66 @@ static void copy_linker_arg(char **pp, const char *s, int sep)
 }
 static int scc_set_linker(SCCState *s, const char *option)
 {
-    while (*option) {
-        const char *p = ((void*)0);
-        char *end = ((void*)0);
-        int ignoring = 0;
-        int ret;
-        if (link_option(option, "Bsymbolic", &p)) {
-            s->symbolic = 1;
-        } else if (link_option(option, "nostdlib", &p)) {
-            s->nostdlib = 1;
-        } else if (link_option(option, "fini=", &p)) {
-            copy_linker_arg(&s->fini_symbol, p, 0);
-            ignoring = 1;
-        } else if (link_option(option, "image-base=", &p)
-                || link_option(option, "Ttext=", &p)) {
-            s->text_addr = ((unsigned long long(*)())scc_dlsym("strtoull"))(p, &end, 16);
-            s->has_text_addr = 1;
-        } else if (link_option(option, "init=", &p)) {
-            copy_linker_arg(&s->init_symbol, p, 0);
-            ignoring = 1;
-        } else if (link_option(option, "oformat=", &p)) {
-            if (strstart("elf64-", &p)) {
-                s->output_format = 0;
-            } else if (!((int(*)())scc_dlsym("strcmp"))(p, "binary")) {
-                s->output_format = 1;
-            } else
-                goto err;
-        } else if (link_option(option, "as-needed", &p)) {
-            ignoring = 1;
-        } else if (link_option(option, "O", &p)) {
-            ignoring = 1;
-        } else if (link_option(option, "export-all-symbols", &p)) {
-            s->rdynamic = 1;
-        } else if (link_option(option, "export-dynamic", &p)) {
-            s->rdynamic = 1;
-        } else if (link_option(option, "rpath=", &p)) {
-            copy_linker_arg(&s->rpath, p, ':');
-        } else if (link_option(option, "enable-new-dtags", &p)) {
-            s->enable_new_dtags = 1;
-        } else if (link_option(option, "section-alignment=", &p)) {
-            s->section_align = ((unsigned(*)())scc_dlsym("strtoul"))(p, &end, 16);
-        } else if (link_option(option, "soname=", &p)) {
-            copy_linker_arg(&s->soname, p, 0);
-        } else if (ret = link_option(option, "?whole-archive", &p), ret) {
-            if (ret > 0)
-                s->filetype |= 0x800;
-            else
-                s->filetype &= ~0x800;
-        } else if (p) {
-            return 0;
-        } else {
-    err:
-            scc_error("unsupported linker option '%s'", option);
-        }
-        if (ignoring && s->warn_unsupported)
-            scc_warning("unsupported linker option '%s'", option);
-        option = skip_linker_arg(&p);
-    }
-    return 1;
+	while (*option) {
+		const char *p = ((void*)0);
+		char *end = ((void*)0);
+		int ignoring = 0;
+		int ret;
+		if (link_option(option, "Bsymbolic", &p)) {
+			s->symbolic = 1;
+		} else if (link_option(option, "nostdlib", &p)) {
+			s->nostdlib = 1;
+		} else if (link_option(option, "fini=", &p)) {
+			copy_linker_arg(&s->fini_symbol, p, 0);
+			ignoring = 1;
+		} else if (link_option(option, "image-base=", &p)
+				|| link_option(option, "Ttext=", &p)) {
+			s->text_addr = ((unsigned long long(*)())scc_dlsym("strtoull"))(p, &end, 16);
+			s->has_text_addr = 1;
+		} else if (link_option(option, "init=", &p)) {
+			copy_linker_arg(&s->init_symbol, p, 0);
+			ignoring = 1;
+		} else if (link_option(option, "oformat=", &p)) {
+			if(
+					strstart("elf64-", &p)
+				){
+				s->output_format = 0;
+			} else if (!((int(*)())scc_dlsym("strcmp"))(p, "binary")) {
+				s->output_format = 1;
+			} else
+				goto err;
+		} else if (link_option(option, "as-needed", &p)) {
+			ignoring = 1;
+		} else if (link_option(option, "O", &p)) {
+			ignoring = 1;
+		} else if (link_option(option, "export-all-symbols", &p)) {
+			s->rdynamic = 1;
+		} else if (link_option(option, "export-dynamic", &p)) {
+			s->rdynamic = 1;
+		} else if (link_option(option, "rpath=", &p)) {
+			copy_linker_arg(&s->rpath, p, ':');
+		} else if (link_option(option, "enable-new-dtags", &p)) {
+			s->enable_new_dtags = 1;
+		} else if (link_option(option, "section-alignment=", &p)) {
+			s->section_align = ((unsigned(*)())scc_dlsym("strtoul"))(p, &end, 16);
+		} else if (link_option(option, "soname=", &p)) {
+			copy_linker_arg(&s->soname, p, 0);
+		} else if (ret = link_option(option, "?whole-archive", &p), ret) {
+			if (ret > 0)
+				s->filetype |= 0x800;
+			else
+				s->filetype &= ~0x800;
+		} else if (p) {
+			return 0;
+		} else {
+err:
+			scc_error("unsupported linker option '%s'", option);
+		}
+		if (ignoring && s->warn_unsupported)
+			scc_warning("unsupported linker option '%s'", option);
+		option = skip_linker_arg(&p);
+	}
+	return 1;
 }
 typedef struct SCCOption {
     const char *name;
@@ -18192,6 +18482,7 @@ static const SCCOption scc_options[] = {
     { "B", SCC_OPTION_B, 0x0001 },
     { "l", SCC_OPTION_l, 0x0001 | 0x0002 },
     { "bench", SCC_OPTION_bench, 0 },
+    { "bt", SCC_OPTION_bt, 0x0001 },
     { "g", SCC_OPTION_g, 0x0001 | 0x0002 },
     { "c", SCC_OPTION_c, 0 },
     { "dumpversion", SCC_OPTION_dumpversion, 0},
@@ -18324,265 +18615,268 @@ static void args_parser_listfile(SCCState *s,
 }
  int scc_parse_args(SCCState *s, int *pargc, char ***pargv, int optind)
 {
-    const SCCOption *popt=((void*)0);
-    const char *optarg, *r;
-    const char *run = ((void*)0);
-    int last_o = -1;
-    int x;
-    CString linker_arg;
-    int tool = 0, arg_start = 0, noaction = optind;
-    char **argv = *pargv;
-    int argc = *pargc;
-    cstr_new(&linker_arg);
-    while (optind < argc) {
-        r = argv[optind];
-        if (r[0] == '@' && r[1] != '\0') {
-            args_parser_listfile(s, r + 1, optind, &argc, &argv);
-	    continue;
-        }
-        optind++;
-        if (tool) {
-            if (r[0] == '-' && r[1] == 'v' && r[2] == 0)
-                ++s->verbose;
-            continue;
-        }
+	const SCCOption *popt=((void*)0);
+	const char *optarg, *r;
+	const char *run = ((void*)0);
+	int last_o = -1;
+	int x;
+	CString linker_arg;
+	int tool = 0, arg_start = 0, noaction = optind;
+	char **argv = *pargv;
+	int argc = *pargc;
+	cstr_new(&linker_arg);
+	while (optind < argc) {
+		r = argv[optind];
+		if (r[0] == '@' && r[1] != '\0') {
+			args_parser_listfile(s, r + 1, optind, &argc, &argv);
+			continue;
+		}
+		optind++;
+		if (tool) {
+			if (r[0] == '-' && r[1] == 'v' && r[2] == 0)
+				++s->verbose;
+			continue;
+		}
 reparse:
-        if (r[0] != '-' || r[1] == '\0') {
-            if (r[0] != '@')
-                args_parser_add_file(s, r, s->filetype);
-            if (run) {
-                scc_set_options(s, run);
-                arg_start = optind - 1;
-                break;
-            }
-            continue;
-        }
-        for(popt = scc_options; ; ++popt) {
-            const char *p1 = popt->name;
-            const char *r1 = r + 1;
-            if (p1 == ((void*)0))
-                scc_error("invalid option -- '%s'", r);
-            if (!strstart(p1, &r1))
-                continue;
-            optarg = r1;
-            if (popt->flags & 0x0001) {
-                if (*r1 == '\0' && !(popt->flags & 0x0002)) {
-                    if (optind >= argc)
-                arg_err:
-                        scc_error("argument to '%s' is missing", r);
-                    optarg = argv[optind++];
-                }
-            } else if (*r1 != '\0')
-                continue;
-            break;
-        }
-        switch(popt->index) {
-        case SCC_OPTION_HELP:
-            return 1;
-        case SCC_OPTION_HELP2:
-            return 2;
-        case SCC_OPTION_I:
-            scc_add_include_path(s, optarg);
-            break;
-        case SCC_OPTION_D:
-            parse_option_D(s, optarg);
-            break;
-        case SCC_OPTION_U:
-            scc_undefine_symbol(s, optarg);
-            break;
-        case SCC_OPTION_L:
-            scc_add_library_path(s, optarg);
-            break;
-        case SCC_OPTION_B:
-            scc_set_lib_path(s, optarg);
-            break;
-        case SCC_OPTION_l:
-            args_parser_add_file(s, optarg, 0x8 | (s->filetype & ~(0xFF | 0x400)));
-            s->nb_libraries++;
-            break;
-        case SCC_OPTION_pthread:
-            parse_option_D(s, "_REENTRANT");
-            s->option_pthread = 1;
-            break;
-        case SCC_OPTION_bench:
-            s->do_bench = 1;
-            break;
-        case SCC_OPTION_g:
-            s->do_debug = 1;
-            break;
-        case SCC_OPTION_c:
-            x = 4;
-        set_output_type:
-            if (s->output_type)
-                scc_warning("-%s: overriding compiler action already specified", popt->name);
-            s->output_type = x;
-            break;
-        case SCC_OPTION_d:
-            if (*optarg == 'D')
-                s->dflag = 3;
-            else if (*optarg == 'M')
-                s->dflag = 7;
-            else if (*optarg == 't')
-                s->dflag = 16;
-            else if (isnum(*optarg))
-                g_debug = ((int(*)())scc_dlsym("atoi"))(optarg);
-            else
-                goto unsupported_option;
-            break;
-        case SCC_OPTION_static:
-            s->static_link = 1;
-            break;
-        case SCC_OPTION_std:
-            break;
-        case SCC_OPTION_shared:
-            x = 3;
-            goto set_output_type;
-        case SCC_OPTION_soname:
-            s->soname = scc_strdup(optarg);
-            break;
-        case SCC_OPTION_o:
-            if (s->outfile) {
-                scc_warning("multiple -o option");
-                scc_free(s->outfile);
-            }
-            s->outfile = scc_strdup(optarg);
-            break;
-        case SCC_OPTION_r:
-            s->option_r = 1;
-            x = 4;
-            goto set_output_type;
-        case SCC_OPTION_isystem:
-            scc_add_sysinclude_path(s, optarg);
-            break;
-	case SCC_OPTION_include:
-	    dynarray_add(&s->cmd_include_files,
-			 &s->nb_cmd_include_files, scc_strdup(optarg));
-	    break;
-        case SCC_OPTION_nostdinc:
-            s->nostdinc = 1;
-            break;
-        case SCC_OPTION_nostdlib:
-            s->nostdlib = 1;
-            break;
-        case SCC_OPTION_run:
-            run = optarg;
-            x = 1;
-            goto set_output_type;
-        case SCC_OPTION_v:
-            do ++s->verbose; while (*optarg++ == 'v');
-            ++noaction;
-            break;
-        case SCC_OPTION_f:
-            if (set_flag(s, options_f, optarg) < 0)
-                goto unsupported_option;
-            break;
-        case SCC_OPTION_m:
-            if (set_flag(s, options_m, optarg) < 0) {
-                if (x = ((int(*)())scc_dlsym("atoi"))(optarg), x != 32 && x != 64)
-                    goto unsupported_option;
-                if (8 != x/8)
-                    return x;
-                ++noaction;
-            }
-            break;
-        case SCC_OPTION_W:
-            if (set_flag(s, options_W, optarg) < 0)
-                goto unsupported_option;
-            break;
-        case SCC_OPTION_w:
-            s->warn_none = 1;
-            break;
-        case SCC_OPTION_rdynamic:
-            s->rdynamic = 1;
-            break;
-        case SCC_OPTION_Wl:
-            if (linker_arg.size)
-                --linker_arg.size, cstr_ccat(&linker_arg, ',');
-            cstr_cat(&linker_arg, optarg, 0);
-            if (scc_set_linker(s, linker_arg.data))
-                cstr_free(&linker_arg);
-            break;
-	case SCC_OPTION_Wp:
-	    r = optarg;
-	    goto reparse;
-        case SCC_OPTION_E:
-            x = 5;
-            goto set_output_type;
-        case SCC_OPTION_P:
-            s->Pflag = ((int(*)())scc_dlsym("atoi"))(optarg) + 1;
-            break;
-        case SCC_OPTION_MD:
-            s->gen_deps = 1;
-            break;
-        case SCC_OPTION_MF:
-            s->deps_outfile = scc_strdup(optarg);
-            break;
-        case SCC_OPTION_dumpversion:
-           (scc_dlsym_("printf"))("%s\n", "SCC-0927-001");
-            (scc_dlsym_("exit"))(0);
-            break;
-        case SCC_OPTION_x:
-            x = 0;
-            if (*optarg == 'c')
-                x = 0x1;
-            else if (*optarg == 'a')
-                x = 0x4;
-            else if (*optarg == 'b')
-                x = 0x400;
-            else if (*optarg == 's')
-                x = 0x10;
-            else if (*optarg == 'n')
-                x = 0;
-            else
-                scc_warning("unsupported language -x '%s'", optarg);
-            s->filetype = x | (s->filetype & ~(0xFF | 0x400));
-            break;
-        case SCC_OPTION_O:
-            last_o = ((int(*)())scc_dlsym("atoi"))(optarg);
-            break;
-        case SCC_OPTION_print_search_dirs:
-            x = 4;
-            goto extra_action;
-        case SCC_OPTION_impdef:
-            x = 6;
-            goto extra_action;
-        case SCC_OPTION_ar:
-            x = 5;
-        extra_action:
-            arg_start = optind - 1;
-            if (arg_start != noaction)
-                scc_error("cannot parse %s here", r);
-            tool = x;
-            break;
-        case SCC_OPTION_traditional:
-        case SCC_OPTION_pedantic:
-        case SCC_OPTION_pipe:
-        case SCC_OPTION_s:
-            break;
-        default:
+		if (r[0] != '-' || r[1] == '\0') {
+			if (r[0] != '@')
+				args_parser_add_file(s, r, s->filetype);
+			if (run) {
+				scc_set_options(s, run);
+				arg_start = optind - 1;
+				break;
+			}
+			continue;
+		}
+		for(popt = scc_options; ; ++popt) {
+			const char *p1 = popt->name;
+			const char *r1 = r + 1;
+			if (p1 == ((void*)0))
+				scc_error("invalid option -- '%s'", r);
+			if (!strstart(p1, &r1))
+				continue;
+			optarg = r1;
+			if (popt->flags & 0x0001) {
+				if (*r1 == '\0' && !(popt->flags & 0x0002)) {
+					if (optind >= argc)
+						arg_err:
+							scc_error("argument to '%s' is missing", r);
+					optarg = argv[optind++];
+				}
+			} else if (*r1 != '\0')
+				continue;
+			break;
+		}
+		switch(popt->index) {
+			case SCC_OPTION_HELP:
+				return 1;
+			case SCC_OPTION_HELP2:
+				return 2;
+			case SCC_OPTION_I:
+				scc_add_include_path(s, optarg);
+				break;
+			case SCC_OPTION_D:
+				parse_option_D(s, optarg);
+				break;
+			case SCC_OPTION_U:
+				scc_undefine_symbol(s, optarg);
+				break;
+			case SCC_OPTION_L:
+				scc_add_library_path(s, optarg);
+				break;
+			case SCC_OPTION_B:
+				scc_set_lib_path(s, optarg);
+				break;
+			case SCC_OPTION_l:
+				args_parser_add_file(s, optarg, 0x8 | (s->filetype & ~(0xFF | 0x400)));
+				s->nb_libraries++;
+				break;
+			case SCC_OPTION_pthread:
+				parse_option_D(s, "_REENTRANT");
+				s->option_pthread = 1;
+				break;
+			case SCC_OPTION_bench:
+				s->do_bench = 1;
+				break;
+			case SCC_OPTION_bt:
+				scc_set_num_callers(((int(*)())scc_dlsym("atoi"))(optarg));
+				break;
+			case SCC_OPTION_g:
+				s->do_debug = 1;
+				break;
+			case SCC_OPTION_c:
+				x = 4;
+set_output_type:
+				if (s->output_type)
+					scc_warning("-%s: overriding compiler action already specified", popt->name);
+				s->output_type = x;
+				break;
+			case SCC_OPTION_d:
+				if (*optarg == 'D')
+					s->dflag = 3;
+				else if (*optarg == 'M')
+					s->dflag = 7;
+				else if (*optarg == 't')
+					s->dflag = 16;
+				else if (isnum(*optarg))
+					g_debug = ((int(*)())scc_dlsym("atoi"))(optarg);
+				else
+					goto unsupported_option;
+				break;
+			case SCC_OPTION_static:
+				s->static_link = 1;
+				break;
+			case SCC_OPTION_std:
+				break;
+			case SCC_OPTION_shared:
+				x = 3;
+				goto set_output_type;
+			case SCC_OPTION_soname:
+				s->soname = scc_strdup(optarg);
+				break;
+			case SCC_OPTION_o:
+				if (s->outfile) {
+					scc_warning("multiple -o option");
+					scc_free(s->outfile);
+				}
+				s->outfile = scc_strdup(optarg);
+				break;
+			case SCC_OPTION_r:
+				s->option_r = 1;
+				x = 4;
+				goto set_output_type;
+			case SCC_OPTION_isystem:
+				scc_add_sysinclude_path(s, optarg);
+				break;
+			case SCC_OPTION_include:
+				dynarray_add(&s->cmd_include_files,
+						&s->nb_cmd_include_files, scc_strdup(optarg));
+				break;
+			case SCC_OPTION_nostdinc:
+				s->nostdinc = 1;
+				break;
+			case SCC_OPTION_nostdlib:
+				s->nostdlib = 1;
+				break;
+			case SCC_OPTION_run:
+				run = optarg;
+				x = 1;
+				goto set_output_type;
+			case SCC_OPTION_v:
+				do ++s->verbose; while (*optarg++ == 'v');
+				++noaction;
+				break;
+			case SCC_OPTION_f:
+				if (set_flag(s, options_f, optarg) < 0)
+					goto unsupported_option;
+				break;
+			case SCC_OPTION_m:
+				if (set_flag(s, options_m, optarg) < 0) {
+					if (x = ((int(*)())scc_dlsym("atoi"))(optarg), x != 32 && x != 64)
+						goto unsupported_option;
+					if (8 != x/8)
+						return x;
+					++noaction;
+				}
+				break;
+			case SCC_OPTION_W:
+				if (set_flag(s, options_W, optarg) < 0)
+					goto unsupported_option;
+				break;
+			case SCC_OPTION_w:
+				s->warn_none = 1;
+				break;
+			case SCC_OPTION_rdynamic:
+				s->rdynamic = 1;
+				break;
+			case SCC_OPTION_Wl:
+				if (linker_arg.size)
+					--linker_arg.size, cstr_ccat(&linker_arg, ',');
+				cstr_cat(&linker_arg, optarg, 0);
+				if (scc_set_linker(s, linker_arg.data))
+					cstr_free(&linker_arg);
+				break;
+			case SCC_OPTION_Wp:
+				r = optarg;
+				goto reparse;
+			case SCC_OPTION_E:
+				x = 5;
+				goto set_output_type;
+			case SCC_OPTION_P:
+				s->Pflag = ((int(*)())scc_dlsym("atoi"))(optarg) + 1;
+				break;
+			case SCC_OPTION_MD:
+				s->gen_deps = 1;
+				break;
+			case SCC_OPTION_MF:
+				s->deps_outfile = scc_strdup(optarg);
+				break;
+			case SCC_OPTION_dumpversion:
+				(scc_dlsym_("printf"))("%s\n", "SCC-0927-001");
+				(scc_dlsym_("exit"))(0);
+				break;
+			case SCC_OPTION_x:
+				x = 0;
+				if (*optarg == 'c')
+					x = 0x1;
+				else if (*optarg == 'a')
+					x = 0x4;
+				else if (*optarg == 'b')
+					x = 0x400;
+				else if (*optarg == 's')
+					x = 0x10;
+				else if (*optarg == 'n')
+					x = 0;
+				else
+					scc_warning("unsupported language -x '%s'", optarg);
+				s->filetype = x | (s->filetype & ~(0xFF | 0x400));
+				break;
+			case SCC_OPTION_O:
+				last_o = ((int(*)())scc_dlsym("atoi"))(optarg);
+				break;
+			case SCC_OPTION_print_search_dirs:
+				x = 4;
+				goto extra_action;
+			case SCC_OPTION_impdef:
+				x = 6;
+				goto extra_action;
+			case SCC_OPTION_ar:
+				x = 5;
+extra_action:
+				arg_start = optind - 1;
+				if (arg_start != noaction)
+					scc_error("cannot parse %s here", r);
+				tool = x;
+				break;
+			case SCC_OPTION_traditional:
+			case SCC_OPTION_pedantic:
+			case SCC_OPTION_pipe:
+			case SCC_OPTION_s:
+				break;
+			default:
 unsupported_option:
-            if (s->warn_unsupported)
-                scc_warning("unsupported option '%s'", r);
-            break;
-        }
-    }
-    if (last_o > 0)
-        scc_define_symbol(s, "__OPTIMIZE__", ((void*)0));
-    if (linker_arg.size) {
-        r = linker_arg.data;
-        goto arg_err;
-    }
-    *pargc = argc - arg_start;
-    *pargv = argv + arg_start;
-    if (tool)
-        return tool;
-    if (optind != noaction)
-        return 0;
-    if (s->verbose == 2)
-        return 4;
-    if (s->verbose)
-        return 3;
-    return 1;
+				if (s->warn_unsupported)
+					scc_warning("unsupported option '%s'", r);
+				break;
+		}
+	}
+	if (last_o > 0)
+		scc_define_symbol(s, "__OPTIMIZE__", ((void*)0));
+	if (linker_arg.size) {
+		r = linker_arg.data;
+		goto arg_err;
+	}
+	*pargc = argc - arg_start;
+	*pargv = argv + arg_start;
+	if (tool)
+		return tool;
+	if (optind != noaction)
+		return 0;
+	if (s->verbose == 2)
+		return 4;
+	if (s->verbose)
+		return 3;
+	return 1;
 }
  void scc_set_options(SCCState *s, const char *r)
 {
@@ -18824,18 +19118,9 @@ the_end:
 		(scc_dlsym_("remove"))(tfile);
     return ret;
 }
-static void scc_tool_cross(SCCState *s, char **argv, int target)
+static void scc_tool_cross(SCCState *s, char **argv, int option)
 {
-    char program[4096];
-    char *a0 = argv[0];
-    int prefix = scc_basename(a0) - a0;
-    (scc_dlsym_("snprintf"))(program, sizeof program,
-        "%.*s%s"
-        "-scc"
-        , prefix, a0, target == 64 ? "x86_64" : "i386");
-    if (((int(*)())scc_dlsym("strcmp"))(a0, program))
-        (scc_dlsym_("execvp"))(argv[0] = program, argv);
-    scc_error("could not run '%s'", program);
+    scc_error("-m%d not implemented.", option);
 }
 static void gen_makedeps(SCCState *s, const char *target, const char *filename)
 {
@@ -18889,6 +19174,7 @@ static const char help[] =
     "  -Wl,-opt[=val]  set linker option (see scc -hh)\n"
     "Debugger:\n"
     "  -g          generate runtime debug info\n"
+    "  -bt N       show N callers in stack traces\n"
     "Misc. options:\n"
     "  -x[c|a|b|s|n] specify type of the next infile (C,ASM,BIN,SAO,NONE)\n"
     "  -nostdinc   do not use standard system include paths\n"
@@ -18951,8 +19237,9 @@ static const char help2[] =
     ;
 static const char version[] =
     "scc version ""SCC-0927-001"" ("
-        "x86_64"
-        " Linux"
+				" ""LNX"
+				" ""64"
+				" ""ELF"
     ")\n"
     ;
 static void print_dirs(const char *msg, char **paths, int nb_paths)
@@ -18967,7 +19254,7 @@ static void print_search_dirs(SCCState *s)
 	(scc_dlsym_("printf"))("install(scc_lib_path): %s\n", s->scc_lib_path);
 	print_dirs("include", s->sysinclude_paths, s->nb_sysinclude_paths);
 	print_dirs("libraries", s->library_paths, s->nb_library_paths);
-	(scc_dlsym_("printf"))("libscc1(elf):\n  %s/""libscc1.a""\n", s->scc_lib_path);
+	(scc_dlsym_("printf"))("libscc1(""LNX""):\n  %s/""libscc1.a""\n", s->scc_lib_path);
 	print_dirs("crt", s->crt_paths, s->nb_crt_paths);
 	(scc_dlsym_("printf"))("elfinterp:\n  %s\n",  "/lib64/ld-linux-x86-64.so.2");
 }

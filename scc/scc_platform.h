@@ -3,7 +3,6 @@
 #ifndef _SCC_PLATFORM_H
 #define _SCC_PLATFORM_H
 
-//TODO if target unclear should throw error to stop
 //SCC_TARGET_I386
 //  => __SCC_TARGET_CPU__=X86, __SCC_TARGET_CPU_BIT__=32
 //SCC_TARGET_X86_64
@@ -34,67 +33,119 @@
 # endif
 
 ///////////////////////////////////////////////////////////////////////////
+#define __SCC_CPU_X86__  1
+#define __SCC_CPU_PPC__  2
+#define __SCC_CPU_MIPS__ 3
+#define __SCC_CPU_SH__   4
+#define __SCC_CPU_ARM__  5
+
+//probe CPU CPU_ID CPU_BIT
+
+#if !defined(__SCC_CPU__)||!defined(__SCC_CPU_ID__)||!defined(__SCC_CPU_BIT__)//{
+
 // __SCC_CPU__ : current cpu type
 #if defined(__X86__)||defined(_X86_)||defined(__i386__)||defined(__x86_64__)||defined(_AMD64_)
 # if (defined __x86_64__ || defined _AMD64_)
 #  define __SCC_CPU_BIT__ 64
+# else
+#  define __SCC_CPU_BIT__ 32
 # endif
 #	define __SCC_CPU__  X86
+# define __SCC_CPU_ID__  __SCC_CPU_X86__
 #elif defined(__PPC__)
 #	define __SCC_CPU__  PPC
+# define __SCC_CPU_ID__  __SCC_CPU_PPC__
 #elif defined(__MIPS__)
 #	define __SCC_CPU__  MIPS
+# define __SCC_CPU_ID__  __SCC_CPU_MIPS__
 #elif defined(__SH__)
 #	define __SCC_CPU__  SH
+# define __SCC_CPU_ID__  __SCC_CPU_SH__
 #elif defined(__arm__) || defined(__aarch64__)
 # if defined(__aarch64__)
 #  define __SCC_CPU_BIT__ 64
+# else
+#  define __SCC_CPU_BIT__ 32
 # endif
 #	define __SCC_CPU__  ARM
+# define __SCC_CPU_ID__  __SCC_CPU_ARM__
 #else
-//TODO getenv ?
-# define __SCC_CPU__
+# error "unknown cpu type"
 #endif
 
 // __SCC_CPU_BIT__ : current cpu bits
 #ifndef __SCC_CPU_BIT__
 # ifdef __SCC_CPU_BIT_DEFAULT__
-#  define __SCC_CPU_BIT__ __SCC_CPU_BIT__
+#  define __SCC_CPU_BIT__ __SCC_CPU_BIT_DEFAULT__
 # else
+//TODO should not get a default ... to fix it soon
 #  define __SCC_CPU_BIT__ 32
 # endif
 #endif
 
+#endif //}
+
 ///////////////////////////////////////////////////////////////////////////
+
+#define __SCC_OS_WIN__     1
+#define __SCC_OS_LNX__     2
+#define __SCC_OS_OSX__     3
+#define __SCC_OS_FREEBSD__ 4
+#define __SCC_OS_NETBSD__  5
+#define __SCC_OS_QNXNTO__  6
+#define __SCC_OS_QNX__     7
+#define __SCC_OS_SAO__     8
+
+#define __SCC_OS_FORMAT_PE     1
+#define __SCC_OS_FORMAT_MACHO  2
+#define __SCC_OS_FORMAT_ELF    3
+
 /* probe runtime */
 #ifndef __SCC_OS__//{
 
 #if defined(_WIN32)||defined(_WIN64)
 #	define __SCC_OS__  WIN
+# define __SCC_OS_ID__ __SCC_OS_WIN__
 # define __SCC_OS_FORMAT__  PE
+# define __SCC_OS_FORMAT_ID__  __SCC_OS_FORMAT_PE
 #elif defined(__APPLE__)
 #	define __SCC_OS__  OSX
+# define __SCC_OS_ID__ __SCC_OS_OSX__
 # define __SCC_OS_FORMAT__  MACHO
+# define __SCC_OS_FORMAT_ID__  __SCC_OS_FORMAT_MACHO
 #elif defined(__linux__)||defined(__LINUX__)
 #	define __SCC_OS__  LNX
+# define __SCC_OS_ID__ __SCC_OS_LNX__
 # define __SCC_OS_FORMAT__  ELF
+# define __SCC_OS_FORMAT_ID__  __SCC_OS_FORMAT_ELF
 #elif defined(__FreeBSD__)
 #	define __SCC_OS__  FREEBSD
+# define __SCC_OS_ID__ __SCC_OS_FREEBSD__
 # define __SCC_OS_FORMAT__  ELF
+# define __SCC_OS_FORMAT_ID__  __SCC_OS_FORMAT_ELF
 #elif defined(__NetBSD__)
 #	define __SCC_OS__  NETBSD
+# define __SCC_OS_ID__ __SCC_OS_NETBSD__
 # define __SCC_OS_FORMAT__  ELF
+# define __SCC_OS_FORMAT_ID__  __SCC_OS_FORMAT_ELF
 #elif defined(__QNXNTO__)
 #	define __SCC_OS__  QNXNTO
+# define __SCC_OS_ID__ __SCC_OS_QNXNTO__
 # define __SCC_OS_FORMAT__  ELF
+# define __SCC_OS_FORMAT_ID__  __SCC_OS_FORMAT_ELF
 #elif defined(__QNX__)
 #	define __SCC_OS__  QNX
+# define __SCC_OS_ID__ __SCC_OS_QNX__
 # define __SCC_OS_FORMAT__  ELF
-#elif defined(__TccOS__)
-#	define __SCC_OS__  SCCOS
+# define __SCC_OS_FORMAT_ID__  __SCC_OS_FORMAT_ELF
+#elif defined(__SaoOS__)//SaoOS
+#	define __SCC_OS__  SaoOS
+# define __SCC_OS_ID__ __SCC_OS_SAO__
 # define __SCC_OS_FORMAT__  ELF
+# define __SCC_OS_FORMAT_ID__  __SCC_OS_FORMAT_ELF
 #else
-//# define __SCC_OS__
+//#  warning "TODO unknown current os"
+#  error "TODO unknown current os"
 #endif
 
 #endif //}__SCC_OS__
@@ -127,12 +178,16 @@
 
 #if defined(SCC_TARGET_I386)
 # define __SCC_TARGET_CPU__ X86
+# define __SCC_TARGET_CPU_BIT__  32
 #elif defined(SCC_TARGET_X86_64)
 # define __SCC_TARGET_CPU__ X86
+# define __SCC_TARGET_CPU_BIT__  64
 #elif defined(SCC_TARGET_ARM)
 # define __SCC_TARGET_CPU__ ARM
+# define __SCC_TARGET_CPU_BIT__  32
 #elif defined(SCC_TARGET_ARM64)
 # define __SCC_TARGET_CPU__ ARM
+# define __SCC_TARGET_CPU_BIT__  64
 #elif defined(SCC_TARGET_PPC)
 # define __SCC_TARGET_CPU__ PPC
 #elif defined(SCC_TARGET_MIPS)
@@ -140,7 +195,7 @@
 #elif defined(SCC_TARGET_SH)
 # define __SCC_TARGET_CPU__ SH
 #else
-//# define __SCC_TARGET_CPU__
+# error "not yet support CPU"
 #endif
 
 #endif//}__SCC_TARGET_CPU__
@@ -153,35 +208,22 @@
 
 #ifndef __SCC_TARGET_CPU__
 # error __SCC_TARGET_CPU__ unknown
-#endif
-///////////////////////////////////////////////////////////////////////////
-#ifndef __SCC_TARGET_CPU_BIT__//{
-
-#if defined(SCC_TARGET_I386)
-# define __SCC_TARGET_CPU_BIT__ 32
-#elif defined(SCC_TARGET_X86_64)
-# define __SCC_TARGET_CPU_BIT__ 64
-#elif defined(SCC_TARGET_ARM)
-# define __SCC_TARGET_CPU_BIT__ 32
-#elif defined(SCC_TARGET_ARM64)
-# define __SCC_TARGET_CPU_BIT__ 64
-#elif defined(SCC_TARGET_PPC)
-#elif defined(SCC_TARGET_MIPS)
-#elif defined(SCC_TARGET_SH)
+#else
 #endif
 
-#endif//}__SCC_TARGET_CPU_BIT__
+# define __SCC_TARGET_CPU_ID__  SCC_MCAT(__SCC_CPU_,__SCC_TARGET_CPU__,__)
 
 #ifndef __SCC_TARGET_CPU_BIT__
-# define __SCC_TARGET_CPU_BIT__ __SCC_CPU_BIT__
+# ifdef __SCC_CPU_BIT__
+#  define __SCC_TARGET_CPU_BIT__ __SCC_CPU_BIT__
+# else
+#  error "unprobe __SCC_TARGET_CPU_BIT__"
+# endif
 #endif
 
 ///////////////////////////////////////////////////////////////////////////
 #ifndef __SCC_TARGET_FORMAT__//{
-# if defined(SCC_TARGET_MACHO)
-#  define __SCC_TARGET_FORMAT__  MACHO
-#  define __SCC_TARGET_OS__  OSX
-# elif defined(SCC_TARGET_PE)
+# if defined(SCC_TARGET_PE)
 #  define __SCC_TARGET_FORMAT__  PE
 #  define __SCC_TARGET_OS__  WIN
 # elif defined(SCC_TARGET_ELF)
@@ -190,7 +232,11 @@
 #endif//}!__SCC_TARGET_FORMAT__
 
 #ifndef __SCC_TARGET_FORMAT__//{
-# warning "unknown __SCC_TARGET_FORMAT__"
+# ifdef __SCC_OS_FORMAT__
+#  define __SCC_TARGET_FORMAT__ __SCC_OS_FORMAT__
+# else
+#  warning "unknown __SCC_TARGET_FORMAT__"
+# endif
 #endif//}!__SCC_TARGET_FORMAT__
 
 ///////////////////////////////////////////////////////////////////////////

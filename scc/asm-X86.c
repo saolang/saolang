@@ -1,4 +1,4 @@
-#if defined(TARGET_DEFS_ONLY)//||defined(SCC_TARGET_MACHO)
+#if defined(TARGET_DEFS_ONLY)
 //SKIP
 #else//TARGET_DEFS_ONLY
 #include "scc.h"
