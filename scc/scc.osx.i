@@ -15890,7 +15890,6 @@ static void scc_add_runtime(SCCState *s1)
     scc_add_pragma_libs(s1);
     if (!s1->nostdlib) {
         scc_add_library_err(s1, "c");
-        scc_add_support(s1, "libscc1.a");
         if (s1->output_type != 1)
             scc_add_crt(s1, "crtn.o");
     }
@@ -19910,7 +19909,6 @@ static void print_search_dirs(SCCState *s)
 	(scc_dlsym_("printf"))("install(scc_lib_path): %s\n", s->scc_lib_path);
 	print_dirs("include", s->sysinclude_paths, s->nb_sysinclude_paths);
 	print_dirs("libraries", s->library_paths, s->nb_library_paths);
-	(scc_dlsym_("printf"))("libscc1(""OSX""):\n  %s/""libscc1.a""\n", s->scc_lib_path);
 }
 static void set_environment(SCCState *s)
 {

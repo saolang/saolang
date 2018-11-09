@@ -1929,57 +1929,57 @@ static void pe_set_options(SCCState * s1, struct pe_info *pe)
 //@ref sccrun.c::scc_relocate_ex() => speciall for PE, need add pe runtime for 
 ST_FUNC int pe_output_file(SCCState *s1, const char *filename)
 {
-    int ret;
-    struct pe_info pe;
-    int i;
+	int ret;
+	struct pe_info pe;
+	int i;
 
-    SCC(memset)(&pe, 0, sizeof pe);
-    pe.filename = filename;
-    pe.s1 = s1;
+	SCC(memset)(&pe, 0, sizeof pe);
+	pe.filename = filename;
+	pe.s1 = s1;
 
-    scc_add_runtime(s1);
-    pe_add_runtime(s1, &pe);
-    resolve_common_syms(s1);
-    pe_set_options(s1, &pe);
+	scc_add_runtime(s1);
+	pe_add_runtime(s1, &pe);
+	resolve_common_syms(s1);
+	pe_set_options(s1, &pe);
 
-    ret = pe_check_symbols(&pe);
-    if (ret)
-        ;
-    else if (filename) {
-        pe_assign_addresses(&pe);
-        relocate_syms(s1, s1->symtab, 0);
-        s1->pe_imagebase = pe.imagebase;
-        for (i = 1; i < s1->nb_sections; ++i) {
-            Section *s = s1->sections[i];
-            if (s->reloc) {
-                relocate_section(s1, s);
-            }
-        }
-        pe.start_addr = (DWORD)
-            ((uintptr_t)scc_get_symbol_err(s1, pe.start_symbol)
-                - pe.imagebase);
-        if (s1->nb_errors)
-            ret = -1;
-        else
-            ret = pe_write(&pe);
-        scc_free(pe.sec_info);
-    } else {
+	ret = pe_check_symbols(&pe);
+	if (ret)
+		;
+	else if (filename) {
+		pe_assign_addresses(&pe);
+		relocate_syms(s1, s1->symtab, 0);
+		s1->pe_imagebase = pe.imagebase;
+		for (i = 1; i < s1->nb_sections; ++i) {
+			Section *s = s1->sections[i];
+			if (s->reloc) {
+				relocate_section(s1, s);
+			}
+		}
+		pe.start_addr = (DWORD)
+			((uintptr_t)scc_get_symbol_err(s1, pe.start_symbol)
+			 - pe.imagebase);
+		if (s1->nb_errors)
+			ret = -1;
+		else
+			ret = pe_write(&pe);
+		scc_free(pe.sec_info);
+	} else {
 #if __SCC_TARGET_CROSS__==0
-        pe.thunk = data_section;
-        pe_build_imports(&pe);
-        s1->runtime_main = pe.start_symbol;
+		pe.thunk = data_section;
+		pe_build_imports(&pe);
+		s1->runtime_main = pe.start_symbol;
 #if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
-        s1->uw_pdata = find_section(s1, ".pdata");
+		s1->uw_pdata = find_section(s1, ".pdata");
 #endif
 #endif
-    }
+	}
 
-    pe_free_imports(&pe);
+	pe_free_imports(&pe);
 
 #ifdef PE_PRINT_SECTIONS
-    pe_print_sections(s1, "scc.log");
+	pe_print_sections(s1, "scc.log");
 #endif
-    return ret;
+	return ret;
 }
 
 //TODO
