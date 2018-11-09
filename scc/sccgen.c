@@ -1213,7 +1213,8 @@ ST_FUNC int gv(int rc)
         }
         r = vtop->r & VT_VALMASK;
         rc2 = (rc & RC_FLOAT) ? RC_FLOAT : RC_INT;
-#ifndef SCC_TARGET_ARM64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
+#else
         if (rc == RC_IRET)
             rc2 = RC_LRET;
 #if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
@@ -1356,7 +1357,8 @@ ST_FUNC void gv2(int rc1, int rc2)
     }
 }
 
-#ifndef SCC_TARGET_ARM64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
+#else
 /* wrapper around RC_FRET to return a register by type */
 static int rc_fret(int t)
 {
@@ -2232,7 +2234,7 @@ redo:
 /* generic itof for unsigned long long case */
 static void gen_cvt_itof1(int t)
 {
-#ifdef SCC_TARGET_ARM64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
     gen_cvt_itof(t);
 #else
     if ((vtop->type.t & (VT_BTYPE | VT_UNSIGNED)) == 
@@ -2260,7 +2262,7 @@ static void gen_cvt_itof1(int t)
 /* generic ftoi for unsigned long long case */
 static void gen_cvt_ftoi1(int t)
 {
-#ifdef SCC_TARGET_ARM64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
     gen_cvt_ftoi(t);
 #else
     int st;
@@ -2483,7 +2485,7 @@ static void gen_cast(CType *type)
                     // convert from 32bit to 64bit
                     gv(RC_INT);
                     if (sbt != (VT_INT | VT_UNSIGNED)) {
-#ifdef SCC_TARGET_ARM64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
                         gen_cvt_sxtw();
 #elif (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
                         int r = gv(RC_INT);
@@ -3934,7 +3936,7 @@ static int parse_btype(CType *type, AttributeDef *ad)
             }
             next();
             break;
-#ifdef SCC_TARGET_ARM64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
         case TOK_UINT128:
             /* GCC's __uint128_t appears in some Linux header files. Make it a
                synonym for long double to get the size and alignment right. */
@@ -4802,7 +4804,7 @@ ST_FUNC void unary(void)
 #endif
 #endif
 
-#ifdef SCC_TARGET_ARM64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
     case TOK___va_start: {
 	parse_builtin_params(0, "ee");
         //xx check types
@@ -5075,7 +5077,7 @@ special_math_val:
                 if (!ret_nregs) {
                     /* get some space for the returned structure */
                     size = type_size(&s->type, &align);
-#ifdef SCC_TARGET_ARM64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
                 /* On arm64, a small struct is return in registers.
                    It is much easier to write it to memory if we know
                    that we are allowed to write some extra bytes, so
@@ -5107,7 +5109,8 @@ special_math_val:
                       ret.r2 = REG_QRET;
 #endif
                 } else {
-#ifndef SCC_TARGET_ARM64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
+#else
 #if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
                     if ((ret.type.t & VT_BTYPE) == VT_QLONG)
 #else
@@ -5628,7 +5631,8 @@ static int is_label(void)
     }
 }
 
-#ifndef SCC_TARGET_ARM64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
+#else
 static void gfunc_return(CType *func_type)
 {
     if ((func_type->t & VT_BTYPE) == VT_STRUCT) {
@@ -5691,7 +5695,7 @@ static void gfunc_return(CType *func_type)
         gv(RC_IRET);
     }
     vtop--; /* NOT vpop() because on x86 it would flush the fp stack */
-}//gfunc_return for SCC_TARGET_ARM64
+}//gfunc_return()
 #endif
 
 static int case_cmp(const void *pa, const void *pb)

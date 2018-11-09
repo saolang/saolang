@@ -62,7 +62,7 @@ DEF(TOK_ASM1, "asm")
 DEF(TOK_ASM2, "__asm")
 DEF(TOK_ASM3, "__asm__")
 
-#ifdef SCC_TARGET_ARM64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
 DEF(TOK_UINT128, "__uint128_t")
 #endif
 
@@ -148,7 +148,7 @@ DEF(TOK_builtin_expect, "__builtin_expect")
 DEF(TOK_builtin_va_start, "__builtin_va_start")
 #elif (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
 DEF(TOK_builtin_va_arg_types, "__builtin_va_arg_types")
-#elif defined SCC_TARGET_ARM64
+#elif (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
 DEF(TOK___va_start, "__va_start")
 DEF(TOK___va_arg, "__va_arg")
 #endif
@@ -245,7 +245,7 @@ DEF(TOK_alloca, "alloca")
 #if defined SCC_TARGET_PE
 DEF(TOK___chkstk, "__chkstk")
 #endif
-#ifdef SCC_TARGET_ARM64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
 DEF(TOK___arm64_clear_cache, "__arm64_clear_cache")
 DEF(TOK___addtf3, "__addtf3")
 DEF(TOK___subtf3, "__subtf3")

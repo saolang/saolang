@@ -776,7 +776,7 @@ LIBSCCAPI SCCState *scc_new(void)
 #else
 	s->float_abi = ARM_SOFTFP_FLOAT;
 #endif
-#elif defined(SCC_TARGET_ARM64)
+#elif (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
 	scc_define_symbol(s, "__aarch64__", NULL);
 #endif
 

@@ -145,25 +145,17 @@
 #ifndef __SCC_TARGET_CPU__//{
 
 //TODO remove {
-#if defined(SCC_TARGET_I386)
-# define __SCC_TARGET_CPU__ X86
-# define __SCC_TARGET_CPU_BIT__  32
-#elif defined(SCC_TARGET_X86_64)
-# define __SCC_TARGET_CPU__ X86
-# define __SCC_TARGET_CPU_BIT__  64
-#elif defined(SCC_TARGET_ARM)
+#if defined(SCC_TARGET_ARM)
 # define __SCC_TARGET_CPU__ ARM
 # define __SCC_TARGET_CPU_BIT__  32
-#elif defined(SCC_TARGET_ARM64)
-# define __SCC_TARGET_CPU__ ARM
-# define __SCC_TARGET_CPU_BIT__  64
-#elif defined(SCC_TARGET_PPC)
-# define __SCC_TARGET_CPU__ PPC
-#elif defined(SCC_TARGET_MIPS)
-# define __SCC_TARGET_CPU__ MIPS
-#elif defined(SCC_TARGET_SH)
-# define __SCC_TARGET_CPU__ SH
+//#elif defined(SCC_TARGET_PPC)
+//# define __SCC_TARGET_CPU__ PPC
+//#elif defined(SCC_TARGET_MIPS)
+//# define __SCC_TARGET_CPU__ MIPS
+//#elif defined(SCC_TARGET_SH)
+//# define __SCC_TARGET_CPU__ SH
 #else
+//TODO
 # error "not yet support CPU"
 #endif
 //TODO remove }

@@ -227,7 +227,7 @@ static void set_pages_executable(void *ptr, unsigned long length)
     if (SCC(mprotect,int)((void *)start, end - start, PROT_READ | PROT_WRITE | PROT_EXEC))
         scc_error("mprotect failed: did you mean to configure --with-selinux?");
 # endif
-# if defined SCC_TARGET_ARM || defined SCC_TARGET_ARM64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__)
     __clear_cache(ptr, (char *)ptr + length);
 # endif
 #endif

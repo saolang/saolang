@@ -130,7 +130,7 @@
 #  define CONFIG_SCC_ELFINTERP "-"
 # elif defined(SCC_UCLIBC)
 #  define CONFIG_SCC_ELFINTERP "/lib/ld-uClibc.so.0" /* is there a uClibc for x86_64 ? */
-# elif defined SCC_TARGET_ARM64
+# elif (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
 #  if defined(SCC_MUSL)
 #   define CONFIG_SCC_ELFINTERP "/lib/ld-musl-aarch64.so.1"
 #  else
@@ -1479,7 +1479,7 @@ ST_FUNC void gen_cvt_itof1(int t);
 #endif
 
 /* ------------ arm64-gen.c ------------ */
-#ifdef SCC_TARGET_ARM64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
 ST_FUNC void gen_cvt_sxtw(void);
 ST_FUNC void gen_opl(int op);
 ST_FUNC void gfunc_return(CType *func_type);
