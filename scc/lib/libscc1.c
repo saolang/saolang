@@ -62,7 +62,7 @@ union double_long {
         unsigned int lower;
         int upper;
     } l;
-#else
+#else //TODO for big endian?
     struct {
         int upper;
         unsigned int lower;
@@ -77,10 +77,13 @@ union float_long {
 };
 
 /* XXX: we don't support several builtin supports for now */
-#if !defined __x86_64__ && !defined __arm__
+//TODO remove __x86_64__, __arm__ which not standard by scc
+#if !defined __x86_64__ && !defined __arm__ //{
 
 /* XXX: use gcc/scc intrinsic ? */
-#if defined __i386__
+//TODO remove __i386__ which not standard by scc
+#if defined __i386__ //{
+//@ref __udivmoddi4()
 #define sub_ddmmss(sh, sl, ah, al, bh, bl) \
   __asm__ ("subl %5,%1\n\tsbbl %3,%0"					\
 	   : "=r" ((USItype) (sh)),					\
@@ -109,12 +112,12 @@ union float_long {
 	     : "=r" (__cbtmp) : "rm" ((USItype) (x)));			\
     (count) = __cbtmp ^ 31;						\
   } while (0)
-#else
+#else //}:{
 #error unsupported CPU type
-#endif
+#endif //}
 
-/* most of this code is taken from libgcc2.c from gcc */
-
+//@ref gcc::libgcc2.c
+//__umoddi3(),__udivdi3(),__moddi3(),__divdi3()
 static UDWtype __udivmoddi4 (UDWtype n, UDWtype d, UDWtype *rp)
 {
   DWunion ww;
@@ -329,10 +332,12 @@ static UDWtype __udivmoddi4 (UDWtype n, UDWtype d, UDWtype *rp)
   ww.s.low = q0;
   ww.s.high = q1;
   return ww.ll;
-}
+}//__udivmoddi4
 
+//@ref __divdi3(),__moddi3()
 #define __negdi2(a) (-(a))
 
+//@ref sccgen.c + scctok.h + gen-ARM-32.c
 long long __divdi3(long long u, long long v)
 {
     int c = 0;
@@ -356,6 +361,7 @@ long long __divdi3(long long u, long long v)
     return w;
 }
 
+//@ref sccgen.c + scctok.h + gen-ARM-32.c
 long long __moddi3(long long u, long long v)
 {
     int c = 0;
@@ -378,11 +384,13 @@ long long __moddi3(long long u, long long v)
     return w;
 }
 
+//@ref sccgen.c + scctok.h + gen-ARM-32.c
 unsigned long long __udivdi3(unsigned long long u, unsigned long long v)
 {
     return __udivmoddi4 (u, v, (UDWtype *) 0);
 }
 
+//@ref sccgen.c + scctok.h
 unsigned long long __umoddi3(unsigned long long u, unsigned long long v)
 {
     UDWtype w;
@@ -448,9 +456,9 @@ long long __ashldi3(long long a, int b)
 #endif
 }
 
-#endif /* !__x86_64__ */
+#endif //}
 
-/* XXX: fix scc's code generator to do this instead */
+//@ref sccgen.c + scctok.h + gen-ARM-32.c
 float __floatundisf(unsigned long long a)
 {
     DWunion uu; 
@@ -466,6 +474,7 @@ float __floatundisf(unsigned long long a)
     }
 }
 
+//@ref sccgen.c + scctok.h + gen-ARM-32.c
 double __floatundidf(unsigned long long a)
 {
     DWunion uu; 
@@ -481,6 +490,7 @@ double __floatundidf(unsigned long long a)
     }
 }
 
+//@ref sccgen.c + scctok.h + gen-ARM-32.c
 long double __floatundixf(unsigned long long a)
 {
     DWunion uu; 
@@ -521,6 +531,7 @@ unsigned long long __fixunssfdi (float a1)
         return 0;
 }
 
+//@ref scctok.h + gen-ARM-32.c
 long long __fixsfdi (float a1)
 {
     long long ret; int s;
@@ -528,6 +539,8 @@ long long __fixsfdi (float a1)
     return s ? ret : -ret;
 }
 
+//@ref TOK___fixxfdi, asm-gen.c & i386-gen.c
+//@ref __fixdfdi()
 unsigned long long __fixunsdfdi (double a1)
 {
     register union double_long dl1;
@@ -561,7 +574,11 @@ long long __fixdfdi (double a1)
     return s ? ret : -ret;
 }
 
+//TODO remove __arm__ (not standard by scc)
+//TODO remove sccgen.c ?
 #ifndef __arm__
+//@ref __fixxfdi()
+//@ref TOK___fixxfdi, asm-gen.c & i386-gen.c
 unsigned long long __fixunsxfdi (long double a1)
 {
     register union ldouble_long dl1;

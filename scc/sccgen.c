@@ -2263,11 +2263,14 @@ static void gen_cvt_itof1(int t)
 #endif //}
 
 /* generic ftoi for unsigned long long case */
+//@ref gen_cast()
 static void gen_cvt_ftoi1(int t)
 {
 #if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
+	//arm64
     gen_cvt_ftoi(t);
 #else
+		//else
     int st;
 
     if (t == (VT_LLONG | VT_UNSIGNED)) {

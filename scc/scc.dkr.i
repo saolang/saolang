@@ -18121,8 +18121,10 @@ static void scc_cleanup(void)
 	scc_define_symbol(s, "__STDC__", ((void*)0));
 	scc_define_symbol(s, "__STDC_VERSION__", "199901L");
 	scc_define_symbol(s, "__STDC_HOSTED__", ((void*)0));
-	scc_define_symbol(s, "__SCC_TARGET_CPU__", "X86");
-	scc_define_symbol(s, "__SCC_TARGET_CPU_BIT__", "64");
+   scc_define_symbol(s, "__SCC_TARGET_CPU__", "X86");
+   scc_define_symbol(s, "__SCC_TARGET_CPU_BIT__", "64");
+   scc_define_symbol(s, "__SCC_TARGET_FORMAT__", "ELF");
+   scc_define_symbol(s, "__SCC_TARGET_OS__", "LNX");
 	scc_define_symbol(s, "__x86_64__", ((void*)0));
 	scc_define_symbol(s, "__unix__", ((void*)0));
 	scc_define_symbol(s, "__unix", ((void*)0));

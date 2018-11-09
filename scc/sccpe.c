@@ -1809,74 +1809,74 @@ ST_FUNC void pe_add_unwind_data(unsigned start, unsigned end, unsigned stack)
 //@ref pe_output_file()
 static void pe_add_runtime(SCCState *s1, struct pe_info *pe)
 {
-    const char *start_symbol;
-    int pe_type = 0;
-    int unicode_entry = 0;
+	const char *start_symbol;
+	int pe_type = 0;
+	int unicode_entry = 0;
 
-    if (find_elf_sym(symtab_section, PE_STDSYM("WinMain","@16")))
-        pe_type = PE_GUI;
-    else
-    if (find_elf_sym(symtab_section, PE_STDSYM("wWinMain","@16"))) {
-        pe_type = PE_GUI;
-        unicode_entry = PE_GUI;
-    }
-    else
-    if (SCC_OUTPUT_DLL == s1->output_type) {
-        pe_type = PE_DLL;
-        /* need this for 'sccelf.c:relocate_section()' */
-        s1->output_type = SCC_OUTPUT_EXE;
-    }
-    else {
-        pe_type = PE_EXE;
-        if (find_elf_sym(symtab_section, "wmain"))
-            unicode_entry = PE_EXE;
-    }
+	if (find_elf_sym(symtab_section, PE_STDSYM("WinMain","@16")))
+		pe_type = PE_GUI;
+	else
+		if (find_elf_sym(symtab_section, PE_STDSYM("wWinMain","@16"))) {
+			pe_type = PE_GUI;
+			unicode_entry = PE_GUI;
+		}
+		else
+			if (SCC_OUTPUT_DLL == s1->output_type) {
+				pe_type = PE_DLL;
+				/* need this for 'sccelf.c:relocate_section()' */
+				s1->output_type = SCC_OUTPUT_EXE;
+			}
+			else {
+				pe_type = PE_EXE;
+				if (find_elf_sym(symtab_section, "wmain"))
+					unicode_entry = PE_EXE;
+			}
 
-    start_symbol =
-        SCC_OUTPUT_MEMORY == s1->output_type
-        ? PE_GUI == pe_type ? (unicode_entry ? "__runwwinmain" : "__runwinmain")
-            : (unicode_entry ? "__runwmain" : "__runmain")
-        : PE_DLL == pe_type ? PE_STDSYM("__dllstart","@12")
-            : PE_GUI == pe_type ? (unicode_entry ? "__wwinstart": "__winstart")
-                : (unicode_entry ? "__wstart" : "__start")
-        ;
+	start_symbol =
+		SCC_OUTPUT_MEMORY == s1->output_type
+		? PE_GUI == pe_type ? (unicode_entry ? "__runwwinmain" : "__runwinmain")
+		: (unicode_entry ? "__runwmain" : "__runmain")
+		: PE_DLL == pe_type ? PE_STDSYM("__dllstart","@12")
+		: PE_GUI == pe_type ? (unicode_entry ? "__wwinstart": "__winstart")
+		: (unicode_entry ? "__wstart" : "__start")
+		;
 
-    if (!s1->leading_underscore || SCC(strchr,char*)(start_symbol, '@'))
-        ++start_symbol;
+	if (!s1->leading_underscore || SCC(strchr,char*)(start_symbol, '@'))
+		++start_symbol;
 
-    /* grab the startup code from libscc1 */
+	/* grab the startup code from libscc1 */
 #if __SCC_TARGET_CROSS__==0
-    if (SCC_OUTPUT_MEMORY != s1->output_type || s1->runtime_main)
+	if (SCC_OUTPUT_MEMORY != s1->output_type || s1->runtime_main)
 #endif
-    set_elf_sym(symtab_section,
-        0, 0,
-        ELFW(ST_INFO)(STB_GLOBAL, STT_NOTYPE), 0,
-        SHN_UNDEF, start_symbol);
+		set_elf_sym(symtab_section,
+				0, 0,
+				ELFW(ST_INFO)(STB_GLOBAL, STT_NOTYPE), 0,
+				SHN_UNDEF, start_symbol);
 
-    if (0 == s1->nostdlib) {
-        static const char *libs[] = {
+	if (0 == s1->nostdlib) { //add runtime
+		static const char *libs[] = {
 #ifdef SCC_LIBSCC1
-            SCC_LIBSCC1,
+			SCC_LIBSCC1,
 #endif
-						"msvcrt", "kernel32", "", "user32", "gdi32", NULL
-        };
-        const char **pp, *p;
-        for (pp = libs; 0 != (p = *pp); ++pp) {
-            if (0 == *p) {
-                if (PE_DLL != pe_type && PE_GUI != pe_type)
-                    break;
-            } else if (pp == libs && scc_add_dll(s1, p, 0) >= 0) {
-                continue;
-            } else {
-                scc_add_library_err(s1, p);
-            }
-        }
-    }
+			"msvcrt", "kernel32", "", "user32", "gdi32", NULL
+		};
+		const char **pp, *p;
+		for (pp = libs; 0 != (p = *pp); ++pp) {
+			if (0 == *p) {
+				if (PE_DLL != pe_type && PE_GUI != pe_type)
+					break;
+			} else if (pp == libs && scc_add_dll(s1, p, 0) >= 0) {
+				continue;
+			} else {
+				scc_add_library_err(s1, p);
+			}
+		}
+	}
 
-    if (SCC_OUTPUT_MEMORY == s1->output_type)
-        pe_type = PE_RUN;
-    pe->type = pe_type;
-    pe->start_symbol = start_symbol;
+	if (SCC_OUTPUT_MEMORY == s1->output_type)
+		pe_type = PE_RUN;
+	pe->type = pe_type;
+	pe->start_symbol = start_symbol;
 }
 
 static void pe_set_options(SCCState * s1, struct pe_info *pe)
