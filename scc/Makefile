@@ -27,6 +27,7 @@ ifeq (-$(CC)-$(GCC_MAJOR)-$(findstring $(GCC_MINOR),56789)-,-gcc-4--)
 endif
 
 LIBSCC = libscc.a
+LIBSCC1 = libscc1.a
 LINK_LIBSCC =
 LIBS =
 CFLAGS += -I$(TOP)
@@ -113,7 +114,7 @@ ifeq ($(INCLUDED),no)
 # running top Makefile
 
 PROGS = scc$(EXESUF)
-SCCLIBS = $(LIBSCC) $(LIBSCCDEF)
+SCCLIBS = $(LIBSCC1) $(LIBSCC) $(LIBSCCDEF)
 
 
 # --------------------------------------------------------------------------

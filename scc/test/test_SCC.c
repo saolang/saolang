@@ -47,6 +47,11 @@ int main(){
 #endif
 
 	SCC(printf)("%s=%d\n", "5 % 3",5 % 3);
+
+	SCC(printf)("%s=%9.2f\n", "5 / 3", (5.0 / 3.0) );
+
+	double f = 50.0 /5.0;
+	SCC(printf)("%s=%9.2f\n", "50 / 5", f );
 	return 42;
 }
 
