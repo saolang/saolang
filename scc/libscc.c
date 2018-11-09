@@ -1807,6 +1807,19 @@ set_output_type:
 				break;
 			case SCC_OPTION_run:
 #ifndef SCC_IS_NATIVE
+				scc_warning("%s = %s", "__SCC_TARGET_CPU__", SCC_QUOTE(__SCC_TARGET_CPU__));
+				scc_warning("%s = %s", "__SCC_TARGET_OS__", SCC_QUOTE(__SCC_TARGET_OS__));
+				scc_warning("%s = %s", "__SCC_TARGET_FORMAT__", SCC_QUOTE(__SCC_TARGET_FORMAT__));
+				scc_warning("%s = %s", "__SCC_TARGET_CPU_BIT__", SCC_QUOTE(__SCC_TARGET_CPU_BIT__));
+
+				scc_warning("%s = %s", "__SCC_CPU__", SCC_QUOTE(__SCC_CPU__));
+				scc_warning("%s = %s", "__SCC_OS__", SCC_QUOTE(__SCC_OS__));
+				scc_warning("%s = %s", "__SCC_OS_FORMAT__", SCC_QUOTE(__SCC_OS_FORMAT__));
+				scc_warning("%s = %s", "__SCC_CPU_BIT__", SCC_QUOTE(__SCC_CPU_BIT__));
+
+				scc_warning("%s,%s,%s,%s", "__SCC_OS_ID__,__SCC_TARGET_OS_ID__", SCC_QUOTE(__SCC_OS_ID__),SCC_QUOTE(__SCC_TARGET_OS_ID__));
+				scc_warning("%s,%s,%s,%s", "__SCC_CPU_ID__,__SCC_TARGET_CPU_ID__", SCC_QUOTE(__SCC_CPU_ID__),SCC_QUOTE(__SCC_TARGET_CPU_ID__));
+				scc_warning("%s,%s,%s,%s", "__SCC_OS_FORMAT_ID__,__SCC_TARGET_FORMAT_ID__", SCC_QUOTE(__SCC_OS_FORMAT_ID__),SCC_QUOTE(__SCC_TARGET_FORMAT_ID__));
 				scc_error("-run is not available in a cross compiler");
 #endif
 				run = optarg;

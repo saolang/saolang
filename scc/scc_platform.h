@@ -16,36 +16,35 @@
 
 #if !defined(__SCC_CPU__)||!defined(__SCC_CPU_BIT__)//{
 
-#if defined(__X86__)||defined(_X86_)||defined(__i386__)||defined(__x86_64__)||defined(_AMD64_)
+#if defined(__X86__)||defined(_X86_)||defined(__i386__)||defined(__x86_64__)||defined(_AMD64_) //{
 # if (defined __x86_64__ || defined _AMD64_)
 #  define __SCC_CPU_BIT__ 64
 # else
 #  define __SCC_CPU_BIT__ 32
 # endif
 #	define __SCC_CPU__  X86
-#elif defined(__PPC__)
-#	define __SCC_CPU__  PPC
-#elif defined(__MIPS__)
-#	define __SCC_CPU__  MIPS
-#elif defined(__SH__)
-#	define __SCC_CPU__  SH
-#elif defined(__arm__) || defined(__aarch64__)
+//#elif defined(__PPC__) //}:{
+//#	define __SCC_CPU__  PPC
+//#elif defined(__MIPS__) //}:{
+//#	define __SCC_CPU__  MIPS
+//#elif defined(__SH__) //}:{
+//#	define __SCC_CPU__  SH
+#elif defined(__arm__) || defined(__aarch64__) //}:{
 # if defined(__aarch64__)
 #  define __SCC_CPU_BIT__ 64
 # else
 #  define __SCC_CPU_BIT__ 32
 # endif
 #	define __SCC_CPU__  ARM
-#else
-# error "unknown cpu type"
-#endif
+#else //}:{
+# error "Unknown cpu type"
+#endif //}
 
-// __SCC_CPU_BIT__ : current cpu bits
 #ifndef __SCC_CPU_BIT__
 # ifdef __SCC_CPU_BIT_DEFAULT__
 #  define __SCC_CPU_BIT__ __SCC_CPU_BIT_DEFAULT__
 # else
-#  warning "unknown CPU BIT" //TODO
+#  warning "Unknown CPU BIT"
 # endif
 #endif
 
@@ -165,25 +164,31 @@
 #ifndef __SCC_TARGET_OS__
 # ifdef __SCC_OS__
 # define __SCC_TARGET_OS__ __SCC_OS__
-# define __SCC_TARGET_OS_ID__ __SCC_OS_ID__
 # else
 # warning "unknown __SCC_TARGET_OS__"
 # endif
 #else
 #endif
 
+# define __SCC_TARGET_OS_ID__  SCC_MCAT(__SCC_OS_,__SCC_TARGET_OS__,__)
+
 ///////////////////////////////////////////////////////////////////////////
 
+//DEBUG..
 //#warning "CPU/BIT/OS/FMT/PTR_SIZE:" SCC_QUOTE(__SCC_TARGET_CPU__,__SCC_TARGET_CPU_BIT__,__SCC_TARGET_OS__,__SCC_TARGET_FORMAT__,PTR_SIZE)
 //#pragma message "WJC.DEBUG=" SCC_QUOTE(__SCC_TARGET_CROSS__,__SCC_TARGET_CPU__,__SCC_TARGET_CPU_ID__,__SCC_TARGET_CPU_BIT__)
 //#warning "__SCC_TARGET_FORMAT__=" SCC_QUOTE(__SCC_TARGET_FORMAT__)
+//#warning "__SCC_TARGET_OS_ID__=" SCC_QUOTE(__SCC_TARGET_OS_ID__)
+//#pragma message "__SCC_TARGET_OS_ID__=" SCC_QUOTE(__SCC_TARGET_OS_ID__)
 
 //regards native if cpu arch and bits remain same:
 #if (__SCC_CPU_ID__ == __SCC_TARGET_CPU_ID__) \
 										 && (__SCC_CPU_BIT__==__SCC_TARGET_CPU_BIT__) \
 										 && (__SCC_OS_FORMAT_ID__==__SCC_TARGET_FORMAT_ID__) \
 										 && (__SCC_OS_ID__==__SCC_TARGET_OS_ID__)
+# ifndef SCC_IS_NATIVE
 #  define SCC_IS_NATIVE
+# endif
 #endif
 
 #ifdef SCC_IS_NATIVE
@@ -191,5 +196,7 @@
 #else
 # define __SCC_TARGET_CROSS__ 1
 #endif
+
+//#warning "SCC_IS_NATIVE/__SCC_TARGET_CROSS__:" SCC_QUOTE(SCC_IS_NATIVE,__SCC_TARGET_CROSS__)
 
 #endif//_SCC_PLATFORM_H
