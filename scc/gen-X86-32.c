@@ -185,7 +185,7 @@ ST_FUNC void load(int r, SValue *sv)
     int v, t, ft, fc, fr;
     SValue v1;
 
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     SValue v2;
     sv = pe_getimport(sv, &v2);
 #endif
@@ -263,7 +263,7 @@ ST_FUNC void store(int r, SValue *v)
 {
     int fr, bt, ft, fc;
 
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     SValue v2;
     v = pe_getimport(v, &v2);
 #endif
@@ -311,7 +311,7 @@ static void gadd_sp(int val)
     }
 }
 
-#if defined SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 static void gen_static_call(int v)
 {
     Sym *sym;
@@ -372,7 +372,7 @@ static uint8_t fastcallw_regs[2] = { TREG_ECX, TREG_EDX };
    returning via struct pointer. */
 ST_FUNC int gfunc_sret(CType *vt, int variadic, CType *ret, int *ret_align, int *regsize)
 {
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     int size, align;
     *ret_align = 1; // Never have to re-align return values for x86
     *regsize = 4;
@@ -473,7 +473,8 @@ ST_FUNC void gfunc_call(int nb_args)
             args_size -= 4;
         }
     }
-#ifndef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
+#else
     else if ((vtop->type.ref->type.t & VT_BTYPE) == VT_STRUCT)
         args_size -= 4;
 #endif
@@ -484,7 +485,7 @@ ST_FUNC void gfunc_call(int nb_args)
     vtop--;
 }
 
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 #define FUNC_PROLOG_SIZE (10 + USE_EBX)
 #else
 #define FUNC_PROLOG_SIZE (9 + USE_EBX)
@@ -523,7 +524,7 @@ ST_FUNC void gfunc_prolog(CType *func_type)
        implicit pointer parameter */
     func_vt = sym->type;
     func_var = (sym->f.func_type == FUNC_ELLIPSIS);
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     size = type_size(&func_vt,&align);
     if (((func_vt.t & VT_BTYPE) == VT_STRUCT)
         && (size > 8 || (size & (size - 1)))) {
@@ -564,7 +565,8 @@ ST_FUNC void gfunc_prolog(CType *func_type)
     /* pascal type call or fastcall ? */
     if (func_call == FUNC_STDCALL || func_call == FUNC_FASTCALLW)
         func_ret_sub = addr - 8;
-#ifndef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
+#else
     else if (func_vc)
         func_ret_sub = 4;
 #endif
@@ -594,7 +596,7 @@ ST_FUNC void gfunc_epilog(void)
     }
     saved_ind = ind;
     ind = func_sub_sp_offset - FUNC_PROLOG_SIZE;
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     if (v >= 4096) {
         oad(0xb8, v); /* mov stacksize, %eax */
 				//@ref lib/chkstk.c
@@ -605,7 +607,7 @@ ST_FUNC void gfunc_epilog(void)
         o(0xe58955);  /* push %ebp, mov %esp, %ebp */
         o(0xec81);  /* sub esp, stacksize */
         gen_le32(v);
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
         o(0x90);  /* adjust to FUNC_PROLOG_SIZE */
 #endif
     }
@@ -1020,7 +1022,7 @@ ST_FUNC void gen_vla_sp_restore(int addr) {
 
 /* Subtract from the stack pointer, and push the resulting value onto the stack */
 ST_FUNC void gen_vla_alloc(CType *type, int align) {
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     /* alloca does more than just adjust %rsp on Windows */
     vpush_global_sym(&func_old_type, TOK_alloca);
     vswap(); /* Move alloca ref past allocation size */

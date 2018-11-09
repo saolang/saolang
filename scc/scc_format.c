@@ -111,7 +111,7 @@ ST_FUNC void scc_format_begin_file(SCCState *s1)
     }
     /* disable symbol hashing during compilation */
     s = s1->symtab, s->reloc = s->hash, s->hash = NULL;
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64) && defined SCC_TARGET_PE
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64) && __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     s1->uw_sym = 0;
 #endif
 }
@@ -442,7 +442,7 @@ LIBSCCAPI void *scc_get_symbol(SCCState *s, const char *name)
     return (void*)(uintptr_t)get_elf_sym_addr(s, name, 0);
 }
 
-#if defined SCC_IS_NATIVE || defined SCC_TARGET_PE
+#if defined SCC_IS_NATIVE || __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 /* return elf symbol value or error */
 ST_FUNC void* scc_get_symbol_err(SCCState *s, const char *name)
 {
@@ -753,7 +753,7 @@ ST_FUNC void relocate_syms(SCCState *s1, Section *symtab, int do_resolve)
             name = (char *) s1->symtab->link->data + sym->st_name;
             /* Use ld.so to resolve symbol for us (for scc -run) */
             if (do_resolve) {
-#if defined SCC_IS_NATIVE && !defined SCC_TARGET_PE
+#if defined SCC_IS_NATIVE && !(__SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__)
                 void *addr = scc_dlsym(name);
                 if (addr) {
                     sym->st_value = (addr_t) addr;
@@ -1084,7 +1084,8 @@ static void put_dt(Section *dynamic, int dt, addr_t val)
     dyn->d_un.d_val = val;
 }
 
-#ifndef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
+#else
 static void add_init_array_defines(SCCState *s1, const char *section_name)
 {
     Section *s;
@@ -1134,7 +1135,8 @@ ST_FUNC void scc_add_runtime(SCCState *s1)
     s1->filetype = 0;
     scc_add_bcheck(s1);
     scc_add_pragma_libs(s1);
-#ifndef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
+#else
 		//NOTES: for non-pe env, try load libc/libgcc and libscc1 runtime
     /* add libc */
     if (!s1->nostdlib) {
@@ -1180,7 +1182,8 @@ static void scc_add_linker_symbols(SCCState *s1)
                 bss_section->data_offset, 0,
                 ELFW(ST_INFO)(STB_GLOBAL, STT_NOTYPE), 0,
                 bss_section->sh_num, "_end");
-#ifndef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
+#else
     /* horrible new standard ldscript defines */
     add_init_array_defines(s1, ".preinit_array");
     add_init_array_defines(s1, ".init_array");
@@ -1835,7 +1838,7 @@ static void scc_output_elf(SCCState *s1, FILE *f, int phnum, ElfW(Phdr) *phdr,
     ehdr.e_ident[4] = ELFCLASSW;
     ehdr.e_ident[5] = ELFDATA2LSB;
     ehdr.e_ident[6] = EV_CURRENT;
-#if !defined(SCC_TARGET_PE) && (defined(__FreeBSD__) || defined(__FreeBSD_kernel__))
+#if !(__SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__) && (defined(__FreeBSD__) || defined(__FreeBSD_kernel__))
     /* FIXME: should set only for freebsd _target_, but we exclude only PE target */
     ehdr.e_ident[EI_OSABI] = ELFOSABI_FREEBSD;
 #endif
@@ -2186,7 +2189,7 @@ the_end:
 LIBSCCAPI int scc_output_file(SCCState *s, const char *filename)
 {
     int ret;
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     if (s->output_type != SCC_OUTPUT_OBJ) {
         ret = pe_output_file(s, filename);
     } else
@@ -2641,7 +2644,8 @@ ST_FUNC int scc_load_archive(SCCState *s1, int fd, int alacarte)
 	return 0;
 }//scc_load_archive()
 
-#ifndef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
+#else
 /* load a DLL and all referenced DLLs. 'level = 0' means that the DLL
    is referenced by the user (so it should be added as DT_NEEDED in
    the generated ELF file) */
@@ -3016,4 +3020,4 @@ ST_FUNC int scc_load_ldscript(SCCState *s1)
     }
     return 0;
 }
-#endif /* !SCC_TARGET_PE */
+#endif //__SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__

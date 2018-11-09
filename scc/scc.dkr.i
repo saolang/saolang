@@ -11530,7 +11530,7 @@ void load(int r, SValue *sv)
         } else if ((ft & (~((0x00001000 | 0x00002000 | 0x00004000 | 0x00008000)|(((1 << (6+6)) - 1) << 20 | 0x0080)))) == (2 | 0x0010)) {
             b = 0xb70f;
         } else {
-            ((((ft & 0x000f) == 3) || ((ft & 0x000f) == 4) || ((ft & 0x000f) == 5) || ((ft & 0x000f) == 6))?(void)0:scc_assert("((ft & VT_BTYPE) == VT_INT) || ((ft & VT_BTYPE) == VT_LLONG) || ((ft & VT_BTYPE) == VT_PTR) || ((ft & VT_BTYPE) == VT_FUNC)","gen-X86-64.c",418));
+            ((((ft & 0x000f) == 3) || ((ft & 0x000f) == 4) || ((ft & 0x000f) == 5) || ((ft & 0x000f) == 6))?(void)0:scc_assert("((ft & VT_BTYPE) == VT_INT) || ((ft & VT_BTYPE) == VT_LLONG) || ((ft & VT_BTYPE) == VT_PTR) || ((ft & VT_BTYPE) == VT_FUNC)","gen-X86-64.c",419));
             ll = is64_type(ft);
             b = 0x8b;
         }
@@ -11592,17 +11592,17 @@ void load(int r, SValue *sv)
                     o(0x44 + ((r) & 7)*8);
                     o(0xf024);
                 } else {
-                    (((v >= TREG_XMM0) && (v <= TREG_XMM7))?(void)0:scc_assert("(v >= TREG_XMM0) && (v <= TREG_XMM7)","gen-X86-64.c",491));
+                    (((v >= TREG_XMM0) && (v <= TREG_XMM7))?(void)0:scc_assert("(v >= TREG_XMM0) && (v <= TREG_XMM7)","gen-X86-64.c",492));
                     if ((ft & 0x000f) == 8) {
                         o(0x100ff3);
                     } else {
-                        (((ft & 0x000f) == 9)?(void)0:scc_assert("(ft & VT_BTYPE) == VT_DOUBLE","gen-X86-64.c",495));
+                        (((ft & 0x000f) == 9)?(void)0:scc_assert("(ft & VT_BTYPE) == VT_DOUBLE","gen-X86-64.c",496));
                         o(0x100ff2);
                     }
                     o(0xc0 + ((v) & 7) + ((r) & 7)*8);
                 }
             } else if (r == TREG_ST0) {
-                (((v >= TREG_XMM0) && (v <= TREG_XMM7))?(void)0:scc_assert("(v >= TREG_XMM0) && (v <= TREG_XMM7)","gen-X86-64.c",501));
+                (((v >= TREG_XMM0) && (v <= TREG_XMM7))?(void)0:scc_assert("(v >= TREG_XMM0) && (v <= TREG_XMM7)","gen-X86-64.c",502));
                 o(0x110ff2);
                 o(0x44 + ((r) & 7)*8);
                 o(0xf024);
@@ -11749,7 +11749,7 @@ static X86_64_Mode classify_x86_64_inner(CType *ty)
             mode = classify_x86_64_merge(mode, classify_x86_64_inner(&f->type));
         return mode;
     }
-    ((0)?(void)0:scc_assert("0","gen-X86-64.c",1021));
+    ((0)?(void)0:scc_assert("0","gen-X86-64.c",1023));
     return 0;
 }
 static X86_64_Mode classify_x86_64_arg(CType *ty, CType *ret, int *psize, int *palign, int *reg_count)
@@ -11903,7 +11903,7 @@ void gfunc_call(int nb_args)
 		break;
 	    case 8:
 	    case 9:
-		((mode == x86_64_mode_sse)?(void)0:scc_assert("mode == x86_64_mode_sse","gen-X86-64.c",1217));
+		((mode == x86_64_mode_sse)?(void)0:scc_assert("mode == x86_64_mode_sse","gen-X86-64.c",1219));
 		r = gv(0x0002);
 		o(0x50);
 		o(0xd60f66);
@@ -11911,7 +11911,7 @@ void gfunc_call(int nb_args)
 		o(0x24);
 		break;
 	    default:
-		((mode == x86_64_mode_integer)?(void)0:scc_assert("mode == x86_64_mode_integer","gen-X86-64.c",1227));
+		((mode == x86_64_mode_integer)?(void)0:scc_assert("mode == x86_64_mode_integer","gen-X86-64.c",1229));
 		r = gv(0x0001);
 		orex(0,r,0,0x50 + ((r) & 7));
 		break;
@@ -11922,8 +11922,8 @@ void gfunc_call(int nb_args)
 	onstack++;
     }
     save_regs(0);
-    ((gen_reg <= 6)?(void)0:scc_assert("gen_reg <= REGN","gen-X86-64.c",1248));
-    ((sse_reg <= 8)?(void)0:scc_assert("sse_reg <= 8","gen-X86-64.c",1249));
+    ((gen_reg <= 6)?(void)0:scc_assert("gen_reg <= REGN","gen-X86-64.c",1250));
+    ((sse_reg <= 8)?(void)0:scc_assert("sse_reg <= 8","gen-X86-64.c",1251));
     for(i = 0; i < nb_args; i++) {
         mode = classify_x86_64_arg(&vtop->type, &type, &size, &align, &reg_count);
         vtop->type = type;
@@ -11938,7 +11938,7 @@ void gfunc_call(int nb_args)
                     o(0xc1 + ((sse_reg+1) << 3));
                 }
             } else {
-                ((reg_count == 1)?(void)0:scc_assert("reg_count == 1","gen-X86-64.c",1267));
+                ((reg_count == 1)?(void)0:scc_assert("reg_count == 1","gen-X86-64.c",1269));
                 --sse_reg;
                 gv(0x1000 << sse_reg);
             }
@@ -11957,8 +11957,8 @@ void gfunc_call(int nb_args)
         }
         vtop--;
     }
-    ((gen_reg == 0)?(void)0:scc_assert("gen_reg == 0","gen-X86-64.c",1289));
-    ((sse_reg == 0)?(void)0:scc_assert("sse_reg == 0","gen-X86-64.c",1290));
+    ((gen_reg == 0)?(void)0:scc_assert("gen_reg == 0","gen-X86-64.c",1291));
+    ((sse_reg == 0)?(void)0:scc_assert("sse_reg == 0","gen-X86-64.c",1292));
     save_regs(0);
     if (nb_reg_args > 2) {
         o(0xd2894c);
@@ -12427,7 +12427,7 @@ void gen_opf(int op)
                 gv(0x0002);
                 vswap();
             }
-            ((!(vtop[-1].r & 0x0100))?(void)0:scc_assert("!(vtop[-1].r & VT_LVAL)","gen-X86-64.c",1849));
+            ((!(vtop[-1].r & 0x0100))?(void)0:scc_assert("!(vtop[-1].r & VT_LVAL)","gen-X86-64.c",1851));
             if ((vtop->type.t & 0x000f) == 9)
                 o(0x66);
             if (op == 0x94 || op == 0x95)
@@ -12443,7 +12443,7 @@ void gen_opf(int op)
             vtop->r = 0x0033;
             vtop->c.i = op | 0x100;
         } else {
-            (((vtop->type.t & 0x000f) != 10)?(void)0:scc_assert("(vtop->type.t & VT_BTYPE) != VT_LDOUBLE","gen-X86-64.c",1868));
+            (((vtop->type.t & 0x000f) != 10)?(void)0:scc_assert("(vtop->type.t & VT_BTYPE) != VT_LDOUBLE","gen-X86-64.c",1870));
             switch(op) {
             default:
             case '+':
@@ -12461,7 +12461,7 @@ void gen_opf(int op)
             }
             ft = vtop->type.t;
             fc = vtop->c.i;
-            (((ft & 0x000f) != 10)?(void)0:scc_assert("(ft & VT_BTYPE) != VT_LDOUBLE","gen-X86-64.c",1886));
+            (((ft & 0x000f) != 10)?(void)0:scc_assert("(ft & VT_BTYPE) != VT_LDOUBLE","gen-X86-64.c",1888));
             r = vtop->r;
             if ((vtop->r & 0x003f) == 0x0031) {
                 SValue v1;
@@ -12472,9 +12472,9 @@ void gen_opf(int op)
                 load(r, &v1);
                 fc = 0;
             }
-            ((!(vtop[-1].r & 0x0100))?(void)0:scc_assert("!(vtop[-1].r & VT_LVAL)","gen-X86-64.c",1900));
+            ((!(vtop[-1].r & 0x0100))?(void)0:scc_assert("!(vtop[-1].r & VT_LVAL)","gen-X86-64.c",1902));
             if (swapped) {
-                ((vtop->r & 0x0100)?(void)0:scc_assert("vtop->r & VT_LVAL","gen-X86-64.c",1902));
+                ((vtop->r & 0x0100)?(void)0:scc_assert("vtop->r & VT_LVAL","gen-X86-64.c",1904));
                 gv(0x0002);
                 vswap();
             }
@@ -12605,7 +12605,7 @@ void gen_cvt_ftoi(int t)
     } else if (bt == 9) {
         o(0xf2);
     } else {
-        ((0)?(void)0:scc_assert("0","gen-X86-64.c",2055));
+        ((0)?(void)0:scc_assert("0","gen-X86-64.c",2057));
     }
     orex(size == 8, r, 0, 0x2c0f);
     o(0xc0 + ((vtop->r) & 7) + ((r) & 7)*8);

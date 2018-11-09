@@ -144,7 +144,7 @@ DEF(TOK_builtin_frame_address, "__builtin_frame_address")
 DEF(TOK_builtin_return_address, "__builtin_return_address")
 DEF(TOK_builtin_expect, "__builtin_expect")
 /*DEF(TOK_builtin_va_list, "__builtin_va_list")*/
-#if defined SCC_TARGET_PE && (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__ && (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
 DEF(TOK_builtin_va_start, "__builtin_va_start")
 #elif (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
 DEF(TOK_builtin_va_arg_types, "__builtin_va_arg_types")
@@ -242,7 +242,7 @@ DEF(TOK___fixxfdi, "__fixxfdi")
 DEF(TOK_alloca, "alloca")
 #endif
 
-#if defined SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 DEF(TOK___chkstk, "__chkstk")
 #endif
 #if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
@@ -271,7 +271,7 @@ DEF(TOK___gttf2, "__gttf2")
 DEF(TOK___getf2, "__getf2")
 #endif
 
-//# ifdef SCC_TARGET_PE
+//#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 //DEF(TOK_malloc, "malloc")
 //DEF(TOK_free, "free")
 //DEF(TOK_realloc, "realloc")

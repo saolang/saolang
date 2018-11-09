@@ -67,7 +67,7 @@ static HMODULE scc_module;
 //    scc_set_lib_path(s, path);
 //}
 
-#ifdef SCC_TARGET_PE//{
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__ //{
 static void scc_add_systemdir(SCCState *s)
 {
     char buf[1000];
@@ -701,9 +701,9 @@ LIBSCCAPI SCCState *scc_new(void)
 # endif
 #endif //}
 	/* enable this if you want symbols with leading underscore on windows: */
-#if 0 /* def SCC_TARGET_PE */
-	s->leading_underscore = 1;
-#endif
+
+	//TODO PE?
+//	s->leading_underscore = 1;
 
 	//#ifdef _WIN32
 	//    scc_set_lib_path_w32(s);
@@ -784,7 +784,7 @@ LIBSCCAPI SCCState *scc_new(void)
 	scc_define_symbol(s, "__APPLE__", NULL);
 #endif
 
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 	scc_define_symbol(s, "_WIN32", NULL);
 # if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
 	scc_define_symbol(s, "_WIN64", NULL);
@@ -834,10 +834,10 @@ LIBSCCAPI SCCState *scc_new(void)
 	scc_define_symbol(s, "__LP64__", NULL);
 #endif
 
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__ //{
 	scc_define_symbol(s, "__WCHAR_TYPE__", "unsigned short");
 	scc_define_symbol(s, "__WINT_TYPE__", "unsigned short");
-#else
+#else //}:{
 	scc_define_symbol(s, "__WCHAR_TYPE__", "int");
 	/* wint_t is unsigned int by default, but (signed) int on BSDs
 		 and unsigned short on windows.  Other OSes might have still
@@ -867,7 +867,7 @@ LIBSCCAPI SCCState *scc_new(void)
 # endif /* SCC_MUSL */
 	/* Some GCC builtins that are simple to express as macros.  */
 	scc_define_symbol(s, "__builtin_extract_return_addr(x)", "x");
-#endif /* ndef SCC_TARGET_PE */
+#endif //}
 	return s;
 }
 
@@ -934,7 +934,7 @@ LIBSCCAPI int scc_set_output_type(SCCState *s, int output_type)
 
 	scc_add_library_path(s, CONFIG_SCC_LIBPATHS);
 
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 # ifdef _WIN32
 	if (!s->nostdlib && output_type != SCC_OUTPUT_OBJ)
 	{
@@ -1005,7 +1005,8 @@ ST_FUNC int scc_add_file_internal(SCCState *s1, const char *filename, int flags)
 			case AFF_BINTYPE_REL:
 				ret = scc_load_object_file(s1, fd, 0);
 				break;
-#ifndef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
+#else
 			case AFF_BINTYPE_DYN://NOTES: mostly .dylib from above, .so from scc_object_type()
 				if (s1->output_type == SCC_OUTPUT_MEMORY) {
 					ret = 0;
@@ -1026,7 +1027,7 @@ ST_FUNC int scc_add_file_internal(SCCState *s1, const char *filename, int flags)
 				ret = scc_load_archive(s1, fd, !(flags & AFF_WHOLE_ARCHIVE));
 				break;
 			default:
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 				ret = pe_load_file(s1, filename, fd);
 #else
 				/* as GNU ld, consider it is an ld script if not recognized */
@@ -1107,7 +1108,7 @@ ST_FUNC int scc_add_crt(SCCState *s, const char *filename)
 /* the library name is the same as the argument of the '-l' option */
 LIBSCCAPI int scc_add_library(SCCState *s, const char *libraryname)
 {
-#if defined SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     const char *libs[] = { "%s/%s.def", "%s/lib%s.def", "%s/%s.dll", "%s/lib%s.dll", "%s/lib%s.a", NULL };
     const char **pp = s->static_link ? libs + 4 : libs;
 #elif __SCC_OS_ID__==__SCC_OS_OSX__
@@ -1145,7 +1146,7 @@ ST_FUNC void scc_add_pragma_libs(SCCState *s1)
 
 LIBSCCAPI int scc_add_symbol(SCCState *s, const char *name, const void *val)
 {
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     /* On x86_64 'val' might not be reachable with a 32bit offset.
        So it is handled here as if it were in a DLL. */
     pe_putimport(s, 0, name, (uintptr_t)val);
@@ -1323,7 +1324,7 @@ static int scc_set_linker(SCCState *s, const char *option)
 			ignoring = 1;
 		} else if (link_option(option, "oformat=", &p)) {
 			if(
-#if defined(SCC_TARGET_PE)
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 					strstart("pe-", &p)
 #elif PTR_SIZE == 8
 					strstart("elf64-", &p)
@@ -1353,7 +1354,7 @@ static int scc_set_linker(SCCState *s, const char *option)
 			s->section_align = SCC(strtoul,unsigned)(p, &end, 16);
 		} else if (link_option(option, "soname=", &p)) {
 			copy_linker_arg(&s->soname, p, 0);
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 		} else if (link_option(option, "large-address-aware", &p)) {
 			s->pe_characteristics |= 0x20;
 		} else if (link_option(option, "file-alignment=", &p)) {
@@ -1524,7 +1525,7 @@ static const SCCOption scc_options[] = {
     { "MF", SCC_OPTION_MF, SCC_OPTION_HAS_ARG },
     { "x", SCC_OPTION_x, SCC_OPTION_HAS_ARG },
     { "ar", SCC_OPTION_ar, 0},
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     { "impdef", SCC_OPTION_impdef, 0},
 #endif
     { NULL, 0, 0 },

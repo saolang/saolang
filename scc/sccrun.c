@@ -122,7 +122,7 @@ static int scc_relocate_ex(SCCState *s1, void *ptr, addr_t ptr_diff)
 
 	if (NULL == ptr) {
 		s1->nb_errors = 0;
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 		pe_output_file(s1, NULL);
 #else
 		scc_add_runtime(s1);
@@ -169,7 +169,7 @@ static int scc_relocate_ex(SCCState *s1, void *ptr, addr_t ptr_diff)
 	if (0 == mem)
 		return offset + max_align;
 
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 	s1->pe_imagebase = mem;
 #endif
 

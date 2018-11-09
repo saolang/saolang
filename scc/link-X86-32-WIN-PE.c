@@ -226,7 +226,7 @@ void relocate(SCCState *s1, ElfW_Rel *rel, int type, unsigned char *ptr, addr_t 
             write16le(ptr, read16le(ptr) + val - addr);
             return;
         case R_386_RELATIVE:
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
             add32le(ptr, val - s1->pe_imagebase);
 #endif
             /* do nothing */

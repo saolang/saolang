@@ -242,7 +242,7 @@ ST_FUNC void gen_addrpc32(int r, Sym *sym, int c)
 /* output got address with relocation */
 static void gen_gotpcrel(int r, Sym *sym, int c)
 {
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     scc_error("internal error: no GOT on PE: %s %x %x | %02x %02x %02x\n",
         get_tok_str(sym->v, NULL), c, r,
         cur_text_section->data[ind-3],
@@ -322,7 +322,7 @@ void load(int r, SValue *sv)
     int v, t, ft, fc, fr;
     SValue v1;
 
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     SValue v2;
     sv = pe_getimport(sv, &v2);
 #endif
@@ -335,7 +335,8 @@ void load(int r, SValue *sv)
 
     ft &= ~(VT_VOLATILE | VT_CONSTANT);
 
-#ifndef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
+#else
     /* we use indirect access via got */
     if ((fr & VT_VALMASK) == VT_CONST && (fr & VT_SYM) &&
         (fr & VT_LVAL) && !(sv->sym->type.t & VT_STATIC)) {
@@ -428,7 +429,7 @@ void load(int r, SValue *sv)
     } else {
         if (v == VT_CONST) {
             if (fr & VT_SYM) {
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
                 orex(1,0,r,0x8d);
                 o(0x05 + REG_VALUE(r) * 8); /* lea xx(%rip), r */
                 gen_addrpc32(fr, sv->sym, fc);
@@ -521,7 +522,7 @@ void store(int r, SValue *v)
     /* store the REX prefix in this variable when PIC is enabled */
     int pic = 0;
 
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     SValue v2;
     v = pe_getimport(v, &v2);
 #endif
@@ -534,7 +535,8 @@ void store(int r, SValue *v)
     ft &= ~(VT_VOLATILE | VT_CONSTANT);
     bt = ft & VT_BTYPE;
 
-#ifndef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
+#else
     /* we need to access the variable via got */
     if (fr == VT_CONST && (v->r & VT_SYM)) {
         /* mov xx(%rip), %r11 */
@@ -602,7 +604,7 @@ static void gcall_or_jmp(int is_jmp)
     if ((vtop->r & (VT_VALMASK | VT_LVAL)) == VT_CONST &&
 	((vtop->r & VT_SYM) && (vtop->c.i-4) == (int)(vtop->c.i-4))) {
         /* constant symbolic case -> simple relocation */
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 	greloca(cur_text_section, vtop->sym, ind + 1, R_X86_64_PC32, (int)(vtop->c.i-4));
 #else
 	greloca(cur_text_section, vtop->sym, ind + 1, R_X86_64_PLT32, (int)(vtop->c.i-4));
@@ -618,7 +620,7 @@ static void gcall_or_jmp(int is_jmp)
     }
 }
 
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 
 #define REGN 4
 static const uint8_t arg_regs[REGN] = {
@@ -2077,7 +2079,7 @@ ST_FUNC void gen_vla_sp_restore(int addr) {
     gen_modrm64(0x8b, TREG_RSP, VT_LOCAL, NULL, addr);
 }
 
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 /* Save result of gen_vla_alloc onto the stack */
 ST_FUNC void gen_vla_result(int addr) {
     /* mov %rax,addr(%rbp)*/
@@ -2087,7 +2089,7 @@ ST_FUNC void gen_vla_result(int addr) {
 
 /* Subtract from the stack pointer, and push the resulting value onto the stack */
 ST_FUNC void gen_vla_alloc(CType *type, int align) {
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     /* alloca does more than just adjust %rsp on Windows */
     vpush_global_sym(&func_old_type, TOK_alloca);
     vswap(); /* Move alloca ref past allocation size */

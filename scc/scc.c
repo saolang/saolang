@@ -50,7 +50,7 @@ static const char help[] =
     "  -m32/64     defer to i386/x86_64 cross compiler\n"
     "Tools:\n"
     "  create library  : scc -ar [rcsv] lib.a files\n"
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     "  create def file : scc -impdef lib.dll [-v] [-o lib.def]\n"
 #endif
     ;
@@ -99,7 +99,7 @@ static const char help2[] =
     "  -export-dynamic               same as -rdynamic\n"
     "  -image-base= -Ttext=          set base address of executable\n"
     "  -section-alignment=           set section alignment in executable\n"
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     "  -file-alignment=              set PE file alignment\n"
     "  -stack=                       set PE stack reserve\n"
     "  -large-address-aware          set related PE option\n"
@@ -181,7 +181,7 @@ static char *default_outputfile(SCCState *s, const char *first_file)
         name = scc_basename(first_file);
     SCC(snprintf)(buf, sizeof(buf), "%s", name);
     ext = scc_fileextension(buf);
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     if (s->output_type == SCC_OUTPUT_DLL)
         SCC(strcpy)(ext, ".dll");
     else
@@ -211,7 +211,7 @@ static unsigned getclock_ms(void)
 int main(int argc0, char **argv0)
 #else
 //output as dll/so with scc_main()
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 //#include <windows.h>
 __declspec(dllexport) int scc_main(int argc0, char **argv0)
 //DLFCN_EXPORT int scc_main(int argc0, char **argv0)
@@ -244,7 +244,7 @@ redo:
 			SCC(printf)(version);
 		if (opt == OPT_AR)
 			return scc_tool_ar(s, argc, argv);
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 		if (opt == OPT_IMPDEF)
 			return scc_tool_impdef(s, argc, argv);
 #endif

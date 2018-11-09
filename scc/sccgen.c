@@ -274,7 +274,7 @@ ST_FUNC void update_storage(Sym *sym)
         esym->st_info = ELFW(ST_INFO)(sym_bind, ELFW(ST_TYPE)(esym->st_info));
     }
 
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     if (sym->a.dllimport)
         esym->st_other |= ST_PE_IMPORT;
     if (sym->a.dllexport)
@@ -320,7 +320,7 @@ ST_FUNC void put_extern_sym2(Sym *sym, int sh_num,
         else
             sym_bind = STB_GLOBAL;
         other = 0;
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
         if (sym_type == STT_FUNC && sym->type.ref) {
             Sym *ref = sym->type.ref;
             if (ref->a.nodecorate) {
@@ -833,7 +833,7 @@ static void patch_storage(Sym *sym, AttributeDef *ad, CType *type)
     if (type)
         patch_type(sym, type);
 
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     if (sym->a.dllimport != ad->a.dllimport)
         scc_error("incompatible dll linkage for redefinition of '%s'",
             get_tok_str(sym->v, NULL));
@@ -2573,7 +2573,7 @@ ST_FUNC int type_size(CType *type, int *a)
         return LDOUBLE_SIZE;
     } else if (bt == VT_DOUBLE || bt == VT_LLONG) {
 #if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==32 //{
-# ifdef SCC_TARGET_PE
+# if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
         *a = 8;
 # else
         *a = 4;
@@ -4089,7 +4089,7 @@ the_end:
     bt = t & (VT_BTYPE|VT_LONG);
     if (bt == VT_LONG)
         t |= LONG_SIZE == 8 ? VT_LLONG : VT_INT;
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     if (bt == VT_LDOUBLE)
         t = (t & ~(VT_BTYPE|VT_LONG)) | VT_DOUBLE;
 #endif
@@ -4504,7 +4504,7 @@ ST_FUNC void unary(void)
         next();
         goto tok_next;
     case TOK_LCHAR:
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
         t = VT_SHORT|VT_UNSIGNED;
         goto push_tokc;
 #endif
@@ -4564,7 +4564,7 @@ ST_FUNC void unary(void)
         }
         break;
     case TOK_LSTR:
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
         t = VT_SHORT | VT_UNSIGNED;
 #else
         t = VT_INT;
@@ -4784,7 +4784,7 @@ ST_FUNC void unary(void)
         }
         break;
 #if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     case TOK_builtin_va_start:
 	parse_builtin_params(0, "ee");
         r = vtop->r & VT_VALMASK;
@@ -4975,7 +4975,7 @@ special_math_val:
             /* for simple function calls, we tolerate undeclared
                external reference to int() function */
             if (scc_state->warn_implicit_function_declaration
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
                 /* people must be warned about using undeclared WINAPI functions
                    (which usually start with uppercase letter) */
                 || (name[0] >= 'A' && name[0] <= 'Z')
@@ -6185,7 +6185,7 @@ static void parse_init_elem(int expr_type)
         if (((vtop->r & (VT_VALMASK | VT_LVAL)) != VT_CONST
 	     && ((vtop->r & (VT_SYM|VT_LVAL)) != (VT_SYM|VT_LVAL)
 		 || vtop->sym->v < SYM_FIRST_ANOM))
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
                  || ((vtop->r & VT_SYM) && vtop->sym->a.dllimport)
 #endif
             )
@@ -6583,7 +6583,7 @@ static void decl_initializer(CType *type, Section *sec, unsigned long c,
         /* only parse strings here if correct type (otherwise: handle
            them as ((w)char *) expressions */
         if ((tok == TOK_LSTR && 
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
              (t1->t & VT_BTYPE) == VT_SHORT && (t1->t & VT_UNSIGNED)
 #else
              (t1->t & VT_BTYPE) == VT_INT
@@ -6880,7 +6880,7 @@ static void decl_initializer_alloc(CType *type, AttributeDef *ad, int r,
 
 		vla_runtime_type_size(type, &a);
 		gen_vla_alloc(type, a);
-#if defined SCC_TARGET_PE && (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__ && (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
 		/* on _WIN64, because of the function args scratch area, the
 			 result of alloca differs from RSP and is returned in RAX.  */
 		gen_vla_result(addr), addr = (loc -= PTR_SIZE);
@@ -7092,7 +7092,7 @@ static int decl0(int l, int is_for_loop_init, Sym *func_sym)
 					expect(";");
 			}
 
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 			if (ad.a.dllimport || ad.a.dllexport) {
 				if (type.t & (VT_STATIC|VT_TYPEDEF))
 					scc_error("cannot have dll linkage with static or typedef");

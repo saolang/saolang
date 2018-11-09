@@ -241,7 +241,7 @@ void relocate(SCCState *s1, ElfW_Rel *rel, int type, unsigned char *ptr, addr_t 
             write64le(ptr, val - rel->r_addend);
             return;
         case R_AARCH64_RELATIVE:
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
             add32le(ptr, val - s1->pe_imagebase);
 #endif
             /* do nothing */

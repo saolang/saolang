@@ -2198,7 +2198,7 @@ static void parse_escape_string(CString *outstr, const uint8_t *buf, int is_long
         if (!is_long)
             cstr_ccat(outstr, c);
         else {
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
             /* store as UTF-16 */
             if (c < 0x10000) {
                 cstr_wccat(outstr, c);
@@ -2422,7 +2422,7 @@ static void parse_number(const char *p)
                 tokc.f = (float)d;
             } else if (t == 'L') {
                 ch = *p++;
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
                 tok = TOK_CDOUBLE;
                 tokc.d = d;
 #else
@@ -2480,7 +2480,7 @@ static void parse_number(const char *p)
                 tokc.f = SCC(strtof,float)(token_buf, NULL);
             } else if (t == 'L') {
                 ch = *p++;
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
                 tok = TOK_CDOUBLE;
                 tokc.d = SCC(strtod,double)(token_buf, NULL);
 #else

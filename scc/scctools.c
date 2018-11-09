@@ -268,7 +268,7 @@ the_end:
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 
 ST_FUNC int scc_tool_impdef(SCCState *s1, int argc, char **argv)
 {
@@ -372,7 +372,7 @@ the_end:
     return ret;
 }
 
-#endif /* SCC_TARGET_PE */
+#endif// #if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 
 /* -------------------------------------------------------------- */
 /*
@@ -458,7 +458,7 @@ ST_FUNC void scc_tool_cross(SCCState *s, char **argv, int target)
 
     SCC(snprintf)(program, sizeof program,
         "%.*s%s"
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
         "-win32"
 #endif
         "-scc"

@@ -86,7 +86,7 @@
 
 /* system include paths */
 #ifndef CONFIG_SCC_SYSINCLUDEPATHS
-# ifdef SCC_TARGET_PE
+# if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 //#  define CONFIG_SCC_SYSINCLUDEPATHS "{B}/include"PATHSEP"{B}/include/winapi"
 #  define CONFIG_SCC_SYSINCLUDEPATHS "{B}"
 # else
@@ -99,7 +99,7 @@
 
 /* library search paths */
 #ifndef CONFIG_SCC_LIBPATHS
-# ifdef SCC_TARGET_PE
+# if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 //#  define CONFIG_SCC_LIBPATHS "{B}/lib"
 #  define CONFIG_SCC_LIBPATHS "{B}"
 # else
@@ -126,7 +126,7 @@
 #  define CONFIG_SCC_ELFINTERP "/usr/libexec/ld.elf_so"
 # elif defined __GNU__
 #  define CONFIG_SCC_ELFINTERP "/lib/ld.so"
-# elif defined(SCC_TARGET_PE)
+# elif __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 #  define CONFIG_SCC_ELFINTERP "-"
 # elif defined(SCC_UCLIBC)
 #  define CONFIG_SCC_ELFINTERP "/lib/ld-uClibc.so.0" /* is there a uClibc for x86_64 ? */
@@ -286,7 +286,7 @@ LAST_UNUSED_STAB_CODE
 #define addr_t ElfW(Addr)
 #define ElfSym ElfW(Sym)
 
-#if PTR_SIZE == 8 && !defined SCC_TARGET_PE
+#if PTR_SIZE == 8 && !(__SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__)
 # define LONG_SIZE 8
 #else
 # define LONG_SIZE 4
@@ -318,7 +318,7 @@ typedef struct TokenSym {
     char str[1];
 } TokenSym;
 
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 typedef unsigned short nwchar_t;
 #else
 typedef int nwchar_t;
@@ -717,7 +717,7 @@ struct SCCState {
     struct sym_attr *sym_attrs;
     int nb_sym_attrs;
 
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     /* PE info */
     int pe_subsystem;
     unsigned pe_characteristics;
@@ -1276,7 +1276,7 @@ ST_FUNC void expr_prod(void);
 ST_FUNC void expr_sum(void);
 ST_FUNC void gexpr(void);
 ST_FUNC int expr_const(void);
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64) && !defined SCC_TARGET_PE
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64) && !(__SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__)
 ST_FUNC int classify_x86_64_va_arg(CType *ty);
 #endif
 
@@ -1356,11 +1356,12 @@ ST_FUNC struct sym_attr *get_sym_attr(SCCState *s1, int index, int alloc);
 ST_FUNC void squeeze_multi_relocs(Section *sec, size_t oldrelocoffset);
 
 ST_FUNC addr_t get_elf_sym_addr(SCCState *s, const char *name, int err);
-#if defined SCC_IS_NATIVE || defined SCC_TARGET_PE
+#if defined SCC_IS_NATIVE || __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 ST_FUNC void *scc_get_symbol_err(SCCState *s, const char *name);
 #endif
 
-#ifndef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
+#else
 ST_FUNC int scc_load_dll(SCCState *s1, int fd, const char *filename, int level);
 ST_FUNC int scc_load_ldscript(SCCState *s1);
 ST_FUNC uint8_t *parse_comment(uint8_t *p);
@@ -1462,7 +1463,7 @@ ST_FUNC void gen_addrpc32(int r, Sym *sym, int c);
 # if __SCC_TARGET_CPU_BIT__==64
 ST_FUNC void gen_addr64(int r, Sym *sym, int64_t c);
 ST_FUNC void gen_opl(int op);
-#  ifdef SCC_TARGET_PE
+#  if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 ST_FUNC void gen_vla_result(int addr);
 #  endif
 # endif
@@ -1513,7 +1514,7 @@ ST_FUNC void asm_clobber(uint8_t *clobber_regs, const char *str);
 #endif
 
 /* ------------ sccpe.c -------------- */
-#ifdef SCC_TARGET_PE //{
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__ //{
 ST_FUNC int pe_load_file(struct SCCState *s1, const char *filename, int fd);
 ST_FUNC int pe_output_file(SCCState * s1, const char *filename);
 ST_FUNC int pe_putimport(SCCState *s1, int dllindex, const char *name, addr_t value);

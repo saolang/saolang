@@ -1622,7 +1622,7 @@ ST_FUNC void asm_gen_code(ASMOperand *operands, int nb_operands,
 	/* Strictly speaking %Xbp and %Xsp should be included in the
 		 call-preserved registers, but currently it doesn't matter.  */
 #if ( __SCC_TARGET_CPU_BIT__==64)
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 	static uint8_t reg_saved[] = { 3, 6, 7, 12, 13, 14, 15 };
 #else
 	static uint8_t reg_saved[] = { 3, 12, 13, 14, 15 };

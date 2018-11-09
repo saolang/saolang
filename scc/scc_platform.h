@@ -164,22 +164,20 @@
 #endif
 
 ///////////////////////////////////////////////////////////////////////////
-#ifndef __SCC_TARGET_FORMAT__//{
-# if defined(SCC_TARGET_PE)
-#  define __SCC_TARGET_FORMAT__  PE
-#  define __SCC_TARGET_OS__  WIN
-# elif defined(SCC_TARGET_ELF)
-#  define __SCC_TARGET_FORMAT__  ELF
-# endif
-#endif//}!__SCC_TARGET_FORMAT__
+
+#define __SCC_TARGET_FORMAT_PE__    1
+#define __SCC_TARGET_FORMAT_ELF__   2
+#define __SCC_TARGET_FORMAT_MACHO__ 3
 
 #ifndef __SCC_TARGET_FORMAT__//{
 # ifdef __SCC_OS_FORMAT__
 #  define __SCC_TARGET_FORMAT__ __SCC_OS_FORMAT__
 # else
-#  warning "unknown __SCC_TARGET_FORMAT__"
+#  error "unknown __SCC_TARGET_FORMAT__"
 # endif
-#endif//}!__SCC_TARGET_FORMAT__
+#endif //}
+
+# define __SCC_TARGET_FORMAT_ID__  SCC_MCAT(__SCC_TARGET_FORMAT_,__SCC_TARGET_FORMAT__,__)
 
 ///////////////////////////////////////////////////////////////////////////
 //TODO not good, need to adjust Makefile better?
