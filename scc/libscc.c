@@ -1835,7 +1835,7 @@ set_output_type:
 				break;
 #if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
 			case SCC_OPTION_mfloat_abi:
-				/* scc doesn't support soft float yet */
+				//TODO doesn't support soft float yet
 				if (!SCC(strcmp,int)(optarg, "softfp")) {
 					s->float_abi = ARM_SOFTFP_FLOAT;
 					scc_undefine_symbol(s, "__ARM_PCS_VFP");

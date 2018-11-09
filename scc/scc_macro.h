@@ -57,30 +57,31 @@
 )
 #define WHILE_INDIRECT1() SCC_WHILE1
 
-// eat 2 value every time
-#define SCC_WHILE2(macro,value1,value2, ...)\
-	SCC_WHEN(SCC_NOT(SCC_IS_PAREN(value2 ())))\
-(\
-  SCC_OBSTRUCT(macro) (value1,value2)\
-  SCC_OBSTRUCT(WHILE_INDIRECT2) () (macro, value1,__VA_ARGS__)\
-)
-#define WHILE_INDIRECT2() SCC_WHILE2
-
-// eat 3
-#define SCC_WHILE3(macro,value1,value2,value3,...)\
-	SCC_WHEN(SCC_NOT(SCC_IS_PAREN(value3 ())))\
-(\
-  SCC_OBSTRUCT(macro) (value1,value2,value3)\
-  SCC_OBSTRUCT(SCC_WHILE_INDIRECT3) () (macro,value1,value2,__VA_ARGS__)\
-)
-#define SCC_WHILE_INDIRECT3() SCC_WHILE3
-
-// ITR => WHILE
+//TODO buggy, need rewrite again...
+///// eat 2 value every time
+///#define SCC_WHILE2(macro,value1,value2, ...)\
+///	SCC_WHEN(SCC_NOT(SCC_IS_PAREN(value2 ())))\
+///(\
+///  SCC_OBSTRUCT(macro) (value1,value2)\
+///  SCC_OBSTRUCT(WHILE_INDIRECT2) () (macro, value1,__VA_ARGS__)\
+///)
+///#define WHILE_INDIRECT2() SCC_WHILE2
+///
+///// eat 3
+///#define SCC_WHILE3(macro,value1,value2,value3,...)\
+///	SCC_WHEN(SCC_NOT(SCC_IS_PAREN(value3 ())))\
+///(\
+///  SCC_OBSTRUCT(macro) (value1,value2,value3)\
+///  SCC_OBSTRUCT(SCC_WHILE_INDIRECT3) () (macro,value1,value2,__VA_ARGS__)\
+///)
+///#define SCC_WHILE_INDIRECT3() SCC_WHILE3
+///
+///// ITR => WHILE
 #define SCC_ITR1(...) SCC_EVAL(SCC_WHILE1(__VA_ARGS__))
-#define SCC_ITR2(...) SCC_EVAL(SCC_WHILE2(__VA_ARGS__))
-#define SCC_ITR3(...) SCC_EVAL(SCC_WHILE3(__VA_ARGS__))
-//#define SCC_ITR4(...) SCC_EVAL(SCC_WHILE4(__VA_ARGS__))
-#define SCC_ITR(n,...) SCC_EVAL(SCC_WHILE##n(__VA_ARGS__))
+///#define SCC_ITR2(...) SCC_EVAL(SCC_WHILE2(__VA_ARGS__))
+///#define SCC_ITR3(...) SCC_EVAL(SCC_WHILE3(__VA_ARGS__))
+/////#define SCC_ITR4(...) SCC_EVAL(SCC_WHILE4(__VA_ARGS__))
+///#define SCC_ITR(n,...) SCC_EVAL(SCC_WHILE##n(__VA_ARGS__))
 
 // YYY,ZZZ => "YYY,ZZZ"
 #define SCC_QUOTE_PACK(...) #__VA_ARGS__
