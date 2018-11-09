@@ -1,6 +1,7 @@
 #if 0
 ../build_Darwin_x86_64/scc -I.. -B ../build_Darwin_x86_64 -run test_SCC.c
 ./build_Darwin_x86_64/scc -I. -B build_Darwin_x86_64 -run test/test_SCC.c
+./scc -DSCC_MUSL -I.. -I. -run ../scc.c -I.. ../test/test_SCC.c && ./a.out
 #endif
 
 #include "scc_libc.h"
@@ -27,6 +28,13 @@ int main(){
 #ifdef SCC_IS_NATIVE
 	SCC(printf)("%s = %s\n", "SCC_IS_NATIVE", SCC_QUOTE(SCC_IS_NATIVE));
 #endif
+#if defined(SCC_MUSL)
+	SCC(printf)("%s = %s\n", "SCC_MUSL", SCC_QUOTE(SCC_MUSL));
+#endif
+#ifdef DEFAULT_ELFINTERP
+	SCC(printf)("%s = %s\n", "DEFAULT_ELFINTERP", SCC_QUOTE(DEFAULT_ELFINTERP));
+#endif
+	
 	/*
 #define _OUTPUT_M(m) SCC(printf)("%s=%s\n", SCC_EXPAND(#m), SCC_EXPAND(#m));
 	SCC_ITR1( _OUTPUT_M,
