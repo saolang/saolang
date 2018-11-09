@@ -1,7 +1,17 @@
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__
+# if __SCC_TARGET_CPU_BIT__==64 || __SCC_TARGET_CPU_BIT__==32
+//PASS
+# else
+# error "asm-X86.c only support 64/32 bit now"
+# endif
+#else
+# error "asm-X86.c only support X86"
+#endif
+
 #include "scc.h"
 
-#if defined(TARGET_DEFS_ONLY)
-//SKIP
+#ifdef TARGET_DEFS_ONLY
+//SKIP for ASM
 #else//TARGET_DEFS_ONLY
 
 #define MAX_OPERANDS 3
@@ -26,7 +36,7 @@
 
 #define OPC_0F        0x100 /* Is secondary map (0x0f prefix) */
 #define OPC_48        0x200 /* Always has REX prefix */
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64) //{
+#if ( __SCC_TARGET_CPU_BIT__==64) //{
 # define OPC_WLQ     0x1000  /* accepts w, l, q or no suffix */
 # define OPC_BWLQ    (OPC_B | OPC_WLQ) /* accepts b, w, l, q or no suffix */
 # define OPC_WLX     OPC_WLQ
@@ -44,7 +54,7 @@ enum {
     OPT_REG8=0, /* warning: value is hardcoded from TOK_ASM_xxx */
     OPT_REG16,  /* warning: value is hardcoded from TOK_ASM_xxx */
     OPT_REG32,  /* warning: value is hardcoded from TOK_ASM_xxx */
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
     OPT_REG64,  /* warning: value is hardcoded from TOK_ASM_xxx */
 #endif
     OPT_MMX,    /* warning: value is hardcoded from TOK_ASM_xxx */
@@ -54,7 +64,7 @@ enum {
     OPT_DB,     /* warning: value is hardcoded from TOK_ASM_xxx */
     OPT_SEG,
     OPT_ST,
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
     OPT_REG8_LOW, /* %spl,%bpl,%sil,%dil, encoded like ah,ch,dh,bh, but
 		     with REX prefix, not used in insn templates */
 #endif
@@ -62,7 +72,7 @@ enum {
     OPT_IM8S,
     OPT_IM16,
     OPT_IM32,
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
     OPT_IM64,
 #endif
     OPT_EAX,    /* %al, %ax, %eax or %rax register */
@@ -104,7 +114,7 @@ enum {
 #define OP_DX     (1 << OPT_DX)
 #define OP_ADDR   (1 << OPT_ADDR)
 #define OP_INDIR  (1 << OPT_INDIR)
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
 # define OP_REG64 (1 << OPT_REG64)
 # define OP_REG8_LOW (1 << OPT_REG8_LOW)
 # define OP_IM64  (1 << OPT_IM64)
@@ -119,22 +129,14 @@ enum {
 #define OP_EA     0x40000000
 #define OP_REG    (OP_REG8 | OP_REG16 | OP_REG32 | OP_REG64)
 
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__)
-# if __SCC_TARGET_CPU_BIT__==64
-#  define TREG_XAX   TREG_RAX
-#  define TREG_XCX   TREG_RCX
-#  define TREG_XDX   TREG_RDX
-# elif __SCC_TARGET_CPU_BIT__==32
-#  define TREG_XAX   TREG_EAX
-#  define TREG_XCX   TREG_ECX
-#  define TREG_XDX   TREG_EDX
-# else
-#  error unsupport __SCC_TARGET_CPU_BIT__
-# endif
-#else
-#pragma message SCC_QUOTE(__SCC_TARGET_CPU_ID__,__SCC_CPU_X86__,__SCC_TARGET_CPU_BIT__)
-#warning SCC_QUOTE(__SCC_TARGET_CPU_ID__,__SCC_CPU_X86__,__SCC_TARGET_CPU_BIT__)
-# error "Not X86??"
+#if __SCC_TARGET_CPU_BIT__==64
+# define TREG_XAX   TREG_RAX
+# define TREG_XCX   TREG_RCX
+# define TREG_XDX   TREG_RDX
+#elif __SCC_TARGET_CPU_BIT__==32
+# define TREG_XAX   TREG_EAX
+# define TREG_XCX   TREG_ECX
+# define TREG_XDX   TREG_EDX
 #endif
 
 typedef struct ASMInstr {
@@ -158,7 +160,7 @@ static const uint8_t reg_to_size[9] = {
     [OP_REG8] = 0,
     [OP_REG16] = 1,
     [OP_REG32] = 2,
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
     [OP_REG64] = 3,
 #endif
 */
@@ -220,7 +222,7 @@ static const ASMInstr asm_instrs[] = {
 #define DEF_ASM_OP1(name, opcode, group, instr_type, op0) { TOK_ASM_ ## name, O(opcode), T(opcode, instr_type, group), 1, { op0 }},
 #define DEF_ASM_OP2(name, opcode, group, instr_type, op0, op1) { TOK_ASM_ ## name, O(opcode), T(opcode, instr_type, group), 2, { op0, op1 }},
 #define DEF_ASM_OP3(name, opcode, group, instr_type, op0, op1, op2) { TOK_ASM_ ## name, O(opcode), T(opcode, instr_type, group), 3, { op0, op1, op2 }},
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
 # include "asm-X86-64.h"
 #else
 # include "asm-X86-32.h"
@@ -236,7 +238,7 @@ static const uint16_t op0_codes[] = {
 #define DEF_ASM_OP1(name, opcode, group, instr_type, op0)
 #define DEF_ASM_OP2(name, opcode, group, instr_type, op0, op1)
 #define DEF_ASM_OP3(name, opcode, group, instr_type, op0, op1, op2)
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
 # include "asm-X86-64.h"
 #else
 # include "asm-X86-32.h"
@@ -280,7 +282,7 @@ static inline int get_reg_shift_v(int v)
 //    return shift;
 //}
 
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
 //@ref parse_operand(),asm_clobber(),asm_parse_reg()
 static int asm_parse_numeric_reg(int t, unsigned int *type)
 {
@@ -332,7 +334,7 @@ static int asm_parse_reg(unsigned int *type)
     if (tok >= TOK_ASM_eax && tok <= TOK_ASM_edi) {
         reg = tok - TOK_ASM_eax;
 	*type = OP_REG32;
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
     } else if (tok >= TOK_ASM_rax && tok <= TOK_ASM_rdi) {
         reg = tok - TOK_ASM_rax;
 	*type = OP_REG64;
@@ -401,7 +403,7 @@ static void parse_operand(SCCState *s1, Operand *op)
             if (op->reg == 0)
                 op->type |= OP_ST0;
             goto no_skip;
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
 	} else if (tok >= TOK_ASM_spl && tok <= TOK_ASM_dil) {
 	    op->type = OP_REG8 | OP_REG8_LOW;
 	    op->reg = 4 + tok - TOK_ASM_spl;
@@ -427,7 +429,7 @@ static void parse_operand(SCCState *s1, Operand *op)
                 op->type |= OP_IM8S;
             if (op->e.v == (uint16_t)op->e.v)
                 op->type |= OP_IM16;
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
             if (op->e.v != (int32_t)op->e.v && op->e.v != (uint32_t)op->e.v)
                 op->type = OP_IM64;
 #endif
@@ -497,7 +499,7 @@ ST_FUNC void gen_expr32(ExprValue *pe)
 	gen_addr32(pe->sym ? VT_SYM : 0, pe->sym, pe->v);
 }
 
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
 //@ref asm_opcode()
 ST_FUNC void gen_expr64(ExprValue *pe)
 {
@@ -536,14 +538,14 @@ static inline int asm_modrm(int reg, Operand *op)
         g(0xc0 + (reg << 3) + op->reg);
     } else if (op->reg == -1 && op->reg2 == -1) {
         /* displacement only */
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
 	g(0x04 + (reg << 3));
 	g(0x25);
 #else
 	g(0x05 + (reg << 3));
 #endif
 	gen_expr32(&op->e);
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
     } else if (op->reg == -2) {
         ExprValue *pe = &op->e;
         g(0x05 + (reg << 3));
@@ -585,7 +587,7 @@ static inline int asm_modrm(int reg, Operand *op)
     return 0;
 }//asm_modrm()
 
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
 #define REX_W 0x48
 #define REX_R 0x44
 #define REX_X 0x42
@@ -700,7 +702,7 @@ ST_FUNC void asm_opcode(SCCState *s1, int opcode)
     int alltypes;   /* OR of all operand types */
     int autosize;
     int p66;
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
     int rex64;
 #endif
 
@@ -778,7 +780,7 @@ again:
 	    if (pa->instr_type & OPC_WLX)
 	        s = NBWLX - 1;
         } else if (pa->instr_type & OPC_B) {
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
 	    /* Some instructions don't have the full size but only
 	       bwl form.  insb e.g. */
 	    if ((pa->instr_type & OPC_WLQ) != OPC_WLQ
@@ -798,7 +800,7 @@ again:
         }
         if (pa->nb_ops != nb_ops)
             continue;
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
 	/* Special case for moves.  Selecting the IM64->REG64 form
 	   should only be done if we really have an >32bit imm64, and that
 	   is hardcoded.  Ignore it here.  */
@@ -874,7 +876,7 @@ again:
 		}
     /* if the size is unknown, then evaluate it (OPC_B or OPC_WL case) */
     autosize = NBWLX-1;
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
     /* XXX the autosize should rather be zero, to not have to adjust this
        all the time.  */
     if ((pa->instr_type & OPC_BWLQ) == OPC_B)
@@ -901,7 +903,7 @@ again:
         }
     }
 
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
     /* Generate addr32 prefix if needed */
     for(i = 0; i < nb_ops; i++) {
         if (ops[i].type & OP_EA32) {
@@ -925,7 +927,7 @@ again:
     }
     if (p66)
         g(0x66);
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
     rex64 = 0;
     if (pa->instr_type & OPC_48)
         rex64 = 1;
@@ -1024,7 +1026,7 @@ again:
             }
         }
     }
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
     asm_rex (rex64, ops, nb_ops, op_type, modreg_index, modrm_index);
 #endif
 
@@ -1099,7 +1101,7 @@ again:
     }
 
     /* emit constants */
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
 #else
     if (!(pa->instr_type & OPC_0F)
 	&& (pa->opcode == 0x9a || pa->opcode == 0xea)) {
@@ -1134,7 +1136,7 @@ again:
                 g(ops[i].e.v);
             } else if (v & OP_IM16) {
                 gen_le16(ops[i].e.v);
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
             } else if (v & OP_IM64) {
                 gen_expr64(&ops[i].e);
 #endif
@@ -1519,12 +1521,12 @@ ST_FUNC void subst_asm_operand(CString *add_str,
         SCC(snprintf)(buf, sizeof(buf), "%d", (int)sv->c.i);
         cstr_cat(add_str, buf, -1);
     no_offset:;
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
         if (r & VT_LVAL)
             cstr_cat(add_str, "(%rip)", -1);
 #endif
     } else if ((r & VT_VALMASK) == VT_LOCAL) {
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
         SCC(snprintf)(buf, sizeof(buf), "%d(%%rbp)", (int)sv->c.i);
 #else
         SCC(snprintf)(buf, sizeof(buf), "%d(%%ebp)", (int)sv->c.i);
@@ -1535,7 +1537,7 @@ ST_FUNC void subst_asm_operand(CString *add_str,
         if (reg >= VT_CONST)
             scc_error("internal compiler error");
         SCC(snprintf)(buf, sizeof(buf), "(%%%s)",
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
                  get_tok_str(TOK_ASM_rax + reg, NULL)
 #else
                  get_tok_str(TOK_ASM_eax + reg, NULL)
@@ -1554,7 +1556,7 @@ ST_FUNC void subst_asm_operand(CString *add_str,
             size = 1;
         else if ((sv->type.t & VT_BTYPE) == VT_SHORT)
             size = 2;
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
         else if ((sv->type.t & VT_BTYPE) == VT_LLONG ||
 		 (sv->type.t & VT_BTYPE) == VT_PTR)
             size = 8;
@@ -1576,7 +1578,7 @@ ST_FUNC void subst_asm_operand(CString *add_str,
             size = 2;
         } else if (modifier == 'k') {
             size = 4;
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
         } else if (modifier == 'q') {
             size = 8;
 #endif
@@ -1595,7 +1597,7 @@ ST_FUNC void subst_asm_operand(CString *add_str,
         default:
             reg = TOK_ASM_eax + reg;
             break;
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
         case 8:
             reg = TOK_ASM_rax + reg;
             break;
@@ -1619,7 +1621,7 @@ ST_FUNC void asm_gen_code(ASMOperand *operands, int nb_operands,
 
 	/* Strictly speaking %Xbp and %Xsp should be included in the
 		 call-preserved registers, but currently it doesn't matter.  */
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
 #ifdef SCC_TARGET_PE
 	static uint8_t reg_saved[] = { 3, 6, 7, 12, 13, 14, 15 };
 #else
@@ -1717,7 +1719,7 @@ ST_FUNC void asm_clobber(uint8_t *clobber_regs, const char *str)
 {
 	int reg;
 	TokenSym *ts;
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
 	unsigned int type;
 #endif
 
@@ -1731,7 +1733,7 @@ ST_FUNC void asm_clobber(uint8_t *clobber_regs, const char *str)
 		reg -= TOK_ASM_eax;
 	} else if (reg >= TOK_ASM_ax && reg <= TOK_ASM_di) {
 		reg -= TOK_ASM_ax;
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if ( __SCC_TARGET_CPU_BIT__==64)
 	} else if (reg >= TOK_ASM_rax && reg <= TOK_ASM_rdi) {
 		reg -= TOK_ASM_rax;
 	} else if ((reg = asm_parse_numeric_reg(reg, &type)) >= 0) {
