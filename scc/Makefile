@@ -1,15 +1,10 @@
 # --------------------------------------------------------------------------
-#
 # Sao C Compiler Makefile
-#
 
 ifndef TOP
  TOP = .
  INCLUDED = no
 endif
-
-#include $(TOP)/Makefile.env
-#include Makefile.env
 
 ENV_MAK=Makefile.env
 ifeq ($(ENV_MAK), $(wildcard $(ENV_MAK)))
@@ -134,16 +129,9 @@ env:
 	@echo ${SCC_OS},${SCC_ARCH}
 
 # cross compiler targets to build
-
-#SCC_X = X86-32 X86-64 X86-32-WIN X86-64-WIN X86-64-OSX ARM-32 ARM-64 ARM-32-WIN C67
-#SCC_X     = X86-32 X86-64 X86-32-WIN X86-64-WIN X86-64-OSX ARM-32 ARM-64
-#SCC_X     = X86-32-LNX X86-64-LNX X86-32-WIN X86-64-WIN X86-64-OSX ARM-32-LNX ARM-64-LNX
 SCC_X     = X86-32-LNX X86-64-LNX X86-32-WIN X86-64-WIN X86-64-OSX ARM-64-LNX ARM-32-LNX
 
 # cross libscc1.a targets to build
-#LIBSCC1_X = X86-32 X86-64 X86-32-WIN X86-64-WIN X86-64-OSX ARM-32 ARM-64 ARM-32-WIN
-#LIBSCC1_X = X86-32 X86-64 X86-32-WIN X86-64-WIN X86-64-OSX ARM-32 ARM-64
-#LIBSCC1_X = X86-32-LNX X86-64-LNX X86-32-WIN X86-64-WIN X86-64-OSX ARM-32-LNX ARM-64-LNX
 LIBSCC1_X = X86-32-LNX X86-64-LNX X86-32-WIN X86-64-WIN X86-64-OSX ARM-64-LNX ARM-32-LNX
 
 PROGS_CROSS = $(foreach X,$(SCC_X),$X-scc$(EXESUF))
@@ -289,19 +277,6 @@ libscc1.a : scc$(EXESUF) FORCE
 FORCE:
 
 # --------------------------------------------------------------------------
-# documentation and man page
-#scc-doc.html: scc-doc.texi
-#	makeinfo --no-split --html --number-sections -o $@ $< || true
-
-#scc.1: scc-doc.texi
-#	$(TOPSRC)/texi2pod.pl $< scc.pod \
-#	&& pod2man --section=1 --center="Sao C Compiler" --release="$(VERSION)" scc.pod >tmp.1 \
-#	&& mv tmp.1 $@ || rm -f tmp.1
-
-#scc-doc.info: scc-doc.texi
-#	makeinfo $< || true
-
-# --------------------------------------------------------------------------
 # install
 
 INSTALL = install -m644
@@ -359,26 +334,7 @@ uninstall-win:
 	rm -r "$(sccdir)"
 
 # --------------------------------------------------------------------------
-# other stuff
-
-#TAGFILES = *.[ch] include/*.h lib/*.[chS]
-#tags : ; ctags $(TAGFILES)
-## cannot have both tags and TAGS on windows
-#ETAGS : ; etags $(TAGFILES)
-
-# create release tarball from *current* git branch (including scc-doc.html
-# and converting two files to CRLF)
 SCC-VERSION = scc-$(VERSION)
-#tar:    scc-doc.html
-#	mkdir $(SCC-VERSION)
-#	( cd $(SCC-VERSION) && git --git-dir ../.git checkout -f )
-#	cp scc-doc.html $(SCC-VERSION)
-#	for f in scc-win32.txt build-scc.bat ; do \
-#	    cat win32/$$f | sed 's,\(.*\),\1\r,g' > $(SCC-VERSION)/win32/$$f ; \
-#	done
-#	tar cjf $(SCC-VERSION).tar.bz2 $(SCC-VERSION)
-#	rm -rf $(SCC-VERSION)
-#	git reset
 
 config.mak:
 	$(if $(wildcard $@),,@echo "Please run ./configure." && exit 1)
@@ -386,7 +342,6 @@ config.mak:
 # run all tests
 test:
 	$(MAKE) -C tests
-# run test(s) from tests2 subdir (see make help)
 tests2.%:
 	$(MAKE) -C tests/tests2 $@
 
@@ -397,7 +352,6 @@ clean:
 	rm -f scc$(EXESUF) scc_p$(EXESUF) *-scc$(EXESUF) scc.pod
 	rm -f  *~ *.o *.a *.so* *.out *.log lib*.def *.exe *.dll a.out tags TAGS
 	@$(MAKE) -C lib $@
-#@$(MAKE) -C tests $@
 	cd ..
 	rm -f  *~ *.o *.a *.so* *.out *.log lib*.def *.exe *.dll a.out tags TAGS
 
