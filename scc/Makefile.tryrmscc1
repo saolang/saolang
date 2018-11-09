@@ -151,17 +151,13 @@ env:
 # cross compiler targets to build
 SCC_X     = X86-32-LNX X86-64-LNX X86-32-WIN X86-64-WIN X86-64-OSX ARM-64-LNX ARM-32-LNX
 
-# cross libscc1.a targets to build
-#LIBSCC1_X = X86-32-LNX X86-64-LNX X86-32-WIN X86-64-WIN X86-64-OSX ARM-64-LNX ARM-32-LNX
-LIBSCC1_X = $(SCC_X)
 PROGS_CROSS = $(foreach X,$(SCC_X),$X-scc$(EXESUF))
-LIBSCC1_CROSS = $(foreach X,$(LIBSCC1_X),$X-libscc1.a)
 
 # build cross compilers & libs
-cross: $(LIBSCC1_CROSS) $(PROGS_CROSS)
+cross: $(PROGS_CROSS)
 
 # build specific cross compiler & lib
-cross-%: %-scc$(EXESUF) %-libscc1.a ;
+cross-%: %-scc$(EXESUF);
 
 install: all
 	@$(MAKE) --no-print-directory install$(CFGWIN)
@@ -286,15 +282,6 @@ libscc.def : libscc.dll scc$(EXESUF)
 	$(XSCC) -impdef $< -o $@
 XSCC ?= ./scc$(EXESUF)
 
-# SaoCC runtime libraries
-libscc1.a : scc$(EXESUF) FORCE
-	@echo libscc1.a =: $(MAKE) -C lib DEFINES='$(DEF-$T)'
-	@$(MAKE) -C lib DEFINES='$(DEF-$T)'
-# Cross libscc1.a
-%-libscc1.a : %-scc$(EXESUF) FORCE
-	@echo *-libscc1.a =: $(MAKE) -C lib DEFINES='$(DEF-$*)' CROSS_TARGET=$*
-	@$(MAKE) -C lib DEFINES='$(DEF-$*)' CROSS_TARGET=$*
-FORCE:
 # --------------------------------------------------------------------------
 # install
 

@@ -6023,9 +6023,10 @@ static void patch_type(Sym *sym, CType *type)
         sym->type.ref = type->ref;
     }
     if (!is_compatible_types(&sym->type, type)) {
-        scc_error("incompatible types for redefinition of '%s'",
-                  get_tok_str(sym->v, ((void*)0)));
-    } else if ((sym->type.t & 0x000f) == 6) {
+        scc_warning("TODO patch_type(): incompatible types for redefinition of '%s' (%d/%d)",
+						get_tok_str(sym->v, ((void*)0)), sym->type.t, type->t);
+    }
+		if ((sym->type.t & 0x000f) == 6) {
         int static_proto = sym->type.t & 0x00002000;
         if ((type->t & 0x00002000) && !static_proto && !(type->t & 0x00008000))
             scc_warning("static storage ignored for redefinition of '%s'",
@@ -11277,6 +11278,151 @@ static void set_pages_executable(void *ptr, unsigned long length)
     end = (end + 4096 - 1) & ~(4096 - 1);
     if (((int(*)())scc_dlsym("mprotect"))((void *)start, end - start, 0x01 | 0x02 | 0x04))
         scc_error("mprotect failed: did you mean to configure --with-selinux?");
+}
+typedef int Wtype;
+typedef unsigned int UWtype;
+typedef unsigned int USItype;
+typedef long long DWtype;
+typedef unsigned long long UDWtype;
+struct DWstruct {
+    Wtype low, high;
+};
+typedef union
+{
+  struct DWstruct s;
+  DWtype ll;
+} DWunion;
+typedef long double XFtype;
+union ldouble_long {
+    long double ld;
+    struct {
+        unsigned long long lower;
+        unsigned short upper;
+    } l;
+};
+union double_long {
+    double d;
+    struct {
+        unsigned int lower;
+        int upper;
+    } l;
+    long long ll;
+};
+union float_long {
+    float f;
+    unsigned int l;
+};
+float __floatundisf(unsigned long long a)
+{
+    DWunion uu;
+    XFtype r;
+    uu.ll = a;
+    if (uu.s.high >= 0) {
+        return (float)uu.ll;
+    } else {
+        r = (XFtype)uu.ll;
+        r += 18446744073709551616.0;
+        return (float)r;
+    }
+}
+double __floatundidf(unsigned long long a)
+{
+    DWunion uu;
+    XFtype r;
+    uu.ll = a;
+    if (uu.s.high >= 0) {
+        return (double)uu.ll;
+    } else {
+        r = (XFtype)uu.ll;
+        r += 18446744073709551616.0;
+        return (double)r;
+    }
+}
+long double __floatundixf(unsigned long long a)
+{
+    DWunion uu;
+    XFtype r;
+    uu.ll = a;
+    if (uu.s.high >= 0) {
+        return (long double)uu.ll;
+    } else {
+        r = (XFtype)uu.ll;
+        r += 18446744073709551616.0;
+        return (long double)r;
+    }
+}
+unsigned long long __fixunssfdi (float a1)
+{
+    register union float_long fl1;
+    register int exp;
+    register unsigned long l;
+    fl1.f = a1;
+    if (fl1.l == 0)
+	return (0);
+    exp = (((fl1.l) >> 23) & 0xFF) - 126 - 24;
+    l = (((fl1.l) & 0x7FFFFF) | (1 << 23));
+    if (exp >= 41)
+	return (unsigned long long)-1;
+    else if (exp >= 0)
+        return (unsigned long long)l << exp;
+    else if (exp >= -23)
+        return l >> -exp;
+    else
+        return 0;
+}
+long long __fixsfdi (float a1)
+{
+    long long ret; int s;
+    ret = __fixunssfdi((s = a1 >= 0) ? a1 : -a1);
+    return s ? ret : -ret;
+}
+unsigned long long __fixunsdfdi (double a1)
+{
+    register union double_long dl1;
+    register int exp;
+    register unsigned long long l;
+    dl1.d = a1;
+    if (dl1.ll == 0)
+	return (0);
+    exp = (((dl1.l.upper) >> 20) & 0x7FF) - 1022 - 53;
+    l = ((dl1.ll & (((long long)1 << 52)-1)) | ((long long)1 << 52));
+    if (exp >= 12)
+	return (unsigned long long)-1;
+    else if (exp >= 0)
+        return l << exp;
+    else if (exp >= -52)
+        return l >> -exp;
+    else
+        return 0;
+}
+long long __fixdfdi (double a1)
+{
+    long long ret; int s;
+    ret = __fixunsdfdi((s = a1 >= 0) ? a1 : -a1);
+    return s ? ret : -ret;
+}
+unsigned long long __fixunsxfdi (long double a1)
+{
+    register union ldouble_long dl1;
+    register int exp;
+    register unsigned long long l;
+    dl1.ld = a1;
+    if (dl1.l.lower == 0 && dl1.l.upper == 0)
+	return (0);
+    exp = (dl1.l.upper & 0x7fff) - 16382 - 64;
+    l = dl1.l.lower;
+    if (exp > 0)
+	return (unsigned long long)-1;
+    else if (exp >= -63)
+        return l >> -exp;
+    else
+        return 0;
+}
+long long __fixxfdi (long double a1)
+{
+    long long ret; int s;
+    ret = __fixunsxfdi((s = a1 >= 0) ? a1 : -a1);
+    return s ? ret : -ret;
 }
 static const int reg_classes[25] = {
       0x0001 | 0x0004,

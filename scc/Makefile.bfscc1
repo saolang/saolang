@@ -27,6 +27,7 @@ ifeq (-$(CC)-$(GCC_MAJOR)-$(findstring $(GCC_MINOR),56789)-,-gcc-4--)
 endif
 
 LIBSCC = libscc.a
+LIBSCC1 = libscc1.a
 LINK_LIBSCC =
 LIBS =
 CFLAGS += -I$(TOP)
@@ -113,7 +114,7 @@ ifeq ($(INCLUDED),no)
 # running top Makefile
 
 PROGS = scc$(EXESUF)
-SCCLIBS = $(LIBSCC) $(LIBSCCDEF)
+SCCLIBS = $(LIBSCC1) $(LIBSCC) $(LIBSCCDEF)
 
 
 # --------------------------------------------------------------------------
@@ -154,6 +155,7 @@ SCC_X     = X86-32-LNX X86-64-LNX X86-32-WIN X86-64-WIN X86-64-OSX ARM-64-LNX AR
 # cross libscc1.a targets to build
 #LIBSCC1_X = X86-32-LNX X86-64-LNX X86-32-WIN X86-64-WIN X86-64-OSX ARM-64-LNX ARM-32-LNX
 LIBSCC1_X = $(SCC_X)
+
 PROGS_CROSS = $(foreach X,$(SCC_X),$X-scc$(EXESUF))
 LIBSCC1_CROSS = $(foreach X,$(LIBSCC1_X),$X-libscc1.a)
 
@@ -201,6 +203,17 @@ DEFINES += $(if $(CRT-$T),-DCONFIG_SCC_CRTPREFIX="\"$(CRT-$T)\"")
 DEFINES += $(if $(LIB-$T),-DCONFIG_SCC_LIBPATHS="\"$(LIB-$T)\"")
 DEFINES += $(if $(INC-$T),-DCONFIG_SCC_SYSINCLUDEPATHS="\"$(INC-$T)\"")
 DEFINES += $(DEF-$(or $(findstring win,$T),unx))
+
+# try rm scc1 again..
+###ifneq ($(X),)
+###ifeq ($(CONFIG_WIN32),yes)
+###DEF-win += -DSCC_LIBSCC1="\"$(X)libscc1.a\""
+###DEF-unx += -DSCC_LIBSCC1="\"$(X)libscc1.a\""
+###else
+###DEF-all += -DSCC_LIBSCC1="\"$(X)libscc1.a\""
+####DEF-win += -DCONFIG_SCCDIR="\"$(sccdir)\""
+###endif
+###endif
 
 # include custom configuration (see make help)
 -include config-extra.mak
@@ -290,11 +303,15 @@ XSCC ?= ./scc$(EXESUF)
 libscc1.a : scc$(EXESUF) FORCE
 	@echo libscc1.a =: $(MAKE) -C lib DEFINES='$(DEF-$T)'
 	@$(MAKE) -C lib DEFINES='$(DEF-$T)'
+
 # Cross libscc1.a
 %-libscc1.a : %-scc$(EXESUF) FORCE
 	@echo *-libscc1.a =: $(MAKE) -C lib DEFINES='$(DEF-$*)' CROSS_TARGET=$*
 	@$(MAKE) -C lib DEFINES='$(DEF-$*)' CROSS_TARGET=$*
+
+.PRECIOUS: %-libscc1.a
 FORCE:
+
 # --------------------------------------------------------------------------
 # install
 
@@ -302,6 +319,8 @@ INSTALL = install -m644
 INSTALLBIN = install -m755 $(STRIP_$(CONFIG_strip))
 STRIP_yes = -s
 
+LIBSCC1_W = $(filter %-win32-libscc1.a %-wince-libscc1.a,$(LIBSCC1_CROSS))
+LIBSCC1_U = $(filter-out $(LIBSCC1_W),$(LIBSCC1_CROSS))
 IB = $(if $1,mkdir -p $2 && $(INSTALLBIN) $1 $2)
 IBw = $(call IB,$(wildcard $1),$2)
 IF = $(if $1,mkdir -p $2 && $(INSTALL) $1 $2)
@@ -311,11 +330,15 @@ IR = mkdir -p $2 && cp -r $1/. $2
 # install progs & libs
 install-unx:
 	$(call IBw,$(PROGS) $(PROGS_CROSS),"$(bindir)")
+	$(call IFw,$(LIBSCC1) $(LIBSCC1_U),"$(sccdir)")
 	#$(call IF,$(TOPSRC)/include/*.h,"$(sccdir)/include")
 	$(call $(if $(findstring .so,$(LIBSCC)),IBw,IFw),$(LIBSCC),"$(libdir)")
 	$(call IF,$(TOPSRC)/libscc.h,"$(includedir)")
 	#$(call IFw,scc-doc.info,"$(infodir)")
 	#$(call IFw,scc-doc.html,"$(docdir)")
+ifneq "$(wildcard $(LIBSCC1_W))" ""
+	$(call IFw,$(TOPSRC)/lib/*.def $(LIBSCC1_W),"$(sccdir)")
+endif
 
 # uninstall
 uninstall-unx:
@@ -327,7 +350,11 @@ uninstall-unx:
 install-win:
 	$(call IBw,$(PROGS) $(PROGS_CROSS) $(subst libscc.a,,$(LIBSCC)),"$(bindir)")
 	$(call IF,$(TOPSRC)/lib/*.def,"$(sccdir)")
+	$(call IFw,libscc1.a $(LIBSCC1_W),"$(sccdir)")
 	$(call IFw,$(TOPSRC)/libscc.h $(subst .dll,.def,$(LIBSCC)),"$(libdir)")
+ifneq "$(wildcard $(LIBSCC1_U))" ""
+	$(call IFw,$(LIBSCC1_U),"$(sccdir)")
+endif
 
 # the msys-git shell works to configure && make except it does not have install
 ifeq "$(and $(CONFIG_WIN32),$(shell which install >/dev/null 2>&1 || echo no))" "no"

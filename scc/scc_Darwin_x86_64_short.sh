@@ -49,3 +49,10 @@ echo ./build_Darwin_x86_64/scc -B build_Darwin_x86_64/ -I. -I build_Darwin_x86_6
 ./build_Darwin_x86_64/scc -B build_Darwin_x86_64 -I build_Darwin_x86_64 -I include_osx -I. -run scc.c
 ./build_Darwin_x86_64/scc -B build_Darwin_x86_64 -I build_Darwin_x86_64 -I include_osx -I. -D SCC_TARGET_X86_64 -run scc.c
 
+cd build_Darwin_x86_64
+./scc -I . -I ..  -run ../scc.c -I. -I.. -run ../test/test_SCC.c
+./scc -I . -I ..  -run ../scc.c -I. -I.. -run ../scc.c -I. -I.. -run ../test/test_SCC.c
+./scc -I . -I ..  -run ../scc.c -I. -I.. -run ../scc.c -I. -I.. -run ../scc.c -I. -I.. -run ../test/test_SCC.c
+
+
+

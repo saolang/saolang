@@ -793,11 +793,17 @@ static void patch_type(Sym *sym, CType *type)
         sym->type.ref = type->ref;
     }
 
+		//TODO fix later
     if (!is_compatible_types(&sym->type, type)) {
-        scc_error("incompatible types for redefinition of '%s'",
-                  get_tok_str(sym->v, NULL));
 
-    } else if ((sym->type.t & VT_BTYPE) == VT_FUNC) {
+//TMP...
+//        scc_error("patch_type(): incompatible types for redefinition of '%s' (%d/%d)",
+//						get_tok_str(sym->v, NULL), sym->type.t, type->t);
+        scc_warning("TODO patch_type(): incompatible types for redefinition of '%s' (%d/%d)",
+						get_tok_str(sym->v, NULL), sym->type.t, type->t);
+    }
+
+		if ((sym->type.t & VT_BTYPE) == VT_FUNC) {
         int static_proto = sym->type.t & VT_STATIC;
         /* warn if static follows non-static function declaration */
         if ((type->t & VT_STATIC) && !static_proto && !(type->t & VT_INLINE))

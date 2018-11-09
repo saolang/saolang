@@ -21,6 +21,46 @@ static int nb_states;
 #include "sccgen.c"
 #include "sccrun.c"
 
+//TEST
+//#ifdef INCLIBSCC1
+////SKIP
+//#else
+//#define INCLIBSCC1 1
+//#include "lib/libscc1.c"
+//#endif
+
+#include "lib/libscc1.c"
+
+//TODO X86-32-LNX //{
+//#include "lib/alloca86.S"
+asm(
+".globl alloca\n"
+"alloca:\n"
+//"    pop     %edx\n"
+//"    pop     %eax\n"
+//"    add     $3,%eax\n"
+//"    and     $-4,%eax\n"
+//"    jz      p3\n"
+//"\n"
+//#ifdef _WIN32
+//"p1:\n"
+//"    cmp     $4096,%eax\n"
+//"    jbe     p2\n"
+//"    test    %eax,-4096(%esp)\n"
+//"    sub     $4096,%esp\n"
+//"    sub     $4096,%eax\n"
+//"    jmp p1\n"
+//"p2:\n"
+//#endif
+//"    sub     %eax,%esp\n"
+//"    mov     %esp,%eax\n"
+//"p3:\n"
+//"    push    %edx\n"
+//"    push    %edx\n"
+"    ret\n"
+	 );
+//TODO X86-32-LNX //}
+
 #include SCC_QUOTE(gen-__SCC_TARGET_CPU__-__SCC_TARGET_CPU_BIT__-__SCC_TARGET_OS__-__SCC_TARGET_FORMAT__.c)
 #include SCC_QUOTE(link-__SCC_TARGET_CPU__-__SCC_TARGET_CPU_BIT__-__SCC_TARGET_OS__-__SCC_TARGET_FORMAT__.c)
 #include SCC_QUOTE(asm-__SCC_TARGET_CPU__-__SCC_TARGET_CPU_BIT__.c)
