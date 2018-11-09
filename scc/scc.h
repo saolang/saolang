@@ -562,7 +562,7 @@ struct sym_attr {
     unsigned plt_offset;
     int plt_sym;
     int dyn_index;
-#ifdef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
     unsigned char plt_thumb_stub:1;
 #endif
 };
@@ -604,7 +604,7 @@ struct SCCState {
 
     /* compile with debug symbol (and use them if error during execution) */
     int do_debug;
-#ifdef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
     enum float_abi float_abi; /* float ABI of the generated code*/
 #endif
     int run_test; /* nth test to run with -dt -run */
@@ -1249,7 +1249,7 @@ ST_FUNC void vpush_global_sym(CType *type, int v);
 ST_FUNC void vrote(SValue *e, int n);
 ST_FUNC void vrott(int n);
 ST_FUNC void vrotb(int n);
-#ifdef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
 ST_FUNC int get_reg_ex(int rc, int rc2);
 ST_FUNC void lexpand_nr(void);
 #endif
@@ -1415,7 +1415,8 @@ ST_FUNC void gen_cvt_ftoi(int t);
 ST_FUNC void gen_cvt_ftof(int t);
 ST_FUNC void ggoto(void);
 ST_FUNC void o(unsigned int c);
-#ifndef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
+#else
 ST_FUNC void gen_cvt_itof(int t);
 #endif
 ST_FUNC void gen_vla_sp_save(int addr);
@@ -1468,7 +1469,7 @@ ST_FUNC void gen_vla_result(int addr);
 #endif
 
 /* ------------ arm-gen.c ------------ */
-#ifdef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
 
 //#if defined(SCC_ARM_EABI) && !defined(CONFIG_SCC_ELFINTERP)
 //PUB_FUNC const char *default_elfinterp(struct SCCState *s);

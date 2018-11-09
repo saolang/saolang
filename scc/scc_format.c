@@ -1038,7 +1038,8 @@ ST_FUNC void build_got_entries(SCCState *s1)
 			    goto jmp_slot;
 		    }
                 } else if (!(sym->st_shndx == SHN_ABS
-#ifndef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
+#else
 			&& PTR_SIZE == 8
 #endif
 			))
@@ -1838,7 +1839,7 @@ static void scc_output_elf(SCCState *s1, FILE *f, int phnum, ElfW(Phdr) *phdr,
     /* FIXME: should set only for freebsd _target_, but we exclude only PE target */
     ehdr.e_ident[EI_OSABI] = ELFOSABI_FREEBSD;
 #endif
-#ifdef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
 #ifdef SCC_ARM_EABI
     ehdr.e_ident[EI_OSABI] = 0;
     ehdr.e_flags = EF_ARM_EABI_VER4;
@@ -2482,7 +2483,7 @@ ST_FUNC int scc_load_object_file(SCCState *s1,
                 sym_index = old_to_new_syms[sym_index];
                 /* ignore link_once in rel section. */
                 if (!sym_index && !sm->link_once
-#ifdef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
                     && type != R_ARM_V4BX
 #endif
                    ) {
@@ -2494,7 +2495,7 @@ ST_FUNC int scc_load_object_file(SCCState *s1,
                 rel->r_info = ELFW(R_INFO)(sym_index, type);
                 /* offset the relocation offset */
                 rel->r_offset += offseti;
-#ifdef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
                 /* Jumps and branches from a Thumb code to a PLT entry need
                    special handling since PLT entries are ARM code.
                    Unconditional bl instructions referencing PLT entries are

@@ -223,7 +223,7 @@ ST_FUNC int sccgen_compile(SCCState *s1)
 
     scc_debug_start(s1);
 
-#ifdef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
     arm_init(s1);
 #endif
 
@@ -967,7 +967,7 @@ ST_FUNC void save_reg_upstack(int r, int n)
     }
 }
 
-#ifdef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
 /* find a register of class 'rc2' with at most one reference on stack.
  * If none, call get_reg(rc) */
 ST_FUNC int get_reg_ex(int rc, int rc2)
@@ -1405,7 +1405,7 @@ static void lexpand(void)
 }
 #endif
 
-#ifdef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
 /* expand long long on stack */
 ST_FUNC void lexpand_nr(void)
 {
@@ -2230,13 +2230,16 @@ redo:
         gv(is_float(vtop->type.t & VT_BTYPE) ? RC_FLOAT : RC_INT);
 }//gen_op
 
-#ifndef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32) //{
+//arm32 see gen-ARM-32.c
+#else //}:{
 /* generic itof for unsigned long long case */
 static void gen_cvt_itof1(int t)
 {
-#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64) //{
+	//arm64
     gen_cvt_itof(t);
-#else
+#else //}:{
     if ((vtop->type.t & (VT_BTYPE | VT_UNSIGNED)) == 
         (VT_LLONG | VT_UNSIGNED)) {
 
@@ -2255,9 +2258,9 @@ static void gen_cvt_itof1(int t)
     } else {
         gen_cvt_itof(t);
     }
-#endif
+#endif //}
 }
-#endif
+#endif //}
 
 /* generic ftoi for unsigned long long case */
 static void gen_cvt_ftoi1(int t)
@@ -2575,7 +2578,7 @@ ST_FUNC int type_size(CType *type, int *a)
 # else
         *a = 4;
 # endif
-#elif defined(SCC_TARGET_ARM)
+#elif (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
 # ifdef SCC_ARM_EABI
         *a = 8; 
 # else
@@ -6202,7 +6205,7 @@ static void init_putz(Section *sec, unsigned long c, int size)
     } else {
         vpush_global_sym(&func_old_type, TOK_memset);
         vseti(VT_LOCAL, c);
-#ifdef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
         vpushs(size);
         vpushi(0);
 #else

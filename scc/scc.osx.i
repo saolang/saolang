@@ -13060,7 +13060,7 @@ void gen_opf(int op)
         }
     }
 }
-void gen_cvt_itof(int t)
+static void gen_cvt_itof(int t)
 {
     if ((t & 0x000f) == 10) {
         save_reg(TREG_ST0);

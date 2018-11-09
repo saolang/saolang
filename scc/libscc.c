@@ -757,7 +757,7 @@ LIBSCCAPI SCCState *scc_new(void)
 # endif
 #endif
 
-#if defined(SCC_TARGET_ARM)
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
 	scc_define_symbol(s, "__ARM_ARCH_4__", NULL);
 	scc_define_symbol(s, "__arm_elf__", NULL);
 	scc_define_symbol(s, "__arm_elf", NULL);
@@ -1379,7 +1379,7 @@ static int scc_set_linker(SCCState *s, const char *option)
 			} else if (!SCC(strcmp,int)(p, "efirom")) {
 				s->pe_subsystem = 13;
 			}
-#elif defined(SCC_TARGET_ARM)
+#elif (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
 			else if (!SCC(strcmp,int)(p, "wince")) {
 				s->pe_subsystem = 9;
 			}
@@ -1507,7 +1507,7 @@ static const SCCOption scc_options[] = {
     { "Wp,", SCC_OPTION_Wp, SCC_OPTION_HAS_ARG | SCC_OPTION_NOSEP },
     { "W", SCC_OPTION_W, SCC_OPTION_HAS_ARG | SCC_OPTION_NOSEP },
     { "O", SCC_OPTION_O, SCC_OPTION_HAS_ARG | SCC_OPTION_NOSEP },
-#ifdef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
     { "mfloat-abi", SCC_OPTION_mfloat_abi, SCC_OPTION_HAS_ARG },
 #endif
     { "m", SCC_OPTION_m, SCC_OPTION_HAS_ARG | SCC_OPTION_NOSEP },
@@ -1808,7 +1808,7 @@ set_output_type:
 				if (set_flag(s, options_f, optarg) < 0)
 					goto unsupported_option;
 				break;
-#ifdef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
 			case SCC_OPTION_mfloat_abi:
 				/* scc doesn't support soft float yet */
 				if (!SCC(strcmp,int)(optarg, "softfp")) {

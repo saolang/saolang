@@ -190,7 +190,7 @@ DEF(TOK___fixunssfdi, "__fixunssfdi")
 DEF(TOK___fixunsdfdi, "__fixunsdfdi")
 #endif
 
-#if defined SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
 # ifdef SCC_ARM_EABI
 DEF(TOK_memcpy, "__aeabi_memcpy")
 DEF(TOK_memcpy4, "__aeabi_memcpy4")

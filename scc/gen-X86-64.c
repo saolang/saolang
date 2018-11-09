@@ -1925,7 +1925,7 @@ void gen_opf(int op)
 
 /* convert integers to fp 't' type. Must handle 'int', 'unsigned int'
    and 'long long' cases. */
-void gen_cvt_itof(int t)
+ST_FUNC void gen_cvt_itof(int t)
 {
     if ((t & VT_BTYPE) == VT_LDOUBLE) {
         save_reg(TREG_ST0);

@@ -86,7 +86,7 @@ static const char help2[] =
     "  dollars-in-identifiers        allow '$' in C symbols\n"
     "-m... target specific options:\n"
     "  ms-bitfields                  use MSVC bitfield layout\n"
-#ifdef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
     "  float-abi                     hard/softfp on arm\n"
 #endif
 #if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)

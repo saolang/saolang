@@ -142,26 +142,6 @@
 #endif //}__SCC_CC__
 
 ///////////////////////////////////////////////////////////////////////////
-#ifndef __SCC_TARGET_CPU__//{
-
-//TODO remove {
-#if defined(SCC_TARGET_ARM)
-# define __SCC_TARGET_CPU__ ARM
-# define __SCC_TARGET_CPU_BIT__  32
-//#elif defined(SCC_TARGET_PPC)
-//# define __SCC_TARGET_CPU__ PPC
-//#elif defined(SCC_TARGET_MIPS)
-//# define __SCC_TARGET_CPU__ MIPS
-//#elif defined(SCC_TARGET_SH)
-//# define __SCC_TARGET_CPU__ SH
-#else
-//TODO
-# error "not yet support CPU"
-#endif
-//TODO remove }
-
-#endif//}__SCC_TARGET_CPU__
-
 #ifndef __SCC_TARGET_CPU__
 # ifdef __SCC_CPU__
 # define __SCC_TARGET_CPU__ __SCC_CPU__

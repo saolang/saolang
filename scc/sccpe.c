@@ -18,7 +18,7 @@
 # define IMAGE_FILE_MACHINE 0x8664
 # define RSRC_RELTYPE 3
 
-#elif defined SCC_TARGET_ARM
+#elif (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
 # define ADDR3264 DWORD
 # define PE_IMAGE_REL IMAGE_REL_BASED_HIGHLOW
 # define REL_TYPE_DIRECT R_ARM_ABS32
@@ -519,7 +519,7 @@ static int pe_write(struct pe_info *pe)
     0x00E0, /*WORD    SizeOfOptionalHeader; */
     0x030F  /*WORD    Characteristics; */
 #define CHARACTERISTICS_DLL 0x230E
-#elif defined(SCC_TARGET_ARM)
+#elif (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
     0x00E0, /*WORD    SizeOfOptionalHeader; */
     0x010F, /*WORD    Characteristics; */
 #define CHARACTERISTICS_DLL 0x230F
@@ -544,7 +544,7 @@ static int pe_write(struct pe_info *pe)
     0x00000000, /*DWORD   BaseOfData; */
 #endif
     /* NT additional fields. */
-#if defined(SCC_TARGET_ARM)
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
     0x00100000,	    /*DWORD   ImageBase; */
 #else
     0x00400000,	    /*DWORD   ImageBase; */
@@ -1227,7 +1227,7 @@ static int pe_check_symbols(struct pe_info *pe)
 
                     offset = text_section->data_offset;
                     /* add the 'jmp IAT[x]' instruction */
-#ifdef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
                     p = section_ptr_add(text_section, 8+4); // room for code and address
                     (*(DWORD*)(p)) = 0xE59FC000; // arm code ldr ip, [pc] ; PC+8+0 = 0001xxxx
                     (*(DWORD*)(p+2)) = 0xE59CF000; // arm code ldr pc, [ip]
@@ -1245,7 +1245,7 @@ static int pe_check_symbols(struct pe_info *pe)
                         symtab_section, 0, sizeof(DWORD),
                         ELFW(ST_INFO)(STB_GLOBAL, STT_OBJECT),
                         0, SHN_UNDEF, buffer);
-#ifdef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
                     put_elf_reloc(symtab_section, text_section,
                         offset + 8, R_XXX_THUNKFIX, is->iat_index); // offset to IAT position
 #else
@@ -1885,14 +1885,14 @@ static void pe_set_options(SCCState * s1, struct pe_info *pe)
         /* XXX: check if is correct for arm-pe target */
         pe->imagebase = 0x10000000;
     } else {
-#if defined(SCC_TARGET_ARM)
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
         pe->imagebase = 0x00010000;
 #else
         pe->imagebase = 0x00400000;
 #endif
     }
 
-#if defined(SCC_TARGET_ARM)
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
     /* we use "console" subsystem by default */
     pe->subsystem = 9;
 #else
