@@ -2360,7 +2360,7 @@ static void gen_cast(CType *type)
         df = is_float(dbt);
         c = (vtop->r & (VT_VALMASK | VT_LVAL | VT_SYM)) == VT_CONST;
         p = (vtop->r & (VT_VALMASK | VT_LVAL | VT_SYM)) == (VT_CONST | VT_SYM);
-#if !defined SCC_IS_NATIVE && !defined SCC_IS_NATIVE_387
+#if !(__SCC_TARGET_CROSS__==0) && !defined SCC_IS_NATIVE_387
         c &= dbt != VT_LDOUBLE;
 #endif
         if (c) {

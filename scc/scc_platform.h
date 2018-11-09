@@ -174,10 +174,7 @@
 
 ///////////////////////////////////////////////////////////////////////////
 
-//DEBUG..
-//#warning "CPU/BIT/OS/FMT/PTR_SIZE:" SCC_QUOTE(__SCC_TARGET_CPU__,__SCC_TARGET_CPU_BIT__,__SCC_TARGET_OS__,__SCC_TARGET_FORMAT__,PTR_SIZE)
-//#pragma message "WJC.DEBUG=" SCC_QUOTE(__SCC_TARGET_CROSS__,__SCC_TARGET_CPU__,__SCC_TARGET_CPU_ID__,__SCC_TARGET_CPU_BIT__)
-//#warning "__SCC_TARGET_FORMAT__=" SCC_QUOTE(__SCC_TARGET_FORMAT__)
+//QUICK DEBUG..
 //#warning "__SCC_TARGET_OS_ID__=" SCC_QUOTE(__SCC_TARGET_OS_ID__)
 //#pragma message "__SCC_TARGET_OS_ID__=" SCC_QUOTE(__SCC_TARGET_OS_ID__)
 
@@ -186,17 +183,9 @@
 										 && (__SCC_CPU_BIT__==__SCC_TARGET_CPU_BIT__) \
 										 && (__SCC_OS_FORMAT_ID__==__SCC_TARGET_FORMAT_ID__) \
 										 && (__SCC_OS_ID__==__SCC_TARGET_OS_ID__)
-# ifndef SCC_IS_NATIVE
-#  define SCC_IS_NATIVE
-# endif
-#endif
-
-#ifdef SCC_IS_NATIVE
 # define __SCC_TARGET_CROSS__ 0
 #else
 # define __SCC_TARGET_CROSS__ 1
 #endif
-
-//#warning "SCC_IS_NATIVE/__SCC_TARGET_CROSS__:" SCC_QUOTE(SCC_IS_NATIVE,__SCC_TARGET_CROSS__)
 
 #endif//_SCC_PLATFORM_H

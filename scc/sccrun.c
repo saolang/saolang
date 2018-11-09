@@ -1,7 +1,7 @@
 #include "scc.h"
 
 /* only native compiler supports -run */
-#ifdef SCC_IS_NATIVE
+#if __SCC_TARGET_CROSS__==0
 
 //TODO redo the backtrace again...
 //using debug backtrace trick for the scc-run
@@ -308,5 +308,5 @@ ST_FUNC void *dlsym(void *handle, const char *symbol)
 }
 
 #endif /* CONFIG_SCC_STATIC */
-#endif /* SCC_IS_NATIVE */
+#endif //__SCC_TARGET_CROSS__==0
 /* ------------------------------------------------------------- */

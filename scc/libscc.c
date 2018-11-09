@@ -911,7 +911,7 @@ LIBSCCAPI void scc_delete(SCCState *s1)
     dynarray_reset(&s1->pragma_libs, &s1->nb_pragma_libs);
     dynarray_reset(&s1->argv, &s1->argc);
 
-#ifdef SCC_IS_NATIVE
+#if __SCC_TARGET_CROSS__==0
     /* free runtime memory */
     scc_run_free(s1);
 #endif
@@ -1021,7 +1021,7 @@ ST_FUNC int scc_add_file_internal(SCCState *s1, const char *filename, int flags)
 			case AFF_BINTYPE_DYN://NOTES: mostly .dylib from above, .so from scc_object_type()
 				if (s1->output_type == SCC_OUTPUT_MEMORY) {
 					ret = 0;
-#ifdef SCC_IS_NATIVE
+#if __SCC_TARGET_CROSS__==0
 					//using libdl directly for sccrun...
 					if (NULL == scc_dlopen(filename))
 						ret = -1;
@@ -1806,7 +1806,7 @@ set_output_type:
 				s->nostdlib = 1;
 				break;
 			case SCC_OPTION_run:
-#ifndef SCC_IS_NATIVE
+#if __SCC_TARGET_CROSS__==1
 				scc_warning("%s = %s", "__SCC_TARGET_CPU__", SCC_QUOTE(__SCC_TARGET_CPU__));
 				scc_warning("%s = %s", "__SCC_TARGET_OS__", SCC_QUOTE(__SCC_TARGET_OS__));
 				scc_warning("%s = %s", "__SCC_TARGET_FORMAT__", SCC_QUOTE(__SCC_TARGET_FORMAT__));

@@ -824,7 +824,7 @@ static void pe_build_imports(struct pe_info *pe)
                 else
                     ordinal = 0, v = imp_sym->st_value; /* address from scc_add_symbol() */
 
-#ifdef SCC_IS_NATIVE
+#if __SCC_TARGET_CROSS__==0
                 if (pe->type == PE_RUN) {
                     if (dllref) {
                         if ( !dllref->handle )
@@ -1845,7 +1845,7 @@ static void pe_add_runtime(SCCState *s1, struct pe_info *pe)
         ++start_symbol;
 
     /* grab the startup code from libscc1 */
-#ifdef SCC_IS_NATIVE
+#if __SCC_TARGET_CROSS__==0
     if (SCC_OUTPUT_MEMORY != s1->output_type || s1->runtime_main)
 #endif
     set_elf_sym(symtab_section,
@@ -1964,7 +1964,7 @@ ST_FUNC int pe_output_file(SCCState *s1, const char *filename)
             ret = pe_write(&pe);
         scc_free(pe.sec_info);
     } else {
-#ifdef SCC_IS_NATIVE
+#if __SCC_TARGET_CROSS__==0
         pe.thunk = data_section;
         pe_build_imports(&pe);
         s1->runtime_main = pe.start_symbol;

@@ -322,7 +322,7 @@ redo:
 		;
 	} else if (0 == ret) {
 		if (s->output_type == SCC_OUTPUT_MEMORY) {
-#ifdef SCC_IS_NATIVE
+#if __SCC_TARGET_CROSS__==0
 			ret = scc_run(s, argc, argv);
 #endif
 		} else {

@@ -83,7 +83,7 @@ ST_FUNC void scc_format_delete(SCCState *s1)
     dynarray_reset(&s1->priv_sections, &s1->nb_priv_sections);
 
     /* free any loaded DLLs */
-#ifdef SCC_IS_NATIVE
+#if __SCC_TARGET_CROSS__==0
     for ( i = 0; i < s1->nb_loaded_dlls; i++) {
         DLLReference *ref = s1->loaded_dlls[i];
         if ( ref->handle )
@@ -442,7 +442,7 @@ LIBSCCAPI void *scc_get_symbol(SCCState *s, const char *name)
     return (void*)(uintptr_t)get_elf_sym_addr(s, name, 0);
 }
 
-#if defined SCC_IS_NATIVE || __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
+#if (__SCC_TARGET_CROSS__==0) || __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 /* return elf symbol value or error */
 ST_FUNC void* scc_get_symbol_err(SCCState *s, const char *name)
 {
@@ -753,7 +753,7 @@ ST_FUNC void relocate_syms(SCCState *s1, Section *symtab, int do_resolve)
             name = (char *) s1->symtab->link->data + sym->st_name;
             /* Use ld.so to resolve symbol for us (for scc -run) */
             if (do_resolve) {
-#if defined SCC_IS_NATIVE && !(__SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__)
+#if (__SCC_TARGET_CROSS__==0) && !(__SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__)
                 void *addr = scc_dlsym(name);
                 if (addr) {
                     sym->st_value = (addr_t) addr;

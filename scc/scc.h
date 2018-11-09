@@ -51,7 +51,7 @@
 /* assembler debug */
 /* #define ASM_DEBUG */
 
-#if defined SCC_IS_NATIVE && !defined CONFIG_SCCBOOT
+#if (__SCC_TARGET_CROSS__==0) && !defined CONFIG_SCCBOOT
 //#ifndef _WIN32
 # define CONFIG_SCC_BACKTRACE
 //#endif
@@ -731,7 +731,7 @@ struct SCCState {
 # endif
 #endif
 
-#ifdef SCC_IS_NATIVE
+#if __SCC_TARGET_CROSS__==0
     const char *runtime_main;
     void **runtime_mem;
     int nb_runtime_mem;
@@ -1356,7 +1356,7 @@ ST_FUNC struct sym_attr *get_sym_attr(SCCState *s1, int index, int alloc);
 ST_FUNC void squeeze_multi_relocs(Section *sec, size_t oldrelocoffset);
 
 ST_FUNC addr_t get_elf_sym_addr(SCCState *s, const char *name, int err);
-#if defined SCC_IS_NATIVE || __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
+#if (__SCC_TARGET_CROSS__==0) || __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 ST_FUNC void *scc_get_symbol_err(SCCState *s, const char *name);
 #endif
 
@@ -1533,7 +1533,7 @@ PUB_FUNC int scc_get_dllexports(const char *filename, char **pp);
 #define ST_ASM_SET 0x04
 
 /* ------------ sccrun.c ----------------- */
-#ifdef SCC_IS_NATIVE
+#if __SCC_TARGET_CROSS__==0
 #ifdef CONFIG_SCC_STATIC
 #define RTLD_LAZY       0x001
 #define RTLD_NOW        0x002
@@ -1554,7 +1554,7 @@ ST_FUNC void scc_set_num_callers(int n);
 #endif//CONFIG_SCC_BACKTRACE
 
 ST_FUNC void scc_run_free(SCCState *s1);
-#endif//SCC_IS_NATIVE
+#endif//__SCC_TARGET_CROSS__==0
 
 /********************************************************/
 #undef ST_DATA
