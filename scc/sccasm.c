@@ -1257,4 +1257,7 @@ ST_FUNC void asm_global_instr(void)
     nocode_wanted = saved_nocode_wanted;
 }
 
+#else
+//TODO NOTES: a warning of
+//ranlib: file: libscc.a(sccasm.o) has no symbols
 #endif /* CONFIG_SCC_ASM */
