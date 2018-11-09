@@ -64,53 +64,37 @@
 #define __SCC_OS_QNX__     7
 #define __SCC_OS_SAO__     8
 
-#define __SCC_OS_FORMAT_PE     1
-#define __SCC_OS_FORMAT_MACHO  2
-#define __SCC_OS_FORMAT_ELF    3
+#define __SCC_OS_FORMAT_PE__     1
+#define __SCC_OS_FORMAT_MACHO__  2
+#define __SCC_OS_FORMAT_ELF__    3
 
 /* probe runtime */
 #ifndef __SCC_OS__//{
 
 #if defined(_WIN32)||defined(_WIN64)
 #	define __SCC_OS__  WIN
-# define __SCC_OS_ID__ __SCC_OS_WIN__
 # define __SCC_OS_FORMAT__  PE
-# define __SCC_OS_FORMAT_ID__  __SCC_OS_FORMAT_PE
 #elif defined(__APPLE__)
 #	define __SCC_OS__  OSX
-# define __SCC_OS_ID__ __SCC_OS_OSX__
 # define __SCC_OS_FORMAT__  MACHO
-# define __SCC_OS_FORMAT_ID__  __SCC_OS_FORMAT_MACHO
 #elif defined(__linux__)||defined(__LINUX__)
 #	define __SCC_OS__  LNX
-# define __SCC_OS_ID__ __SCC_OS_LNX__
 # define __SCC_OS_FORMAT__  ELF
-# define __SCC_OS_FORMAT_ID__  __SCC_OS_FORMAT_ELF
 #elif defined(__FreeBSD__)
 #	define __SCC_OS__  FREEBSD
-# define __SCC_OS_ID__ __SCC_OS_FREEBSD__
 # define __SCC_OS_FORMAT__  ELF
-# define __SCC_OS_FORMAT_ID__  __SCC_OS_FORMAT_ELF
 #elif defined(__NetBSD__)
 #	define __SCC_OS__  NETBSD
-# define __SCC_OS_ID__ __SCC_OS_NETBSD__
 # define __SCC_OS_FORMAT__  ELF
-# define __SCC_OS_FORMAT_ID__  __SCC_OS_FORMAT_ELF
 #elif defined(__QNXNTO__)
 #	define __SCC_OS__  QNXNTO
-# define __SCC_OS_ID__ __SCC_OS_QNXNTO__
 # define __SCC_OS_FORMAT__  ELF
-# define __SCC_OS_FORMAT_ID__  __SCC_OS_FORMAT_ELF
 #elif defined(__QNX__)
 #	define __SCC_OS__  QNX
-# define __SCC_OS_ID__ __SCC_OS_QNX__
 # define __SCC_OS_FORMAT__  ELF
-# define __SCC_OS_FORMAT_ID__  __SCC_OS_FORMAT_ELF
 #elif defined(__SaoOS__)//SaoOS
-#	define __SCC_OS__  SaoOS
-# define __SCC_OS_ID__ __SCC_OS_SAO__
+#	define __SCC_OS__  SAO
 # define __SCC_OS_FORMAT__  ELF
-# define __SCC_OS_FORMAT_ID__  __SCC_OS_FORMAT_ELF
 #else
 //#  warning "TODO unknown current os"
 #  error "TODO unknown current os"
@@ -118,7 +102,8 @@
 
 #endif //}__SCC_OS__
 
-//TODO iOS@Darwin/Android@Linux..
+# define __SCC_OS_FORMAT_ID__  SCC_MCAT(__SCC_OS_FORMAT_,__SCC_OS_FORMAT__,__)
+# define __SCC_OS_ID__  SCC_MCAT(__SCC_OS_,__SCC_OS__,__)
 
 ///////////////////////////////////////////////////////////////////////////
 #ifndef __SCC_CC__//{
@@ -165,10 +150,6 @@
 
 ///////////////////////////////////////////////////////////////////////////
 
-#define __SCC_TARGET_FORMAT_PE__    1
-#define __SCC_TARGET_FORMAT_ELF__   2
-#define __SCC_TARGET_FORMAT_MACHO__ 3
-
 #ifndef __SCC_TARGET_FORMAT__//{
 # ifdef __SCC_OS_FORMAT__
 #  define __SCC_TARGET_FORMAT__ __SCC_OS_FORMAT__
@@ -177,15 +158,15 @@
 # endif
 #endif //}
 
-# define __SCC_TARGET_FORMAT_ID__  SCC_MCAT(__SCC_TARGET_FORMAT_,__SCC_TARGET_FORMAT__,__)
+# define __SCC_TARGET_FORMAT_ID__  SCC_MCAT(__SCC_OS_FORMAT_,__SCC_TARGET_FORMAT__,__)
 
 ///////////////////////////////////////////////////////////////////////////
 //TODO not good, need to adjust Makefile better?
 #ifndef __SCC_TARGET_OS__
 # ifdef __SCC_OS__
 # define __SCC_TARGET_OS__ __SCC_OS__
+# define __SCC_TARGET_OS_ID__ __SCC_OS_ID__
 # else
-//# define __SCC_TARGET_OS__ LNX
 # warning "unknown __SCC_TARGET_OS__"
 # endif
 #else
@@ -193,18 +174,22 @@
 
 ///////////////////////////////////////////////////////////////////////////
 
+//#warning "CPU/BIT/OS/FMT/PTR_SIZE:" SCC_QUOTE(__SCC_TARGET_CPU__,__SCC_TARGET_CPU_BIT__,__SCC_TARGET_OS__,__SCC_TARGET_FORMAT__,PTR_SIZE)
+//#pragma message "WJC.DEBUG=" SCC_QUOTE(__SCC_TARGET_CROSS__,__SCC_TARGET_CPU__,__SCC_TARGET_CPU_ID__,__SCC_TARGET_CPU_BIT__)
+//#warning "__SCC_TARGET_FORMAT__=" SCC_QUOTE(__SCC_TARGET_FORMAT__)
+
 //regards native if cpu arch and bits remain same:
-#if (__SCC_CPU_ID__ == __SCC_TARGET_CPU_ID__) && (__SCC_CPU_BIT__==__SCC_TARGET_CPU_BIT__)
+#if (__SCC_CPU_ID__ == __SCC_TARGET_CPU_ID__) \
+										 && (__SCC_CPU_BIT__==__SCC_TARGET_CPU_BIT__) \
+										 && (__SCC_OS_FORMAT_ID__==__SCC_TARGET_FORMAT_ID__) \
+										 && (__SCC_OS_ID__==__SCC_TARGET_OS_ID__)
 #  define SCC_IS_NATIVE
 #endif
 
 #ifdef SCC_IS_NATIVE
-# define __SCC_TARGET_CROSS__ 1
-#else
 # define __SCC_TARGET_CROSS__ 0
+#else
+# define __SCC_TARGET_CROSS__ 1
 #endif
-
-//#warning "CPU/BIT/OS/FMT/PTR_SIZE:" SCC_QUOTE(__SCC_TARGET_CPU__,__SCC_TARGET_CPU_BIT__,__SCC_TARGET_OS__,__SCC_TARGET_FORMAT__,PTR_SIZE)
-//#pragma message "WJC.DEBUG=" SCC_QUOTE(__SCC_TARGET_CROSS__,__SCC_TARGET_CPU__,__SCC_TARGET_CPU_ID__,__SCC_TARGET_CPU_BIT__)
 
 #endif//_SCC_PLATFORM_H

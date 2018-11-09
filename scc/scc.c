@@ -147,7 +147,7 @@ static void print_search_dirs(SCCState *s)
 	print_dirs("include", s->sysinclude_paths, s->nb_sysinclude_paths);
 	print_dirs("libraries", s->library_paths, s->nb_library_paths);
 	SCC(printf)("libscc1("SCC_QUOTE(__SCC_OS__)"):\n  %s/"SCC_LIBSCC1"\n", s->scc_lib_path);
-#if __SCC_OS_FORMAT_ID__==__SCC_OS_FORMAT_ELF
+#if __SCC_OS_FORMAT_ID__==__SCC_OS_FORMAT_ELF__
 	print_dirs("crt", s->crt_paths, s->nb_crt_paths);
 	SCC(printf)("elfinterp:\n  %s\n",  DEFAULT_ELFINTERP(s));
 #endif

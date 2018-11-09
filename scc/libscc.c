@@ -741,9 +741,20 @@ LIBSCCAPI SCCState *scc_new(void)
 	scc_define_symbol(s, "__STDC_VERSION__", "199901L");
 	scc_define_symbol(s, "__STDC_HOSTED__", NULL);
 
-#if __SCC_TARGET_CROSS__==1
-	scc_define_symbol(s, "__SCC_TARGET_CPU__", SCC_QUOTE(__SCC_TARGET_CPU__));
-	scc_define_symbol(s, "__SCC_TARGET_CPU_BIT__", SCC_QUOTE(__SCC_TARGET_CPU_BIT__));
+	//copy the config if not cross build...
+#if __SCC_TARGET_CROSS__==0
+# ifdef __SCC_TARGET_CPU__
+   scc_define_symbol(s, "__SCC_TARGET_CPU__", SCC_QUOTE(__SCC_TARGET_CPU__));
+# endif
+# ifdef __SCC_TARGET_CPU_BIT__
+   scc_define_symbol(s, "__SCC_TARGET_CPU_BIT__", SCC_QUOTE(__SCC_TARGET_CPU_BIT__));
+# endif
+# ifdef __SCC_TARGET_FORMAT__
+   scc_define_symbol(s, "__SCC_TARGET_FORMAT__", SCC_QUOTE(__SCC_TARGET_FORMAT__));
+# endif
+# ifdef __SCC_TARGET_OS__
+   scc_define_symbol(s, "__SCC_TARGET_OS__", SCC_QUOTE(__SCC_TARGET_OS__));
+# endif
 #endif
 	
 	/* target defines */
