@@ -182,15 +182,16 @@ DEFINES += $(if $(LIB-$T),-DCONFIG_SCC_LIBPATHS="\"$(LIB-$T)\"")
 DEFINES += $(if $(INC-$T),-DCONFIG_SCC_SYSINCLUDEPATHS="\"$(INC-$T)\"")
 DEFINES += $(DEF-$(or $(findstring win,$T),unx))
 
-ifneq ($(X),)
-ifeq ($(CONFIG_WIN32),yes)
-DEF-win += -DSCC_LIBSCC1="\"$(X)libscc1.a\""
-DEF-unx += -DSCC_LIBSCC1="\"$(X)libscc1.a\""
-else
-DEF-all += -DSCC_LIBSCC1="\"$(X)libscc1.a\""
-#DEF-win += -DCONFIG_SCCDIR="\"$(sccdir)\""
-endif
-endif
+# try rm scc1 again..
+###ifneq ($(X),)
+###ifeq ($(CONFIG_WIN32),yes)
+###DEF-win += -DSCC_LIBSCC1="\"$(X)libscc1.a\""
+###DEF-unx += -DSCC_LIBSCC1="\"$(X)libscc1.a\""
+###else
+###DEF-all += -DSCC_LIBSCC1="\"$(X)libscc1.a\""
+####DEF-win += -DCONFIG_SCCDIR="\"$(sccdir)\""
+###endif
+###endif
 
 # include custom configuration (see make help)
 -include config-extra.mak
