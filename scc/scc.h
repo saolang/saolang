@@ -160,9 +160,10 @@
 #endif
 
 /* (target specific) libscc1.a */
-#ifndef SCC_LIBSCC1
-# define SCC_LIBSCC1 "libscc1.a"
-#endif
+//TODO rm scc1
+//#ifndef SCC_LIBSCC1
+//# define SCC_LIBSCC1 "libscc1.a"
+//#endif
 
 /* library to use with CONFIG_USE_LIBGCC instead of libscc1.a */
 #if defined CONFIG_USE_LIBGCC && !defined SCC_LIBGCC

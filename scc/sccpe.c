@@ -1844,7 +1844,7 @@ static void pe_add_runtime(SCCState *s1, struct pe_info *pe)
 	if (!s1->leading_underscore || SCC(strchr,char*)(start_symbol, '@'))
 		++start_symbol;
 
-	/* grab the startup code from libscc1 */
+	// grab the startup code from libscc1 TODO rm
 #if __SCC_TARGET_CROSS__==0
 	if (SCC_OUTPUT_MEMORY != s1->output_type || s1->runtime_main)
 #endif
@@ -1855,9 +1855,9 @@ static void pe_add_runtime(SCCState *s1, struct pe_info *pe)
 
 	if (0 == s1->nostdlib) { //add runtime
 		static const char *libs[] = {
-#ifdef SCC_LIBSCC1
-			SCC_LIBSCC1,
-#endif
+//#ifdef SCC_LIBSCC1
+//			SCC_LIBSCC1,
+//#endif
 			"msvcrt", "kernel32", "", "user32", "gdi32", NULL
 		};
 		const char **pp, *p;

@@ -1150,9 +1150,10 @@ ST_FUNC void scc_add_runtime(SCCState *s1)
         }
 #endif
 
-#ifdef SCC_LIBSCC1
-        scc_add_support(s1, SCC_LIBSCC1);
-#endif
+//TODO rm scc1
+//#ifdef SCC_LIBSCC1
+//        scc_add_support(s1, SCC_LIBSCC1);
+//#endif
         /* add crt end if not memory output */
         if (s1->output_type != SCC_OUTPUT_MEMORY)
             scc_add_crt(s1, "crtn.o");
