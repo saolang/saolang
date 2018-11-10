@@ -1865,7 +1865,8 @@ set_output_type:
 				scc_warning("%s,%s,%s,%s", "__SCC_OS_ID__,__SCC_TARGET_OS_ID__", SCC_QUOTE(__SCC_OS_ID__),SCC_QUOTE(__SCC_TARGET_OS_ID__));
 				scc_warning("%s,%s,%s,%s", "__SCC_CPU_ID__,__SCC_TARGET_CPU_ID__", SCC_QUOTE(__SCC_CPU_ID__),SCC_QUOTE(__SCC_TARGET_CPU_ID__));
 				scc_warning("%s,%s,%s,%s", "__SCC_OS_FORMAT_ID__,__SCC_TARGET_FORMAT_ID__", SCC_QUOTE(__SCC_OS_FORMAT_ID__),SCC_QUOTE(__SCC_TARGET_FORMAT_ID__));
-				scc_error("-run is not available in a cross compiler");
+				//scc_error("-run is not available in a cross compiler");
+				scc_warning("-run might work fail for cross compiler!");
 #endif
 				run = optarg;
 				x = SCC_OUTPUT_MEMORY;
