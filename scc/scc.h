@@ -998,9 +998,13 @@ struct filespec {
 
 //WARNING: the sequence does matter.
 //@ref scc_keywords in pp.c
-enum //scc_token
+enum scc_token
 {
-    TOK_LAST = TOK_IDENT - 1
+    TOK_LAST = TOK_IDENT - 1 //wrap-ing-up never used...
+#if 0
+scc.h:#define DEF(id, str) ,id
+sccpp.c:#define DEF(id, str) str "\0"
+#endif
 #define DEF(id, str) ,id
 #include "scctok.h"
 #undef DEF

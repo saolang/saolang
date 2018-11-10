@@ -18963,7 +18963,7 @@ static int scc_add_file_internal(SCCState *s1, const char *filename, int flags)
 				filetype = 0x4;
 			} else if (!((int(*)())scc_dlsym("strcmp"))(ext, "s")) {
 				filetype = 0x2;
-			} else if (!((int(*)())scc_dlsym("strcmp"))(ext, "c") || !((int(*)())scc_dlsym("strcmp"))(ext, "i")) {
+			}else if(!((int(*)())scc_dlsym("strcmp"))(ext, "c")|| !((int(*)())scc_dlsym("strcmp"))(ext, "h")|| !((int(*)())scc_dlsym("strcmp"))(ext, "i")){
 				filetype = 0x1;
 			} else if (!((int(*)())scc_dlsym("strcmp"))(ext, "sao")){
 				filetype = 0x10;

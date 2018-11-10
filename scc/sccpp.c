@@ -40,6 +40,10 @@ static struct TinyAlloc *cstr_alloc;
 static TokenString *macro_stack;
 
 static const char scc_keywords[] = 
+#if 0
+scc.h:#define DEF(id, str) ,id
+sccpp.c:#define DEF(id, str) str "\0"
+#endif
 #define DEF(id, str) str "\0"
 #include "scctok.h"
 #undef DEF
@@ -392,64 +396,60 @@ static void add_char(CString *cstr, int c)
     }
 }
 
-/* ------------------------------------------------------------------------- */
-/* allocate a new token */
 static TokenSym *tok_alloc_new(TokenSym **pts, const char *str, int len)
 {
-    TokenSym *ts, **ptable;
-    int i;
+	TokenSym *ts, **ptable;
+	int i;
 
-    if (tok_ident >= SYM_FIRST_ANOM) 
-        scc_error("memory full (symbols)");
+	if (tok_ident >= SYM_FIRST_ANOM) 
+		scc_error("memory full (symbols)");
 
-    /* expand token table if needed */
-    i = tok_ident - TOK_IDENT;
-    if ((i % TOK_ALLOC_INCR) == 0) {
-        ptable = scc_realloc(table_ident, (i + TOK_ALLOC_INCR) * sizeof(TokenSym *));
-        table_ident = ptable;
-    }
+	i = tok_ident - TOK_IDENT;
+	if ((i % TOK_ALLOC_INCR) == 0) { //expand table
+		ptable = scc_realloc(table_ident, (i + TOK_ALLOC_INCR) * sizeof(TokenSym *));
+		table_ident = ptable;
+	}
 
-    ts = tal_realloc(toksym_alloc, 0, sizeof(TokenSym) + len);
-    table_ident[i] = ts;
-    ts->tok = tok_ident++;
-    ts->sym_define = NULL;
-    ts->sym_label = NULL;
-    ts->sym_struct = NULL;
-    ts->sym_identifier = NULL;
-    ts->len = len;
-    ts->hash_next = NULL;
-    SCC(memcpy)(ts->str, str, len);
-    ts->str[len] = '\0';
-    *pts = ts;
-    return ts;
+	ts = tal_realloc(toksym_alloc, 0, sizeof(TokenSym) + len);
+	table_ident[i] = ts;
+	ts->tok = tok_ident++;
+	ts->sym_define = NULL;
+	ts->sym_label = NULL;
+	ts->sym_struct = NULL;
+	ts->sym_identifier = NULL;
+	ts->len = len;
+	ts->hash_next = NULL;
+	SCC(memcpy)(ts->str, str, len);
+	ts->str[len] = '\0';//pack \0
+	*pts = ts;
+	return ts;
 }
 
 #define TOK_HASH_INIT 1
 #define TOK_HASH_FUNC(h, c) ((h) + ((h) << 5) + ((h) >> 27) + (c))
 
-
-/* find a token and add it if not found */
+//k,v
 ST_FUNC TokenSym *tok_alloc(const char *str, int len)
 {
-    TokenSym *ts, **pts;
-    int i;
-    unsigned int h;
-    
-    h = TOK_HASH_INIT;
-    for(i=0;i<len;i++)
-        h = TOK_HASH_FUNC(h, ((unsigned char *)str)[i]);
-    h &= (TOK_HASH_SIZE - 1);
+	TokenSym *ts, **pts;
+	int i;
+	unsigned int h;
 
-    pts = &hash_ident[h];
-    for(;;) {
-        ts = *pts;
-        if (!ts)
-            break;
-        if (ts->len == len && !SCC(memcmp,int)(ts->str, str, len))
-            return ts;
-        pts = &(ts->hash_next);
-    }
-    return tok_alloc_new(pts, str, len);
+	h = TOK_HASH_INIT;
+	for(i=0;i<len;i++)
+		h = TOK_HASH_FUNC(h, ((unsigned char *)str)[i]);
+	h &= (TOK_HASH_SIZE - 1);
+
+	pts = &hash_ident[h];
+	for(;;) {
+		ts = *pts;
+		if (!ts)
+			break;
+		if (ts->len == len && !SCC(memcmp,int)(ts->str, str, len))
+			return ts;
+		pts = &(ts->hash_next);
+	}
+	return tok_alloc_new(pts, str, len);
 }
 
 /* XXX: buffer overflow */

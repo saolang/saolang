@@ -3,11 +3,13 @@
 #../configure --prefix=. --cc=clang --config-musl --extra-cflags="-Wall -g -O2 -I ../include"
 # --extra-cflags="-Wall -g -O2 -DMAKE_DEBUG"
 
+#../configure --prefix=. --cc=clang --config-musl
+
 arch=$(uname -s)_$(uname -m)
 echo arch=$arch
 mkdir -p build_$arch/
 cd build_$arch/
-../configure --prefix=. --cc=clang --config-musl
+../configure --cc=clang --config-musl
 make clean
 make makedebug
 make libscc.so
