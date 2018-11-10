@@ -1112,7 +1112,8 @@ LIBSCCAPI int scc_add_file(SCCState *s, const char *filename)
 				filetype = AFF_TYPE_ASMPP;
 			} else if (!SCC(strcmp,int)(ext, "s")) {
 				filetype = AFF_TYPE_ASM;
-			} else if (!PATHCMP(ext, "c") || !PATHCMP(ext, "i")) { //The .i files are also called as "Pure C files
+			}else if(!PATHCMP(ext, "c")|| !PATHCMP(ext, "h")|| !PATHCMP(ext, "i")){
+				//The .i files are also called as "Pure C files
 				filetype = AFF_TYPE_C;
 			} else if (!SCC(strcmp,int)(ext, "sao")){
 				filetype = AFF_TYPE_SAO;
