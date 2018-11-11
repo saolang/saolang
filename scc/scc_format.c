@@ -826,8 +826,7 @@ static void relocate_rel(SCCState *s1, Section *sr)
         rel->r_offset += s->sh_addr;
 }
 
-/* count the number of dynamic relocations so that we can reserve
-   their space */
+// count the number of dynamic relocations so that we can reserve their space
 static int prepare_dynamic_rel(SCCState *s1, Section *sr)
 {
 	ElfW_Rel *rel;
@@ -864,6 +863,7 @@ static int prepare_dynamic_rel(SCCState *s1, Section *sr)
 				break;
 #endif //}
 			default:
+				scc_warning("prepare_dynamic_rel() not handled rel.r_info=%d",type);
 				break;
 		}
 	}

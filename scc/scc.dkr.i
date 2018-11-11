@@ -790,7 +790,7 @@ struct filespec {
     char type;
     char name[1];
 };
-enum
+enum scc_token
 {
     TOK_LAST = 256 - 1
 ,TOK_INT
@@ -940,40 +940,40 @@ enum
 ,TOK___fixunssfdi
 ,TOK___fixunsdfdi
 ,TOK_alloca
-	,TOK_ASMDIR_byte
-	,TOK_ASMDIR_word
-	,TOK_ASMDIR_align
-	,TOK_ASMDIR_balign
-	,TOK_ASMDIR_p2align
-	,TOK_ASMDIR_set
-	,TOK_ASMDIR_skip
-	,TOK_ASMDIR_space
-	,TOK_ASMDIR_string
-	,TOK_ASMDIR_asciz
-	,TOK_ASMDIR_ascii
-	,TOK_ASMDIR_file
-	,TOK_ASMDIR_globl
-	,TOK_ASMDIR_global
-	,TOK_ASMDIR_weak
-	,TOK_ASMDIR_hidden
-	,TOK_ASMDIR_ident
-	,TOK_ASMDIR_size
-	,TOK_ASMDIR_type
-	,TOK_ASMDIR_text
-	,TOK_ASMDIR_data
-	,TOK_ASMDIR_bss
-	,TOK_ASMDIR_previous
-	,TOK_ASMDIR_pushsection
-	,TOK_ASMDIR_popsection
-	,TOK_ASMDIR_fill
-	,TOK_ASMDIR_rept
-	,TOK_ASMDIR_endr
-	,TOK_ASMDIR_org
+,TOK_ASMDIR_byte
+,TOK_ASMDIR_word
+,TOK_ASMDIR_align
+,TOK_ASMDIR_balign
+,TOK_ASMDIR_p2align
+,TOK_ASMDIR_set
+,TOK_ASMDIR_skip
+,TOK_ASMDIR_space
+,TOK_ASMDIR_string
+,TOK_ASMDIR_asciz
+,TOK_ASMDIR_ascii
+,TOK_ASMDIR_file
+,TOK_ASMDIR_globl
+,TOK_ASMDIR_global
+,TOK_ASMDIR_weak
+,TOK_ASMDIR_hidden
+,TOK_ASMDIR_ident
+,TOK_ASMDIR_size
+,TOK_ASMDIR_type
+,TOK_ASMDIR_text
+,TOK_ASMDIR_data
+,TOK_ASMDIR_bss
+,TOK_ASMDIR_previous
+,TOK_ASMDIR_pushsection
+,TOK_ASMDIR_popsection
+,TOK_ASMDIR_fill
+,TOK_ASMDIR_rept
+,TOK_ASMDIR_endr
+,TOK_ASMDIR_org
 ,TOK_ASMDIR_quad
-	,TOK_ASMDIR_code64
-	,TOK_ASMDIR_short
-	,TOK_ASMDIR_long
-	,TOK_ASMDIR_int
+,TOK_ASMDIR_code64
+,TOK_ASMDIR_short
+,TOK_ASMDIR_long
+,TOK_ASMDIR_int
 ,TOK_ASMDIR_section
  ,TOK_ASM_al
  ,TOK_ASM_cl
@@ -1417,8 +1417,6 @@ enum
     ,TOK_ASM_sfence
     ,TOK_ASM_clflush
 ,TOK_message
-,TOK_warning
-,TOK_error
 };
 static int gnu_ext;
 static int scc_ext;
@@ -1908,40 +1906,40 @@ static const char scc_keywords[] =
 "__fixunssfdi" "\0"
 "__fixunsdfdi" "\0"
 "alloca" "\0"
-	"." "byte" "\0"
-	"." "word" "\0"
-	"." "align" "\0"
-	"." "balign" "\0"
-	"." "p2align" "\0"
-	"." "set" "\0"
-	"." "skip" "\0"
-	"." "space" "\0"
-	"." "string" "\0"
-	"." "asciz" "\0"
-	"." "ascii" "\0"
-	"." "file" "\0"
-	"." "globl" "\0"
-	"." "global" "\0"
-	"." "weak" "\0"
-	"." "hidden" "\0"
-	"." "ident" "\0"
-	"." "size" "\0"
-	"." "type" "\0"
-	"." "text" "\0"
-	"." "data" "\0"
-	"." "bss" "\0"
-	"." "previous" "\0"
-	"." "pushsection" "\0"
-	"." "popsection" "\0"
-	"." "fill" "\0"
-	"." "rept" "\0"
-	"." "endr" "\0"
-	"." "org" "\0"
+"." "byte" "\0"
+"." "word" "\0"
+"." "align" "\0"
+"." "balign" "\0"
+"." "p2align" "\0"
+"." "set" "\0"
+"." "skip" "\0"
+"." "space" "\0"
+"." "string" "\0"
+"." "asciz" "\0"
+"." "ascii" "\0"
+"." "file" "\0"
+"." "globl" "\0"
+"." "global" "\0"
+"." "weak" "\0"
+"." "hidden" "\0"
+"." "ident" "\0"
+"." "size" "\0"
+"." "type" "\0"
+"." "text" "\0"
+"." "data" "\0"
+"." "bss" "\0"
+"." "previous" "\0"
+"." "pushsection" "\0"
+"." "popsection" "\0"
+"." "fill" "\0"
+"." "rept" "\0"
+"." "endr" "\0"
+"." "org" "\0"
 "." "quad" "\0"
-	"." "code64" "\0"
-	"." "short" "\0"
-	"." "long" "\0"
-	"." "int" "\0"
+"." "code64" "\0"
+"." "short" "\0"
+"." "long" "\0"
+"." "int" "\0"
 "." "section" "\0"
  "al" "\0"
  "cl" "\0"
@@ -2385,8 +2383,6 @@ static const char scc_keywords[] =
     "sfence" "\0"
     "clflush" "\0"
 "message" "\0"
-"warning" "\0"
-"error" "\0"
 ;
 static const unsigned char tok_two_chars[] =
  {
@@ -2597,48 +2593,48 @@ static void add_char(CString *cstr, int c)
 }
 static TokenSym *tok_alloc_new(TokenSym **pts, const char *str, int len)
 {
-    TokenSym *ts, **ptable;
-    int i;
-    if (tok_ident >= 0x10000000)
-        scc_error("memory full (symbols)");
-    i = tok_ident - 256;
-    if ((i % 512) == 0) {
-        ptable = scc_realloc(table_ident, (i + 512) * sizeof(TokenSym *));
-        table_ident = ptable;
-    }
-    ts = tal_realloc_impl(&toksym_alloc, 0, sizeof(TokenSym) + len);
-    table_ident[i] = ts;
-    ts->tok = tok_ident++;
-    ts->sym_define = ((void*)0);
-    ts->sym_label = ((void*)0);
-    ts->sym_struct = ((void*)0);
-    ts->sym_identifier = ((void*)0);
-    ts->len = len;
-    ts->hash_next = ((void*)0);
-    (scc_dlsym_("memcpy"))(ts->str, str, len);
-    ts->str[len] = '\0';
-    *pts = ts;
-    return ts;
+	TokenSym *ts, **ptable;
+	int i;
+	if (tok_ident >= 0x10000000)
+		scc_error("memory full (symbols)");
+	i = tok_ident - 256;
+	if ((i % 512) == 0) {
+		ptable = scc_realloc(table_ident, (i + 512) * sizeof(TokenSym *));
+		table_ident = ptable;
+	}
+	ts = tal_realloc_impl(&toksym_alloc, 0, sizeof(TokenSym) + len);
+	table_ident[i] = ts;
+	ts->tok = tok_ident++;
+	ts->sym_define = ((void*)0);
+	ts->sym_label = ((void*)0);
+	ts->sym_struct = ((void*)0);
+	ts->sym_identifier = ((void*)0);
+	ts->len = len;
+	ts->hash_next = ((void*)0);
+	(scc_dlsym_("memcpy"))(ts->str, str, len);
+	ts->str[len] = '\0';
+	*pts = ts;
+	return ts;
 }
 static TokenSym *tok_alloc(const char *str, int len)
 {
-    TokenSym *ts, **pts;
-    int i;
-    unsigned int h;
-    h = 1;
-    for(i=0;i<len;i++)
-        h = ((h) + ((h) << 5) + ((h) >> 27) + (((unsigned char *)str)[i]));
-    h &= (16384 - 1);
-    pts = &hash_ident[h];
-    for(;;) {
-        ts = *pts;
-        if (!ts)
-            break;
-        if (ts->len == len && !((int(*)())scc_dlsym("memcmp"))(ts->str, str, len))
-            return ts;
-        pts = &(ts->hash_next);
-    }
-    return tok_alloc_new(pts, str, len);
+	TokenSym *ts, **pts;
+	int i;
+	unsigned int h;
+	h = 1;
+	for(i=0;i<len;i++)
+		h = ((h) + ((h) << 5) + ((h) >> 27) + (((unsigned char *)str)[i]));
+	h &= (16384 - 1);
+	pts = &hash_ident[h];
+	for(;;) {
+		ts = *pts;
+		if (!ts)
+			break;
+		if (ts->len == len && !((int(*)())scc_dlsym("memcmp"))(ts->str, str, len))
+			return ts;
+		pts = &(ts->hash_next);
+	}
+	return tok_alloc_new(pts, str, len);
 }
 static const char *get_tok_str(int v, CValue *cv)
 {
@@ -15290,6 +15286,7 @@ static int prepare_dynamic_rel(SCCState *s1, Section *sr)
 					count++;
 				break;
 			default:
+				scc_warning("prepare_dynamic_rel() not handled rel.r_info=%d",type);
 				break;
 		}
 	}
@@ -18404,7 +18401,7 @@ static int scc_add_file_internal(SCCState *s1, const char *filename, int flags)
 				filetype = 0x4;
 			} else if (!((int(*)())scc_dlsym("strcmp"))(ext, "s")) {
 				filetype = 0x2;
-			} else if (!((int(*)())scc_dlsym("strcmp"))(ext, "c") || !((int(*)())scc_dlsym("strcmp"))(ext, "i")) {
+			}else if(!((int(*)())scc_dlsym("strcmp"))(ext, "c")|| !((int(*)())scc_dlsym("strcmp"))(ext, "h")|| !((int(*)())scc_dlsym("strcmp"))(ext, "i")){
 				filetype = 0x1;
 			} else if (!((int(*)())scc_dlsym("strcmp"))(ext, "sao")){
 				filetype = 0x10;

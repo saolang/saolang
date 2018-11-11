@@ -62,6 +62,7 @@
 #define __SCC_OS_QNXNTO__  6
 #define __SCC_OS_QNX__     7
 #define __SCC_OS_SAO__     8
+#define __SCC_OS_POSIX__   9
 
 #define __SCC_OS_FORMAT_PE__     1
 #define __SCC_OS_FORMAT_MACHO__  2
@@ -71,6 +72,7 @@
 #ifndef __SCC_OS__//{
 
 #if defined(_WIN32)||defined(_WIN64)
+//TODO !defined(_XBOX_VER)
 #	define __SCC_OS__  WIN
 # define __SCC_OS_FORMAT__  PE
 #elif defined(__APPLE__)
@@ -94,9 +96,16 @@
 #elif defined(__SaoOS__)//SaoOS
 #	define __SCC_OS__  SAO
 # define __SCC_OS_FORMAT__  ELF
+#elif (defined(__sun__) && defined(__svr4__))
+#	define __SCC_OS__  POSIX
+# define __SCC_OS_FORMAT__  ELF
 #else
-//#  warning "TODO unknown current os"
-#  error "TODO unknown current os"
+#  error "TODO OS not yet supported (yet)"
+#if 0 //more bsd...
+# (defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || \
+       defined(__NetBSD__) || defined(__OpenBSD__) || \
+       defined(__DragonFly__)) && !defined(__ORBIS__)
+#endif
 #endif
 
 #endif //}__SCC_OS__
