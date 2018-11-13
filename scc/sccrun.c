@@ -51,6 +51,8 @@ LIBSCCAPI int scc_relocate(SCCState *s1, void *ptr)
 #else
     ptr = scc_malloc(size);
 #endif
+
+		//@ref set_pages_executable()... PROT_EXEC
     scc_relocate_ex(s1, ptr, ptr_diff); /* no more errors expected */
     dynarray_add(&s1->runtime_mem, &s1->nb_runtime_mem, ptr);
     return 0;
