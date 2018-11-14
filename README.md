@@ -58,7 +58,7 @@ future
 * keyword-less - removed all english keywording
 * delimiter(;) is strongly recommented, but somehow/sometime it works when omited
 
-| sao | c | remark or remember-helper |
+| sao | c | remember-helper |
 |---|---|---|
 | ()?():() | ()?():() | classic ternary operator |
 | (x)?:(z) | (tmp=x)?tmp:z | binary operator |
@@ -81,12 +81,33 @@ future
 | @\_{}; | do{}while(0) | doonce{} |
 | @(); | return; | return void |
 | @(42); | return 42; | 
+
+# Ext Syntactic-Sugar
+
+| sao | c | remember-helper |
+|---|---|---|
 | @\<c\>; | N/A | import c; |
 | @\<cmath\>; | N/A | import cmath; |
 | @{main}; | N/A | export {main}; |
 | @[func1,func2]; | N/A | export [func1,func2]; |
+| ()=>{} | function(){} |
+| XXX(){} | function XXX(){} |
+| XXX = x => (x^2) | function XXX(x){ return x^2} |
+| XXX(){} | function XXX(){} |
+| -- | -- | -- |
+| XXX(x)<SaoType*>=>(x^2)| function XXX()<SaoType*>{return <SaoType*>x^2;} | <SaoType*> is by default |
+| XXX(x)<c.byte8>=>(x^2)| function XXX()<c.byte8>{return <c.byte8> x^2;} | convert to preferred...? * TODO |
 
+* like ES6; function default return <SaoType*>, and do calc by guessing...
+* like golang, a return type is support?
 
+# StackLess JIT
+
+```
+//run expression using SLJIT syntax
+<SLJIT>{
+}
+```
 
 
 
