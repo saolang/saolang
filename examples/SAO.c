@@ -1,10 +1,10 @@
 //TODO
 #if defined SAO_handling
-#SAO{
-#}
+#<SAO>
+#<C>
 #endif
-//#{ASM
-//#}
+//#<SAO>
+//#<C>
 int main(){
 	return 42;
 }
