@@ -1,9 +1,10 @@
 # core
 
-delimiter(;) is strongly recommented, but somehow sometime it works even omited
+* keyword-less - removed all english keywording
+* delimiter(;) is strongly recommented, but somehow/sometime it works when omited
 
 | sao | c | misc |
-| --- | --- | --- |
+|---|---|---|
 | @? | if | |
 | @: | else | or default in switch(){} |
 | @:? | else if | elif/elseif | |
@@ -14,14 +15,14 @@ delimiter(;) is strongly recommented, but somehow sometime it works even omited
 | @~ | break | |
 | @#(x){1:@~ 2:x+2;@~;@:x-1;} | switch(x){case 1:break;case2:x+2;break;default:x-1;} |
 | @(;;){} | for(;;){} |
-| @(i=1;i<x;i++){ @?(i%3==0) @% } | for(i=1;i<x;i++){ if(i%3==0)continue;} |
+| @(i=1;i<x;i++){ @?(i%3==0) @%; } | for(i=1;i<x;i++){ if(i%3==0)continue;} |
 | @$(){} | while(){} | |
 | {}@$() | do{}while() | *TODO |
-| --- | --- | --- |
-| @() | return | |
+|---|---|---|
+| @(); | return; | |
 | @(42); | return 42; | |
-| @<c>; | N/A | import c; |
-| @<cmath>; | N/A | import cmath; |
+| @\<c\>; | N/A | import c; |
+| @\<cmath\>; | N/A | import cmath; |
 | @{main}; | N/A | export {main}; |
 | @[func1,func2]; | N/A | export [func1,func2]; |
 
