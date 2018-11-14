@@ -81,6 +81,8 @@ future
 | @\_{}; | do{}while(0) | doonce{} |
 | @(); | return; | return void |
 | @(42); | return 42; | 
+| XXX(){} | XXX(){} |
+| XXX()<type>{} | type XXX(){} |
 
 # Ext Syntactic-Sugar
 
@@ -90,10 +92,9 @@ future
 | @\<cmath\>; | N/A | import cmath; |
 | @{main}; | N/A | export {main}; |
 | @[func1,func2]; | N/A | export [func1,func2]; |
-| ()=>{} | function(){} |
-| XXX(){} | function XXX(){} |
-| XXX(){} | function XXX(){} |
-| XXX = x => (x^2) | function XXX(x){ return x^2} |
+| ()=>{} | function(){} | closure |
+| ()<type>=>{} | function()<type>{} | declare return type |
+| XXX = x => (x^2) | function XXX(x){ return x^2} | assign closure to var |
 | XXX(x)<SaoType*>{@(x^2)} | function XXX()<SaoType*>{return <SaoType*>x^2;} |  |
 | XXX = (x)<SaoType*> => (x^2) | function XXX()<SaoType*>{return <SaoType*>x^2;} |  |
 | XXX(x)<c.byte8>{@(x^2)} | function XXX()<c.byte8>{return (<c.byte8>) x^2;} | ... |
