@@ -94,8 +94,9 @@ future
 | XXX(){} | function XXX(){} |
 | XXX(){} | function XXX(){} |
 | XXX = x => (x^2) | function XXX(x){ return x^2} |
-| XXX(x)<SaoType*>=>(x^2)| function XXX()<SaoType*>{return <SaoType*>x^2;} |  |
-| XXX(x)<c.byte8>=>(x^2)| function XXX()<c.byte8>{return (<c.byte8>) x^2;} | ... |
+| XXX(x)<SaoType*>{@(x^2)} | function XXX()<SaoType*>{return <SaoType*>x^2;} |  |
+| XXX = (x)<SaoType*> => (x^2) | function XXX()<SaoType*>{return <SaoType*>x^2;} |  |
+| XXX(x)<c.byte8>{@(x^2)} | function XXX()<c.byte8>{return (<c.byte8>) x^2;} | ... |
 
 * like ES6; function default return <SaoType*>, and do calc by guessing...
 * like golang, a return type is support?
