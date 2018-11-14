@@ -3,29 +3,29 @@
 * keyword-less - removed all english keywording
 * delimiter(;) is strongly recommented, but somehow/sometime it works when omited
 
-| sao | c | remark | remember-helper |
+| sao | c | remark / remember-helper |
 |---|---|---|---|
 | ()?():() | ()?():() | classic ternary operator |
 | (x)?:(z) | (tmp=x)?tmp:z | binary operator |
 | @? | if | ask => if |
-| @: | else | or 'default' in switch(){} | ?: => : => else |
+| @: | 'else' for if or 'default' for switch | ?: => : => else |
 | @:? | else if | elif/elseif |
-| @?(){} | if(){} | |
-| @?(){}@:{} | if(){}else{} | |
-| @?(){}@:?(){}@:{} | if(){}else if(){}else{} | |
-| @# | switch | | #=>hash=>hasing=>switch |
-| @~ | break | | ~ => escape => break |
-| @% | continue | | % => percent => continue |
-| @\_ | do| | bottom line => just do it |
+| @?(){} | if(){} |
+| @?(){}@:{} | if(){}else{} |
+| @?(){}@:?(){}@:{} | if(){}else if(){}else{} |
+| @# | switch | #=>hash=>hasing=>switch |
+| @~ | break | ~ => escape => break |
+| @% | continue | % => percent => continue |
+| @\_ | do| bottom line => just do it |
 | @#(x){1:@\~;2:x+2;@\~;@:x-1;} | switch(x){ case 1:break; case 2:x+2;break; default:x-1;} |
 | @(;;){} | for(;;){} |
 | @(i=1;i<x;i++){ @?(i%3==0) @%; } | for(i=1;i<x;i++){ if(i%3==0)continue;} |
-| @$(){} | while(){} | |
+| @$(){} | while(){} | 
 | @$()@_{} | while(){}  | while()do{} |
-| @_{}@$() | do{}while() |  |
+| @_{}@$() | do{}while() | 
 | @_{}; | do{}while(0) | doonce{} |
 | @(); | return; | return void |
-| @(42); | return 42; | |
+| @(42); | return 42; | 
 | @\<c\>; | N/A | import c; |
 | @\<cmath\>; | N/A | import cmath; |
 | @{main}; | N/A | export {main}; |
