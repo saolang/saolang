@@ -3,8 +3,8 @@
 * keyword-less - removed all english keywording
 * delimiter(;) is strongly recommented, but somehow/sometime it works when omited
 
-| sao | c | remark / remember-helper |
-|---|---|---|---|
+| sao | c | remark or remember-helper |
+|---|---|---|
 | ()?():() | ()?():() | classic ternary operator |
 | (x)?:(z) | (tmp=x)?tmp:z | binary operator |
 | @? | if | ask => if |
