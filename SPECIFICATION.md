@@ -16,21 +16,19 @@
 | @# | switch | | #=>hash=>hasing=>switch |
 | @~ | break | | ~ => escape => break |
 | @% | continue | | % => percent => continue |
-| @#(x){1:@~;2:x+2;@~;@:x-1;} | switch(x){case 1:break;case2:x+2;break;default:x-1;} |
+| @#(x){1:@\~;2:x+2;@\~;@:x-1;} | switch(x){case 1:break;case2:x+2;break;default:x-1;} |
 | @(;;){} | for(;;){} |
 | @(i=1;i<x;i++){ @?(i%3==0) @%; } | for(i=1;i<x;i++){ if(i%3==0)continue;} |
 | @$(){} | while(){} | |
-| @$()@_{} |  | while(){} |
+| @$()@_{} | while(){}  | while()do{} |
 | @_{}@$() | do{}while() |  |
-| @_{}; |  | doonce{} |
-|---|---|---|---|
+| @_{}; | do{}while(0) | doonce{} |
 | @(); | return; | return void |
 | @(42); | return 42; | |
 | @\<c\>; | N/A | import c; |
 | @\<cmath\>; | N/A | import cmath; |
 | @{main}; | N/A | export {main}; |
 | @[func1,func2]; | N/A | export [func1,func2]; |
-|---|---|---|
 |```
 fun
 ```|
