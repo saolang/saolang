@@ -1,24 +1,25 @@
 # core
 
+delimiter(;) is strongly recommented, but somehow sometime it works even omited
+
 | sao | c | misc |
-| -- | -- | -- |
+| --- | --- | --- |
 | @? | if | |
 | @: | else | or default in switch(){} |
 | @:? | else if | elif/elseif | |
 | @?(){} | if(){} | |
 | @?(){}@:{} | if(){}else{} | |
-| @?(){}@:?(){} | if(){}else if(){}else{} | |
+| @?(){}@:?(){}@:{} | if(){}else if(){}else{} | |
 | @# | switch | |
 | @~ | break | |
-| @#(x){1:@~ 2:x+2;@~;@:x-1;} | switch(x){case 1:break;case2:x+2;break;default:x-1} |
-| (;;){} | for(;;){} |
-| (i=1;i<x;i++){ @?(i%3==0) @% } | for(i=1;i<x;i++){ if(i%3==0)continue;} |
+| @#(x){1:@~ 2:x+2;@~;@:x-1;} | switch(x){case 1:break;case2:x+2;break;default:x-1;} |
+| @(;;){} | for(;;){} |
+| @(i=1;i<x;i++){ @?(i%3==0) @% } | for(i=1;i<x;i++){ if(i%3==0)continue;} |
 | @$(){} | while(){} | |
-| {}@$() | do{}while() | * |
-| -- | -- | -- |
+| {}@$() | do{}while() | *TODO |
+| --- | --- | --- |
 | @() | return | |
 | @(42); | return 42; | |
-| -- | -- | -- |
 | @<c>; | N/A | import c; |
 | @<cmath>; | N/A | import cmath; |
 | @{main}; | N/A | export {main}; |
