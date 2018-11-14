@@ -1,35 +1,43 @@
-# core
+# Core Syntactic-Sugar
 
 * keyword-less - removed all english keywording
 * delimiter(;) is strongly recommented, but somehow/sometime it works when omited
 
-| sao | c | misc |
-|---|---|---|
-| @? | if | |
-| @: | else | or default in switch(){} |
-| @:? | else if | elif/elseif | |
+| sao | c | remark | remember-helper |
+|---|---|---|---|
+| ()?():() | ()?():() | classic ternary operator |
+| (x)?:(z) | (tmp=x)?tmp:z | binary operator |
+| @? | if | ask => if |
+| @: | else | or 'default' in switch(){} | ?: => : => else |
+| @:? | else if | elif/elseif |
 | @?(){} | if(){} | |
 | @?(){}@:{} | if(){}else{} | |
 | @?(){}@:?(){}@:{} | if(){}else if(){}else{} | |
-| @# | switch | |
-| @~ | break | |
-| @#(x){1:@~ 2:x+2;@~;@:x-1;} | switch(x){case 1:break;case2:x+2;break;default:x-1;} |
+| @# | switch | | #=>hash=>hasing=>switch |
+| @~ | break | | ~ => escape => break |
+| @% | continue | | % => percent => continue |
+| @#(x){1:@~;2:x+2;@~;@:x-1;} | switch(x){case 1:break;case2:x+2;break;default:x-1;} |
 | @(;;){} | for(;;){} |
 | @(i=1;i<x;i++){ @?(i%3==0) @%; } | for(i=1;i<x;i++){ if(i%3==0)continue;} |
 | @$(){} | while(){} | |
-| {}@$() | do{}while() | *TODO |
-|---|---|---|
-| @(); | return; | |
+| @$()@_{} |  | while(){} |
+| @_{}@$() | do{}while() |  |
+| @_{}; |  | doonce{} |
+|---|---|---|---|
+| @(); | return; | return void |
 | @(42); | return 42; | |
 | @\<c\>; | N/A | import c; |
 | @\<cmath\>; | N/A | import cmath; |
 | @{main}; | N/A | export {main}; |
 | @[func1,func2]; | N/A | export [func1,func2]; |
+|---|---|---|
+|```
+fun
+```|
 
 ## remember-helper
 
 ```SAO
-@?   ask => if
 @:   ?: => else
 @:?  else+if => elseif
 @#   hash => hashing => switch
