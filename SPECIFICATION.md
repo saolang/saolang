@@ -17,10 +17,10 @@
 | @~ | break | ~ => escape => break |
 | @% | continue | % => percent => continue |
 | @\_ | do| bottom line => just do it |
-| @#(x){1:@\~;2:x+2;@\~;@:x-1;} | switch(x){ case 1:break; case 2:x+2;break; default:x-1;} |
+| @#(x){1:@\~;2:x+2;@\~;@:x-1;} | switch(x){case 1:break;case 2:x+2;break;default:x-1;} |
 | @(;;){} | for(;;){} |
 | @(i=1;i<x;i++){ @?(i%3==0) @%; } | for(i=1;i<x;i++){ if(i%3==0)continue;} |
-| @$(){} | while(){} | 
+| @$(){} | while(){} | money => loop |
 | @$()@_{} | while(){}  | while()do{} |
 | @_{}@$() | do{}while() | 
 | @_{}; | do{}while(0) | doonce{} |
