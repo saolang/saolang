@@ -98,16 +98,31 @@ future
 | XXX(x)<SaoType*>{@(x^2)} | function XXX()<SaoType*>{return <SaoType*>x^2;} |  |
 | XXX = (x)<SaoType*> => (x^2) | function XXX()<SaoType*>{return <SaoType*>x^2;} |  |
 | XXX(x)<c.byte8>{@(x^2)} | function XXX()<c.byte8>{return (<c.byte8>) x^2;} | ... |
+| @\*<language-handler>{..} | | eating .. with language handler |
+| @|<> | | piping vs eating |
+| @\*<SLJIT>{..} | using SLJIT (StackLessJIT) handler to process .. |
 
 * like ES6; function default return <SaoType*>, and do calc by guessing...
 * like golang, a return type is support?
 
 # StackLess JIT
 
+# misc TODO 
+
+* stdin/stdout/stderr => std stream/pipe in/out
+* piping
+
+## JSON
+
+```JSON
+[x,y]=[1,2];
+{x,y}={};
 ```
-//run expression using SLJIT syntax
-<SLJIT>{
-}
+
+## DLFCN/FFI
+```DL/FFI
+<dlfcn>
+dlfcn.dlsym()
 ```
 
 
