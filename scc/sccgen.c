@@ -1,4 +1,5 @@
 #include "scc.h"
+
 /* loc : local variable index
    ind : output code index
    rsym: return symbol
@@ -195,50 +196,50 @@ ST_FUNC void scc_debug_funcend(SCCState *s1, int size)
 /* ------------------------------------------------------------------------- */
 ST_FUNC int sccgen_compile(SCCState *s1)
 {
-    cur_text_section = NULL;
-    funcname = "";
-    anon_sym = SYM_FIRST_ANOM;
-    section_sym = 0;
-    const_wanted = 0;
-    nocode_wanted = 0x80000000;
+	cur_text_section = NULL;
+	funcname = "";
+	anon_sym = SYM_FIRST_ANOM;
+	section_sym = 0;
+	const_wanted = 0;
+	nocode_wanted = 0x80000000;
 
-    /* define some often used types */
-    int_type.t = VT_INT;
-    char_pointer_type.t = VT_BYTE;
-    mk_pointer(&char_pointer_type);
+	/* define some often used types */
+	int_type.t = VT_INT;
+	char_pointer_type.t = VT_BYTE;
+	mk_pointer(&char_pointer_type);
 #if PTR_SIZE == 4
-    size_type.t = VT_INT | VT_UNSIGNED;
-    ptrdiff_type.t = VT_INT;
+	size_type.t = VT_INT | VT_UNSIGNED;
+	ptrdiff_type.t = VT_INT;
 #elif LONG_SIZE == 4
-    size_type.t = VT_LLONG | VT_UNSIGNED;
-    ptrdiff_type.t = VT_LLONG;
+	size_type.t = VT_LLONG | VT_UNSIGNED;
+	ptrdiff_type.t = VT_LLONG;
 #else
-    size_type.t = VT_LONG | VT_LLONG | VT_UNSIGNED;
-    ptrdiff_type.t = VT_LONG | VT_LLONG;
+	size_type.t = VT_LONG | VT_LLONG | VT_UNSIGNED;
+	ptrdiff_type.t = VT_LONG | VT_LLONG;
 #endif
-    func_old_type.t = VT_FUNC;
-    func_old_type.ref = sym_push(SYM_FIELD, &int_type, 0, 0);
-    func_old_type.ref->f.func_call = FUNC_CDECL;
-    func_old_type.ref->f.func_type = FUNC_OLD;
+	func_old_type.t = VT_FUNC;
+	func_old_type.ref = sym_push(SYM_FIELD, &int_type, 0, 0);
+	func_old_type.ref->f.func_call = FUNC_CDECL;
+	func_old_type.ref->f.func_type = FUNC_OLD;
 
-    scc_debug_start(s1);
+	scc_debug_start(s1);
 
 #if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
-    arm_init(s1);
+	arm_init(s1);
 #endif
 
 #ifdef INC_DEBUG
-    printf("%s: **** new file\n", file->filename);
+	printf("%s: **** new file\n", file->filename);
 #endif
 
-    parse_flags= PARSE_FLAG_PREPROCESS |PARSE_FLAG_TOK_NUM |PARSE_FLAG_TOK_STR;
-    next();
-    decl(VT_CONST);
-    gen_inline_functions(s1);
-    check_vstack();
+	parse_flags= PARSE_FLAG_PREPROCESS |PARSE_FLAG_TOK_NUM |PARSE_FLAG_TOK_STR;
+	next();
+	decl(VT_CONST);
+	gen_inline_functions(s1);
+	check_vstack();
 
-    scc_debug_end(s1);
-    return 0;
+	scc_debug_end(s1);
+	return 0;
 }
 
 /* ------------------------------------------------------------------------- */

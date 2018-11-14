@@ -1237,6 +1237,9 @@ ST_FUNC void scc_debug_funcstart(SCCState *s1, Sym *sym);
 ST_FUNC void scc_debug_funcend(SCCState *s1, int size);
 ST_FUNC void scc_debug_line(SCCState *s1);
 
+//@ref libsao.c
+ST_FUNC int sao_compile(SCCState *s1);
+
 ST_FUNC int sccgen_compile(SCCState *s1);
 ST_FUNC void free_inline_functions(SCCState *s);
 ST_FUNC void check_vstack(void);

@@ -206,7 +206,7 @@ DEFINES += $(DEF-$(or $(findstring win,$T),unx))
 # include custom configuration (see make help)
 -include config-extra.mak
 
-CORE_FILES = scc.c scctools.c libscc.c sccpp.c sccgen.c sccasm.c sccrun.c
+CORE_FILES = scc.c scctools.c libscc.c sccpp.c sccgen.c sccasm.c sccrun.c libsao.c
 CORE_FILES += scc.h config.h libscc.h scctok.h
 
 #X86-32-LNX_FILES = $(CORE_FILES) scc-ELF.c   gen-X86-32.c link-X86.c    asm-X86.c asm-X86-32.h tok-X86.h

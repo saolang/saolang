@@ -2,6 +2,8 @@
 
 #if ONE_SOURCE
 # include "libscc.c"
+//TMP for SAO
+# include "libsao.c"
 #endif
 
 #include "scctools.c"

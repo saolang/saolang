@@ -790,7 +790,7 @@ struct filespec {
     char type;
     char name[1];
 };
-enum
+enum scc_token
 {
     TOK_LAST = 256 - 1
 ,TOK_INT
@@ -940,40 +940,40 @@ enum
 ,TOK___fixunssfdi
 ,TOK___fixunsdfdi
 ,TOK_alloca
-	,TOK_ASMDIR_byte
-	,TOK_ASMDIR_word
-	,TOK_ASMDIR_align
-	,TOK_ASMDIR_balign
-	,TOK_ASMDIR_p2align
-	,TOK_ASMDIR_set
-	,TOK_ASMDIR_skip
-	,TOK_ASMDIR_space
-	,TOK_ASMDIR_string
-	,TOK_ASMDIR_asciz
-	,TOK_ASMDIR_ascii
-	,TOK_ASMDIR_file
-	,TOK_ASMDIR_globl
-	,TOK_ASMDIR_global
-	,TOK_ASMDIR_weak
-	,TOK_ASMDIR_hidden
-	,TOK_ASMDIR_ident
-	,TOK_ASMDIR_size
-	,TOK_ASMDIR_type
-	,TOK_ASMDIR_text
-	,TOK_ASMDIR_data
-	,TOK_ASMDIR_bss
-	,TOK_ASMDIR_previous
-	,TOK_ASMDIR_pushsection
-	,TOK_ASMDIR_popsection
-	,TOK_ASMDIR_fill
-	,TOK_ASMDIR_rept
-	,TOK_ASMDIR_endr
-	,TOK_ASMDIR_org
+,TOK_ASMDIR_byte
+,TOK_ASMDIR_word
+,TOK_ASMDIR_align
+,TOK_ASMDIR_balign
+,TOK_ASMDIR_p2align
+,TOK_ASMDIR_set
+,TOK_ASMDIR_skip
+,TOK_ASMDIR_space
+,TOK_ASMDIR_string
+,TOK_ASMDIR_asciz
+,TOK_ASMDIR_ascii
+,TOK_ASMDIR_file
+,TOK_ASMDIR_globl
+,TOK_ASMDIR_global
+,TOK_ASMDIR_weak
+,TOK_ASMDIR_hidden
+,TOK_ASMDIR_ident
+,TOK_ASMDIR_size
+,TOK_ASMDIR_type
+,TOK_ASMDIR_text
+,TOK_ASMDIR_data
+,TOK_ASMDIR_bss
+,TOK_ASMDIR_previous
+,TOK_ASMDIR_pushsection
+,TOK_ASMDIR_popsection
+,TOK_ASMDIR_fill
+,TOK_ASMDIR_rept
+,TOK_ASMDIR_endr
+,TOK_ASMDIR_org
 ,TOK_ASMDIR_quad
-	,TOK_ASMDIR_code64
-	,TOK_ASMDIR_short
-	,TOK_ASMDIR_long
-	,TOK_ASMDIR_int
+,TOK_ASMDIR_code64
+,TOK_ASMDIR_short
+,TOK_ASMDIR_long
+,TOK_ASMDIR_int
 ,TOK_ASMDIR_section
  ,TOK_ASM_al
  ,TOK_ASM_cl
@@ -1417,8 +1417,6 @@ enum
     ,TOK_ASM_sfence
     ,TOK_ASM_clflush
 ,TOK_message
-,TOK_warning
-,TOK_error
 };
 static int gnu_ext;
 static int scc_ext;
@@ -1541,6 +1539,7 @@ static void scc_debug_end(SCCState *s1);
 static void scc_debug_funcstart(SCCState *s1, Sym *sym);
 static void scc_debug_funcend(SCCState *s1, int size);
 static void scc_debug_line(SCCState *s1);
+static int sao_compile(SCCState *s1);
 static int sccgen_compile(SCCState *s1);
 static void free_inline_functions(SCCState *s);
 static void check_vstack(void);
@@ -1908,40 +1907,40 @@ static const char scc_keywords[] =
 "__fixunssfdi" "\0"
 "__fixunsdfdi" "\0"
 "alloca" "\0"
-	"." "byte" "\0"
-	"." "word" "\0"
-	"." "align" "\0"
-	"." "balign" "\0"
-	"." "p2align" "\0"
-	"." "set" "\0"
-	"." "skip" "\0"
-	"." "space" "\0"
-	"." "string" "\0"
-	"." "asciz" "\0"
-	"." "ascii" "\0"
-	"." "file" "\0"
-	"." "globl" "\0"
-	"." "global" "\0"
-	"." "weak" "\0"
-	"." "hidden" "\0"
-	"." "ident" "\0"
-	"." "size" "\0"
-	"." "type" "\0"
-	"." "text" "\0"
-	"." "data" "\0"
-	"." "bss" "\0"
-	"." "previous" "\0"
-	"." "pushsection" "\0"
-	"." "popsection" "\0"
-	"." "fill" "\0"
-	"." "rept" "\0"
-	"." "endr" "\0"
-	"." "org" "\0"
+"." "byte" "\0"
+"." "word" "\0"
+"." "align" "\0"
+"." "balign" "\0"
+"." "p2align" "\0"
+"." "set" "\0"
+"." "skip" "\0"
+"." "space" "\0"
+"." "string" "\0"
+"." "asciz" "\0"
+"." "ascii" "\0"
+"." "file" "\0"
+"." "globl" "\0"
+"." "global" "\0"
+"." "weak" "\0"
+"." "hidden" "\0"
+"." "ident" "\0"
+"." "size" "\0"
+"." "type" "\0"
+"." "text" "\0"
+"." "data" "\0"
+"." "bss" "\0"
+"." "previous" "\0"
+"." "pushsection" "\0"
+"." "popsection" "\0"
+"." "fill" "\0"
+"." "rept" "\0"
+"." "endr" "\0"
+"." "org" "\0"
 "." "quad" "\0"
-	"." "code64" "\0"
-	"." "short" "\0"
-	"." "long" "\0"
-	"." "int" "\0"
+"." "code64" "\0"
+"." "short" "\0"
+"." "long" "\0"
+"." "int" "\0"
 "." "section" "\0"
  "al" "\0"
  "cl" "\0"
@@ -2385,8 +2384,6 @@ static const char scc_keywords[] =
     "sfence" "\0"
     "clflush" "\0"
 "message" "\0"
-"warning" "\0"
-"error" "\0"
 ;
 static const unsigned char tok_two_chars[] =
  {
@@ -2597,48 +2594,48 @@ static void add_char(CString *cstr, int c)
 }
 static TokenSym *tok_alloc_new(TokenSym **pts, const char *str, int len)
 {
-    TokenSym *ts, **ptable;
-    int i;
-    if (tok_ident >= 0x10000000)
-        scc_error("memory full (symbols)");
-    i = tok_ident - 256;
-    if ((i % 512) == 0) {
-        ptable = scc_realloc(table_ident, (i + 512) * sizeof(TokenSym *));
-        table_ident = ptable;
-    }
-    ts = tal_realloc_impl(&toksym_alloc, 0, sizeof(TokenSym) + len);
-    table_ident[i] = ts;
-    ts->tok = tok_ident++;
-    ts->sym_define = ((void*)0);
-    ts->sym_label = ((void*)0);
-    ts->sym_struct = ((void*)0);
-    ts->sym_identifier = ((void*)0);
-    ts->len = len;
-    ts->hash_next = ((void*)0);
-    (scc_dlsym_("memcpy"))(ts->str, str, len);
-    ts->str[len] = '\0';
-    *pts = ts;
-    return ts;
+	TokenSym *ts, **ptable;
+	int i;
+	if (tok_ident >= 0x10000000)
+		scc_error("memory full (symbols)");
+	i = tok_ident - 256;
+	if ((i % 512) == 0) {
+		ptable = scc_realloc(table_ident, (i + 512) * sizeof(TokenSym *));
+		table_ident = ptable;
+	}
+	ts = tal_realloc_impl(&toksym_alloc, 0, sizeof(TokenSym) + len);
+	table_ident[i] = ts;
+	ts->tok = tok_ident++;
+	ts->sym_define = ((void*)0);
+	ts->sym_label = ((void*)0);
+	ts->sym_struct = ((void*)0);
+	ts->sym_identifier = ((void*)0);
+	ts->len = len;
+	ts->hash_next = ((void*)0);
+	(scc_dlsym_("memcpy"))(ts->str, str, len);
+	ts->str[len] = '\0';
+	*pts = ts;
+	return ts;
 }
 static TokenSym *tok_alloc(const char *str, int len)
 {
-    TokenSym *ts, **pts;
-    int i;
-    unsigned int h;
-    h = 1;
-    for(i=0;i<len;i++)
-        h = ((h) + ((h) << 5) + ((h) >> 27) + (((unsigned char *)str)[i]));
-    h &= (16384 - 1);
-    pts = &hash_ident[h];
-    for(;;) {
-        ts = *pts;
-        if (!ts)
-            break;
-        if (ts->len == len && !((int(*)())scc_dlsym("memcmp"))(ts->str, str, len))
-            return ts;
-        pts = &(ts->hash_next);
-    }
-    return tok_alloc_new(pts, str, len);
+	TokenSym *ts, **pts;
+	int i;
+	unsigned int h;
+	h = 1;
+	for(i=0;i<len;i++)
+		h = ((h) + ((h) << 5) + ((h) >> 27) + (((unsigned char *)str)[i]));
+	h &= (16384 - 1);
+	pts = &hash_ident[h];
+	for(;;) {
+		ts = *pts;
+		if (!ts)
+			break;
+		if (ts->len == len && !((int(*)())scc_dlsym("memcmp"))(ts->str, str, len))
+			return ts;
+		pts = &(ts->hash_next);
+	}
+	return tok_alloc_new(pts, str, len);
 }
 static const char *get_tok_str(int v, CValue *cv)
 {
@@ -5624,29 +5621,29 @@ static void scc_debug_funcend(SCCState *s1, int size)
 }
 static int sccgen_compile(SCCState *s1)
 {
-    cur_text_section = ((void*)0);
-    funcname = "";
-    anon_sym = 0x10000000;
-    section_sym = 0;
-    const_wanted = 0;
-    nocode_wanted = 0x80000000;
-    int_type.t = 3;
-    char_pointer_type.t = 1;
-    mk_pointer(&char_pointer_type);
-    size_type.t = 0x0800 | 4 | 0x0010;
-    ptrdiff_type.t = 0x0800 | 4;
-    func_old_type.t = 6;
-    func_old_type.ref = sym_push(0x20000000, &int_type, 0, 0);
-    func_old_type.ref->f.func_call = 0;
-    func_old_type.ref->f.func_type = 2;
-    scc_debug_start(s1);
-    parse_flags= 0x0001 |0x0002 |0x0040;
-    next();
-    decl(0x0030);
-    gen_inline_functions(s1);
-    check_vstack();
-    scc_debug_end(s1);
-    return 0;
+	cur_text_section = ((void*)0);
+	funcname = "";
+	anon_sym = 0x10000000;
+	section_sym = 0;
+	const_wanted = 0;
+	nocode_wanted = 0x80000000;
+	int_type.t = 3;
+	char_pointer_type.t = 1;
+	mk_pointer(&char_pointer_type);
+	size_type.t = 0x0800 | 4 | 0x0010;
+	ptrdiff_type.t = 0x0800 | 4;
+	func_old_type.t = 6;
+	func_old_type.ref = sym_push(0x20000000, &int_type, 0, 0);
+	func_old_type.ref->f.func_call = 0;
+	func_old_type.ref->f.func_type = 2;
+	scc_debug_start(s1);
+	parse_flags= 0x0001 |0x0002 |0x0040;
+	next();
+	decl(0x0030);
+	gen_inline_functions(s1);
+	check_vstack();
+	scc_debug_end(s1);
+	return 0;
 }
 static Elf64_Sym *elfsym(Sym *s)
 {
@@ -15856,6 +15853,7 @@ static int prepare_dynamic_rel(SCCState *s1, Section *sr)
 					count++;
 				break;
 			default:
+				scc_warning("prepare_dynamic_rel() not handled rel.r_info=%d",type);
 				break;
 		}
 	}
@@ -18734,8 +18732,10 @@ static int scc_compile(SCCState *s1, int filetype)
 {
 	Sym *define_start;
 	int is_asm;
+	int is_sao;
 	define_start = define_stack;
 	is_asm = !!(filetype & (0x2|0x4));
+	is_sao = !!(filetype & (0x10));
 	scc_format_begin_file(s1);
 	if (((int(*)())scc_dlsym("setjmp"))(s1->error_jmp_buf) == 0) {
 		s1->nb_errors = 0;
@@ -18745,6 +18745,8 @@ static int scc_compile(SCCState *s1, int filetype)
 			scc_preprocess(s1);
 		} else if (is_asm) {
 			scc_assemble(s1, !!(filetype & 0x4));
+		} else if (is_sao) {
+			sao_compile(s1);
 		} else {
 			sccgen_compile(s1);
 		}
@@ -19699,6 +19701,99 @@ unsupported_option:
            (double)total_time/1000,
            (unsigned)total_lines*1000/total_time,
            (double)total_bytes/1000/total_time);
+}
+static int _sao_check_he0xE(int t, const char *p)
+{
+    if (t == 0xbe && toup(((char*(*)())scc_dlsym("strchr"))(p, 0)[-1]) == 'E')
+        return 'E';
+    return t;
+}
+static int _sao_need_space(int a, int b)
+{
+    return 'E' == a ? '+' == b || '-' == b
+        : '+' == a ? 0xa4 == b || '+' == b
+        : '-' == a ? 0xa2 == b || '-' == b
+        : a >= 256 ? b >= 256
+	: a == 0xbe ? b >= 256
+        : 0;
+}
+static void _sao_line(SCCState *s1, BufferedFile *f, int level)
+{
+	int d = f->line_num - f->line_ref;
+	if (s1->dflag & 4)
+		return;
+	if (s1->Pflag == LINE_MACRO_OUTPUT_FORMAT_NONE) {
+		;
+	} else if (level == 0 && f->line_ref && d < 8) {
+		while (d > 0) (scc_dlsym_("fputs"))("\n", s1->ppfp), --d;
+	} else if (s1->Pflag == LINE_MACRO_OUTPUT_FORMAT_STD) {
+		(scc_dlsym_("fprintf"))(s1->ppfp, "#line %d \"%s\"\n", f->line_num, f->filename);
+	} else {
+		(scc_dlsym_("fprintf"))(s1->ppfp, "# %d \"%s\"%s\n", f->line_num, f->filename,
+				level > 0 ? " 1" : level < 0 ? " 2" : "");
+	}
+	f->line_ref = f->line_num;
+}
+static int _sao_preprocess(SCCState *s1)
+{
+    BufferedFile **iptr;
+    int token_seen, spcs, level;
+    const char *p;
+    char white[400];
+    parse_flags = 0x0001
+                | (parse_flags & 0x0008)
+                | 0x0004
+                | 0x0010
+                | 0x0020
+                ;
+    if (s1->Pflag == LINE_MACRO_OUTPUT_FORMAT_P10)
+        parse_flags |= 0x0002, s1->Pflag = 1;
+    if (s1->dflag & 1) {
+        s1->dflag &= ~1;
+    }
+    token_seen = 10, spcs = 0;
+    _sao_line(s1, file, 0);
+    for (;;) {
+        iptr = s1->include_stack_ptr;
+        next();
+        if (tok == (-1))
+            break;
+        level = s1->include_stack_ptr - iptr;
+        if (level) {
+            if (level > 0)
+                _sao_line(s1, *iptr, 0);
+            _sao_line(s1, file, level);
+        }
+        if (s1->dflag & 7) {
+            if (s1->dflag & 4)
+                continue;
+        }
+        if (is_space(tok)) {
+            if (spcs < sizeof white - 1)
+                white[spcs++] = tok;
+            continue;
+        } else if (tok == 10) {
+            spcs = 0;
+            if (token_seen == 10)
+                continue;
+            ++file->line_ref;
+        } else if (token_seen == 10) {
+            _sao_line(s1, file, 0);
+        } else if (spcs == 0 && _sao_need_space(token_seen, tok)) {
+            white[spcs++] = ' ';
+        }
+				white[spcs] = 0;
+				(scc_dlsym_("fputs"))(white, s1->ppfp);
+				spcs = 0;
+        (scc_dlsym_("fputs"))(p = get_tok_str(tok, &tokc), s1->ppfp);
+        token_seen = _sao_check_he0xE(tok, p);
+    }
+    return 0;
+}
+static int sao_compile(SCCState *s1)
+{
+	_sao_preprocess(s1);
+	return 0;
 }
 typedef struct {
     char ar_name[16];

@@ -618,9 +618,11 @@ static int scc_compile(SCCState *s1, int filetype)
 {
 	Sym *define_start;
 	int is_asm;
+	int is_sao;//TMP
 
 	define_start = define_stack;
 	is_asm = !!(filetype & (AFF_TYPE_ASM|AFF_TYPE_ASMPP));
+	is_sao = !!(filetype & (AFF_TYPE_SAO));
 	scc_format_begin_file(s1);
 
 	if (SCC(setjmp,int)(s1->error_jmp_buf) == 0) {
@@ -629,6 +631,7 @@ static int scc_compile(SCCState *s1, int filetype)
 		s1->error_set_jmp_enabled = 1;
 
 		preprocess_start(s1, is_asm);
+
 		if (s1->output_type == SCC_OUTPUT_PREPROCESS) {
 			scc_preprocess(s1);
 		} else if (is_asm) {
@@ -637,6 +640,9 @@ static int scc_compile(SCCState *s1, int filetype)
 #else
 			scc_error_noabort("asm not supported");
 #endif
+		} else if (is_sao) {
+			//TODO find handler to handle !!
+			sao_compile(s1);
 		} else {
 			sccgen_compile(s1);
 		}
@@ -1116,6 +1122,7 @@ LIBSCCAPI int scc_add_file(SCCState *s, const char *filename)
 				//The .i files are also called as "Pure C files
 				filetype = AFF_TYPE_C;
 			} else if (!SCC(strcmp,int)(ext, "sao")){
+				//default using sao-lang-handler
 				filetype = AFF_TYPE_SAO;
 			} else
 				filetype |= AFF_TYPE_BIN;
