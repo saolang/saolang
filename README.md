@@ -98,9 +98,10 @@ future
 | XXX(x)<SaoType*>{@(x^2)} | function XXX()<SaoType*>{return <SaoType*>x^2;} |  |
 | XXX = (x)<SaoType*> => (x^2) | function XXX()<SaoType*>{return <SaoType*>x^2;} |  |
 | XXX(x)<c.byte8>{@(x^2)} | function XXX()<c.byte8>{return (<c.byte8>) x^2;} | ... |
-| @\*<language-handler>{..} | | eating .. with language handler |
-| @|\<> | | piping vs eating |
+| @\*\<language-handler>{..} | | eating .. with prefer language handler |
+| @\*\<SAO\>{..} | using SAO handler (default) to process .. |
 | @\*\<SLJIT\>{..} | using SLJIT (StackLessJIT) handler to process .. |
+| @\|\<> | | piping vs eating |
 
 * like ES6; function default return <SaoType*>, and do calc by guessing...
 * like golang, a return type is support?
