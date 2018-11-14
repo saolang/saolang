@@ -1,3 +1,11 @@
+# Plan
+
+sao - the SAO console command
+	sljit - stack less JIT for the SAO lang lowlevel
+libsao so/dll - shared lib
+libsao.a - static lib
+libsaoext so/dll - using external cc to get better performance, elf/macho/pe
+
 # C Compiler
 
 cc/
