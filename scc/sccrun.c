@@ -89,6 +89,7 @@ LIBSCCAPI int scc_run(SCCState *s1, int argc, char **argv)
         return 0;
     if (scc_relocate(s1, SCC_RELOCATE_AUTO) < 0)
         return -1;
+		//TODO if not found main(), then using the default function of the module....so it's a todo then...
     prog_main = scc_get_symbol_err(s1, s1->runtime_main);
 
 #ifdef CONFIG_SCC_BACKTRACE
