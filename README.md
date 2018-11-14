@@ -55,9 +55,6 @@ future
 
 # Core Syntactic-Sugar
 
-* keyword-less - removed all english keywording
-* delimiter(;) is strongly recommented, but somehow/sometime it works when omited
-
 | sao | c | remember-helper |
 |---|---|---|
 | ()?():() | ()?():() | classic ternary operator |
@@ -84,6 +81,10 @@ future
 | XXX(){} | XXX(){} |
 | XXX()<type>{} | type XXX(){} |
 
+* keyword-less - removed all english keywording
+* delimiter(;) is strongly recommented, but somehow/sometime it works when omited
+* parentheses {} is very important for matching
+
 # Ext Syntactic-Sugar
 
 | sao | pseudo | remember-helper |
@@ -98,10 +99,10 @@ future
 | XXX(x)<SaoType*>{@(x^2)} | function XXX()<SaoType*>{return <SaoType*>x^2;} |  |
 | XXX = (x)<SaoType*> => (x^2) | function XXX()<SaoType*>{return <SaoType*>x^2;} |  |
 | XXX(x)<c.byte8>{@(x^2)} | function XXX()<c.byte8>{return (<c.byte8>) x^2;} | ... |
-| @\*\<language-handler>{..} | | eating .. with prefer language handler |
+| @\*\<language-handler>{..} | | eating .. with prefer language handler, * => mouth => eat |
 | @\*\<SAO\>{..} | using SAO handler (default) to process .. |
 | @\*\<SLJIT\>{..} | using SLJIT (StackLessJIT) handler to process .. |
-| @\|\<> | | piping vs eating |
+| {..} @\|\<handler> | | piping .. to handler |
 
 * like ES6; function default return <SaoType*>, and do calc by guessing...
 * like golang, a return type is support?
