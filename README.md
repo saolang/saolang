@@ -1,7 +1,4 @@
-# SAO
-
-A very SAO computer language.
-
+# SAO - A Computer Language Very "Sao"
 ```
                          :yyydmmmMMMh`                  
        yMh+smNMMd-      -NMMMMMMMMMMM:                  
