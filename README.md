@@ -3,49 +3,57 @@
 A very SAO computer language.
 
 ```
-                                            .::-`                          
-          yho..-:/++++:`         /sddddmmmmmNMMNNy`                        
-         :MMMNNNMMMMmdh+         .ohmmhhooodMMMMMd`                        
-         oMMMd:MMMMM.`           .ymmmdo. -NMMMMm.                         
-         dMMM:/MMMMMso.     :sys+:-:ydMN+:NMMMMy`                          
-        .MMMNdNMMMMNys:     `-/ymNNds+++sNMMMMo                            
-        .MMMo.yMMMMy--`         `-smMMMMMMMMN/                             
-        -MMMyyNMMMMNmho            :NMMMMMMMNhs/-.`                        
-        +MMNoyMMMMM+.`          .+hNMMMMNdmNMMMMNmmhys/:-.`                
-        hMMm..NMMMm:+s+-     .+hNMMMmmMMNmd:/smMMMMMMMMMNmdhso/:---.`      
-       `NMMMmmNmmdddMMMNy..:ydNMMNs+/+MMMMMdosmMMMMMdmNNMMMMNmmdddhhy/     
-        smNd/-:::--:MMMMMo-:/.-dMNdhmNMMMMM+-/MMMMMm.`.-::+:-.```````      
-     `.` .hy+/.odmNNMMMMN      :MMm..yMMMMN+omMMNds.                       
-/ys+`.ddh:-shm-  .:hMMMMy       MMMdhNMMMMNmdddmo-`                        
--mMMs ./o:   .     hMMMM/       yNMy/NMMMM/    mMNd+`                      
- `:s/       ```   :MMMMm`        .o`-MMMMN-://+hMMMMm-                     
-            -shhyyNMMMm-       ``.-omMMMNNmdo-.`sMMMMm`                    
-              .oMMMNms`  /oooshdmMNNhso/-.`     .NMMMM-                    
-                +h+-`    sNMMMMmy/.`             :yNNs`                    
-                          `:++:`                   .`                      
+                         :yyydmmmMMMh`                  
+       yMh+smNMMd-      -NMMMMMMMMMMM:                  
+       mMMMMMMMMN/       +mMNhoodMMMN`                  
+      `NMMyMMMh-`        .:+-   hMMMh                   
+      `NMN.MMMh          dMMMo .NMMM/                   
+      -NMy`MMMy`      -` `yMMM-sMMMy                    
+      /MM+/MMMMN+   `dMNy- +Nd-NMMM-                    
+      oMMMMMMMMd+    `+mMMy. `hMMMy                     
+      oMNsmMMMs        `yMMMdmMMMN.                     
+      oMN`/MMM:          /NMMMMMMs                      
+      oMm oMMMNm+         +MMMMMM+                      
+      sMMmMMMMMNo         -NMMMMMMNo`                   
+      hMNNMMMMo          /NMMMMMMMMMNd/-                
+      dMo`hMMN`        `sMMMMNooNMMMMMMMms/`            
+     `mMy sMMh`/:     .dMMMMMMMh`oNMMMMMMMMNy+.         
+     .NMdodMMNNMMs   -mMMMd/dMMM: :NMMMMMMMMMMMNmh+.    
+     :MMMMMMmdmMMM/ /NMMN/ `mMMMmhNMMMNmMMMMMMMNNNNm`   
+     .NMNy+.  :MMMmoho/NMymMMMMMyodMMMm`:ohmy/.         
+      sM+ .::-/MMMh    yMmdNMMMM. dMMMs                 
+       /- `dMMNMMMo    +Mh `mMMm oMMMm`                 
+    /` oMN:`oNMMMN:    :Mm -MMMMNMMMs`                  
+os- dNo`yN+  `hMMM-    -NMmNMMMMMMmo                    
+dMd /Nm` ~`   sMMN.    .NMMMMMMh.``Md:                  
+/MN- `        hMMm`    `dM//MMM:   dMM+                 
+ oN`         `NMMh      `h.oMMM-   yMMN:                
+             :MMMo         yMMN+shddMMMh                
+        `hms+hMMN.        :NMMMMN/ `mMMN.               
+          oNMMMMs      `/hMMMMdo.   yMMM/               
+           oMMMd` `+oodMMMMho.      oMMM+               
+           -NNo`  +MMMMMNs.         -NMM+               
+            +-    .dMMMd-            /Ny`               
+                   `ohs               -                 
 ```
 
 # Feature
 
-inline
+Phrase I
 
-* ASM built-in support
+* bootstrap         - self-hosting
+* keyword-less      - there is no (natual language) keywords
+* FFI/DL            - dynamically load libraries
+* import/export     - file is module when compile
+* keep tiny         - size does matter
+* keep elegant      - meaningless if not so
 
-art
+Phrase II
 
-* bootstrap     - self-hosting
-* keyword-less  - there is no (natual language) keywords
-* FFI/DL        - dynamically load libraries
-* import/export - file is module when compile
-* keep tiny     - size does matter
-* keep elegant  - meaningless if not so
-
-inline+
-
+* free syntax sugar
 * JSON/BSON built-in support
-* more inline support via sao-plugin, such as RegExp
 
-future
+Phrase III
 
 * multi-processing/multi-threading/coroutines
 * hardware abstracted binary codes + vm interpretor
@@ -53,7 +61,8 @@ future
 * promise/q     - inner promise pattern support
 * await/async
 
-# Core Syntactic-Sugar
+# Sao Syntactic-Sugar
+## Core 
 
 | sao | c | remember-helper |
 |---|---|---|
@@ -85,7 +94,7 @@ future
 * delimiter(;) is strongly recommented, but somehow/sometime it works when omited
 * parentheses {} is very important for matching
 
-# Ext Syntactic-Sugar
+## Ext 
 
 | sao | pseudo | remember-helper |
 |---|---|---|

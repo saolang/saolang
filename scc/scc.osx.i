@@ -19704,18 +19704,18 @@ unsupported_option:
 }
 static int _sao_check_he0xE(int t, const char *p)
 {
-    if (t == 0xbe && toup(((char*(*)())scc_dlsym("strchr"))(p, 0)[-1]) == 'E')
-        return 'E';
-    return t;
+	if (t == 0xbe && toup(((char*(*)())scc_dlsym("strchr"))(p, 0)[-1]) == 'E')
+		return 'E';
+	return t;
 }
 static int _sao_need_space(int a, int b)
 {
-    return 'E' == a ? '+' == b || '-' == b
-        : '+' == a ? 0xa4 == b || '+' == b
-        : '-' == a ? 0xa2 == b || '-' == b
-        : a >= 256 ? b >= 256
-	: a == 0xbe ? b >= 256
-        : 0;
+	return 'E' == a ? '+' == b || '-' == b
+		: '+' == a ? 0xa4 == b || '+' == b
+		: '-' == a ? 0xa2 == b || '-' == b
+		: a >= 256 ? b >= 256
+		: a == 0xbe ? b >= 256
+		: 0;
 }
 static void _sao_line(SCCState *s1, BufferedFile *f, int level)
 {
@@ -19736,59 +19736,59 @@ static void _sao_line(SCCState *s1, BufferedFile *f, int level)
 }
 static int _sao_preprocess(SCCState *s1)
 {
-    BufferedFile **iptr;
-    int token_seen, spcs, level;
-    const char *p;
-    char white[400];
-    parse_flags = 0x0001
-                | (parse_flags & 0x0008)
-                | 0x0004
-                | 0x0010
-                | 0x0020
-                ;
-    if (s1->Pflag == LINE_MACRO_OUTPUT_FORMAT_P10)
-        parse_flags |= 0x0002, s1->Pflag = 1;
-    if (s1->dflag & 1) {
-        s1->dflag &= ~1;
-    }
-    token_seen = 10, spcs = 0;
-    _sao_line(s1, file, 0);
-    for (;;) {
-        iptr = s1->include_stack_ptr;
-        next();
-        if (tok == (-1))
-            break;
-        level = s1->include_stack_ptr - iptr;
-        if (level) {
-            if (level > 0)
-                _sao_line(s1, *iptr, 0);
-            _sao_line(s1, file, level);
-        }
-        if (s1->dflag & 7) {
-            if (s1->dflag & 4)
-                continue;
-        }
-        if (is_space(tok)) {
-            if (spcs < sizeof white - 1)
-                white[spcs++] = tok;
-            continue;
-        } else if (tok == 10) {
-            spcs = 0;
-            if (token_seen == 10)
-                continue;
-            ++file->line_ref;
-        } else if (token_seen == 10) {
-            _sao_line(s1, file, 0);
-        } else if (spcs == 0 && _sao_need_space(token_seen, tok)) {
-            white[spcs++] = ' ';
-        }
-				white[spcs] = 0;
-				(scc_dlsym_("fputs"))(white, s1->ppfp);
-				spcs = 0;
-        (scc_dlsym_("fputs"))(p = get_tok_str(tok, &tokc), s1->ppfp);
-        token_seen = _sao_check_he0xE(tok, p);
-    }
-    return 0;
+	BufferedFile **iptr;
+	int token_seen, spcs, level;
+	const char *p;
+	char white[400];
+	parse_flags = 0x0001
+		| (parse_flags & 0x0008)
+		| 0x0004
+		| 0x0010
+		| 0x0020
+		;
+	if (s1->Pflag == LINE_MACRO_OUTPUT_FORMAT_P10)
+		parse_flags |= 0x0002, s1->Pflag = 1;
+	if (s1->dflag & 1) {
+		s1->dflag &= ~1;
+	}
+	token_seen = 10, spcs = 0;
+	_sao_line(s1, file, 0);
+	for (;;) {
+		iptr = s1->include_stack_ptr;
+		next();
+		if (tok == (-1))
+			break;
+		level = s1->include_stack_ptr - iptr;
+		if (level) {
+			if (level > 0)
+				_sao_line(s1, *iptr, 0);
+			_sao_line(s1, file, level);
+		}
+		if (s1->dflag & 7) {
+			if (s1->dflag & 4)
+				continue;
+		}
+		if (is_space(tok)) {
+			if (spcs < sizeof white - 1)
+				white[spcs++] = tok;
+			continue;
+		} else if (tok == 10) {
+			spcs = 0;
+			if (token_seen == 10)
+				continue;
+			++file->line_ref;
+		} else if (token_seen == 10) {
+			_sao_line(s1, file, 0);
+		} else if (spcs == 0 && _sao_need_space(token_seen, tok)) {
+			white[spcs++] = ' ';
+		}
+		white[spcs] = 0;
+		(scc_dlsym_("fputs"))(white, s1->ppfp);
+		spcs = 0;
+		(scc_dlsym_("fputs"))(p = get_tok_str(tok, &tokc), s1->ppfp);
+		token_seen = _sao_check_he0xE(tok, p);
+	}
+	return 0;
 }
 static int sao_compile(SCCState *s1)
 {
