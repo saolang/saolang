@@ -116,6 +116,12 @@ Phrase III
 * like ES6; function default return <SaoType*>, and do calc by guessing...
 * like golang, a return type is support?
 
+## OS Mode
+
+stdin/stdout/stderr is controlled/assigned by caller(the OS or intepreter)
+
+#
+
 # StackLess JIT
 
 # misc TODO 
@@ -136,6 +142,11 @@ Phrase III
 dlfcn.dlsym()
 ```
 
+# FAQ
+
+## What mean Sao?
+
+https://en.wiktionary.org/wiki/%E9%A8%B7
 
 
 

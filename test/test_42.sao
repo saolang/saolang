@@ -1,0 +1,9 @@
+@<sao>;
+
+@<test>;
+
+//return test.main();
+
+@( test.main() )
+
+//sao.printf(sao.stdout,rt);

@@ -1,0 +1,24 @@
+//function for compile string
+
+//like eval, but inline then
+
+
+//@ref https://en.wikipedia.org/wiki/Just-in-time_compilation
+//INLINE START (SYNTAX.SAO) {
+
+//INLINE END }
+
+//INLINE (SYNTAX.SAO) {
+
+expressions string.
+
+//} INLINE
+
+// => compiled byte-codes-pack
+
+
+
+// SYNTAX.$C
+//   => SLJIT PORTABLE BYTECODE LIKE CLASS OF JAVA...
+//   =>  SAO RUNTIME (interprete the SLJIT BYTECODE)
+

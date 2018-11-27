@@ -1,23 +1,35 @@
 # Plan
 
+```
 sao - the SAO console command
-	sljit - stack less JIT for the SAO lang lowlevel
+	sljit - using stack-less-JIT for the lowlevel
 libsao so/dll - shared lib
 libsao.a - static lib
 libsaoext so/dll - using external cc to get better performance, elf/macho/pe
+```
 
-# C Compiler
+libc-dync mode 
+nostdc os mode
+.sao => (sljit) => binary
 
-cc/
-	saocc_asm.c   - ASM support
-	saocc_pps.c   - preprocessing macros
-	saocc_cpl.c   - raw compiler w/- macros
-	saocc_gen.c   - binary generator
-	saocc_lkr.c   - linker?
-	saocc.c       - driver
-	saocc_macro.h
+# Sao C Compiler
+
+```
+sao-by-c //sao.c
+sao-by-sao //sao.sao
+c-by-sao //cc.sao
+c-by-c //scc.c
+```
+
+scc/
+	scc_asm.c   - ASM support
+	scc_pps.c   - preprocessing macros
+	scc_cpl.c   - raw compiler w/- macros
+	scc_gen.c   - binary generator
+	scc_lkr.c   - linker?
+	scc.c       - driver
+	scc_macro.h
 	libsao.c      - shared lib
-
 
 # SAO Compiled by C
 
@@ -37,3 +49,18 @@ c/
 	sao-clk.sao
 	sao-gen.sao
 	sao-lkr.sao
+
+
+# ideas
+
+能否在启动时获得一个半只读但可执行的内存区间??
+我想做一个运行包用于执行SLJIT和基础库……类似loader...要很小.
+
+sao runtime dll/bin
+
+sao $prog (in source code or binary, like lua/nodejs)
+
+or $progbin (which have tiny loader packed)
+
+$progbinloader...how?
+how about 
