@@ -161,6 +161,7 @@ void execute_from_malloc_rw ()
 }
 
 #ifndef __APPLE__
+//memalign is not in APPLE/OSX ?
 /* malloced memory rw+x */
 void execute_from_malloc_rw_x ()
 {
@@ -424,7 +425,11 @@ int main (int argc, char *argv[]) {
 
 void help(char *prog)
 {
+#ifndef __APPLE__
 	printf("Usage: %s [data|bss|stack|stack-exec|malloc-rw|malloc-rw-x|mmap-rw|mmap-rwx|mmap-rw-x|shm-open-rwx|shmget-rw|shmget-rwx|shmget-rw-x]\n", prog);
+#else
+	printf("Usage: %s [data|bss|stack|stack-exec|malloc-rw|mmap-rw|mmap-rwx|mmap-rw-x|shm-open-rwx|shmget-rw|shmget-rwx|shmget-rw-x]\n", prog);
+#endif
 }
 #if 0
 OSX:

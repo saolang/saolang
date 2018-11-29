@@ -1,5 +1,7 @@
 /* probes for platforms */
 
+//NOTES: for internal, so need to change name later...
+
 #ifndef _SCC_PLATFORM_H
 #define _SCC_PLATFORM_H
 
