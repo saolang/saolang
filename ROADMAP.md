@@ -64,3 +64,13 @@ or $progbin (which have tiny loader packed)
 
 $progbinloader...how?
 how about 
+
+* sao script
+like jerry:
+```
+* vm-and-bytecode-loader(mini) for diff arch, like java vm
+* bytecode portable => .bc like java class then.
+* load things else from bytecode then, i.e. parser is a .bc
+* support output binary(not .bc but .$arch) with XXXX.bc
+* support load .$arch.bin if necessary as ext.
+```
