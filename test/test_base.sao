@@ -1,0 +1,40 @@
+@^ uu(x,y){
+	@~ x*y;
+}
+
+ttt = (x, y)=>1.0*Math.pow(x+y,0.5);
+
+s = (sw)=>{
+	@#(sw){
+		@=1:
+			@~("case1");
+		@=2:
+			@~("case2");
+		@=:
+			@~ "default";
+	}
+	@~ -1;
+}
+
+f = (c)=>{
+	print("c="+c+":");
+	@?(c==1){
+		print ("IF BR");
+	}@:@?(c==2){
+		print ("ELSE IF BR");
+	}@:{
+		print ("ELSE BR");
+	}
+	@~;
+};
+
+f(1);
+f(2);
+f(3);
+
+print(ttt(3.0*3.0,4.0*4.0));
+print(uu(3.0,4.0));
+
+@*(i=1;i<=3;i++){
+	print(s(i));
+}

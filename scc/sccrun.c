@@ -1,7 +1,7 @@
 #include "scc.h"
 
 /* only native compiler supports -run */
-#ifdef SCC_IS_NATIVE
+#if __SCC_TARGET_CROSS__==0
 
 //TODO redo the backtrace again...
 //using debug backtrace trick for the scc-run
@@ -51,6 +51,8 @@ LIBSCCAPI int scc_relocate(SCCState *s1, void *ptr)
 #else
     ptr = scc_malloc(size);
 #endif
+
+		//@ref set_pages_executable()... PROT_EXEC
     scc_relocate_ex(s1, ptr, ptr_diff); /* no more errors expected */
     dynarray_add(&s1->runtime_mem, &s1->nb_runtime_mem, ptr);
     return 0;
@@ -87,6 +89,7 @@ LIBSCCAPI int scc_run(SCCState *s1, int argc, char **argv)
         return 0;
     if (scc_relocate(s1, SCC_RELOCATE_AUTO) < 0)
         return -1;
+		//TODO if not found main(), then using the default function of the module....so it's a todo then...
     prog_main = scc_get_symbol_err(s1, s1->runtime_main);
 
 #ifdef CONFIG_SCC_BACKTRACE
@@ -102,14 +105,14 @@ LIBSCCAPI int scc_run(SCCState *s1, int argc, char **argv)
     return (*prog_main)(argc, argv);
 }
 
-#if defined SCC_TARGET_I386 || defined SCC_TARGET_X86_64
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ //{
 /* To avoid that x86 processors would reload cached instructions
-   each time when data is written in the near, we need to make
-   sure that code and data do not share the same 64 byte unit */
- #define RUN_SECTION_ALIGNMENT 63
-#else
- #define RUN_SECTION_ALIGNMENT 0
-#endif
+	 each time when data is written in the near, we need to make
+	 sure that code and data do not share the same 64 byte unit */
+#define RUN_SECTION_ALIGNMENT 63
+#else //}:{
+#define RUN_SECTION_ALIGNMENT 0
+#endif //}
 
 /* relocate code. Return -1 on error, required size if ptr is NULL,
    otherwise copy code into buffer passed by the caller */
@@ -122,7 +125,7 @@ static int scc_relocate_ex(SCCState *s1, void *ptr, addr_t ptr_diff)
 
 	if (NULL == ptr) {
 		s1->nb_errors = 0;
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 		pe_output_file(s1, NULL);
 #else
 		scc_add_runtime(s1);
@@ -169,7 +172,7 @@ static int scc_relocate_ex(SCCState *s1, void *ptr, addr_t ptr_diff)
 	if (0 == mem)
 		return offset + max_align;
 
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 	s1->pe_imagebase = mem;
 #endif
 
@@ -227,7 +230,7 @@ static void set_pages_executable(void *ptr, unsigned long length)
     if (SCC(mprotect,int)((void *)start, end - start, PROT_READ | PROT_WRITE | PROT_EXEC))
         scc_error("mprotect failed: did you mean to configure --with-selinux?");
 # endif
-# if defined SCC_TARGET_ARM || defined SCC_TARGET_ARM64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__)
     __clear_cache(ptr, (char *)ptr + length);
 # endif
 #endif
@@ -308,5 +311,5 @@ ST_FUNC void *dlsym(void *handle, const char *symbol)
 }
 
 #endif /* CONFIG_SCC_STATIC */
-#endif /* SCC_IS_NATIVE */
+#endif //__SCC_TARGET_CROSS__==0
 /* ------------------------------------------------------------- */

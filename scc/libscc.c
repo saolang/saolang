@@ -21,6 +21,51 @@ static int nb_states;
 #include "sccgen.c"
 #include "sccrun.c"
 
+//TEST
+//#ifdef INCLIBSCC1
+////SKIP
+//#else
+//#define INCLIBSCC1 1
+//#include "lib/libscc1.c"
+//#endif
+
+#include "lib/libscc1.c"
+
+////TODO X86-32-LNX //{
+////#include "lib/alloca86.S"
+//__asm__(
+//".globl alloca\n"
+//"alloca:\n"
+//"    pop     edx\n"
+//"    pop     eax\n"
+//"    push    edx\n"
+//"    push    edx\n"
+//
+////"    pop     %edx\n"
+////"    pop     %eax\n"
+////"    add     $3,%eax\n"
+////"    and     $-4,%eax\n"
+////"    jz      p3\n"
+////"\n"
+////#ifdef _WIN32
+////"p1:\n"
+////"    cmp     $4096,%eax\n"
+////"    jbe     p2\n"
+////"    test    %eax,-4096(%esp)\n"
+////"    sub     $4096,%esp\n"
+////"    sub     $4096,%eax\n"
+////"    jmp p1\n"
+////"p2:\n"
+////#endif
+////"    sub     %eax,%esp\n"
+////"    mov     %esp,%eax\n"
+////"p3:\n"
+////"    push    %edx\n"
+////"    push    %edx\n"
+//"    ret\n"
+//	 );
+////TODO X86-32-LNX //}
+
 #include SCC_QUOTE(gen-__SCC_TARGET_CPU__-__SCC_TARGET_CPU_BIT__-__SCC_TARGET_OS__-__SCC_TARGET_FORMAT__.c)
 #include SCC_QUOTE(link-__SCC_TARGET_CPU__-__SCC_TARGET_CPU_BIT__-__SCC_TARGET_OS__-__SCC_TARGET_FORMAT__.c)
 #include SCC_QUOTE(asm-__SCC_TARGET_CPU__-__SCC_TARGET_CPU_BIT__.c)
@@ -34,11 +79,11 @@ static int nb_states;
 #ifndef CONFIG_SCC_ASM//{
 ST_FUNC void asm_instr(void)
 {
-    scc_error("inline asm() not supported for this arch yet");//TODO add %s to show arch
+    scc_error("inline asm() not supported for this arch yet "__SCC_TARGET_CPU__"-"__SCC_TARGET_CPU_BIT__"-"__SCC_TARGET_OS__"-"__SCC_TARGET_FORMAT__);//TODO add %s to show arch
 }
 ST_FUNC void asm_global_instr(void)
 {
-    scc_error("inline asm() not supported for this arch yet");//TODO to show arch
+    scc_error("inline asm() not supported for this arch yet "__SCC_TARGET_CPU__"-"__SCC_TARGET_CPU_BIT__"-"__SCC_TARGET_OS__"-"__SCC_TARGET_FORMAT__);//TODO to show arch
 }
 #endif//}CONFIG_SCC_ASM
 
@@ -46,18 +91,15 @@ ST_FUNC void asm_global_instr(void)
 #ifdef _WIN32//{
 ST_FUNC char *normalize_slashes(char *path)
 {
-    //char *p;
 		for (char *p = path; *p; ++p){
-			if (*p == '\\'){
-				*p = '/';
-			}
+			if (*p == '\\') *p = '/';
 		}
     return path;
 }
 
 static HMODULE scc_module;
 
-//TODO later: maybe not, but all ...
+//TODO 
 ///* on win32, we suppose the lib and includes are at the location of 'scc.exe' */
 //static void scc_set_lib_path_w32(SCCState *s)
 //{
@@ -70,10 +112,11 @@ static HMODULE scc_module;
 //    scc_set_lib_path(s, path);
 //}
 
-#ifdef SCC_TARGET_PE//{
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__ //{
 static void scc_add_systemdir(SCCState *s)
 {
     char buf[1000];
+		//TODO GetSystemDirectoryA,GetSystemDirectoryW
     SCC(GetSystemDirectory)(buf, sizeof buf);
     scc_add_library_path(s, normalize_slashes(buf));
 }
@@ -101,8 +144,7 @@ ST_FUNC char *pstrcpy(char *buf, int buf_size, const char *s)
         q_end = buf + buf_size - 1;
         while (q < q_end) {
             c = *s++;
-            if (c == '\0')
-                break;
+            if (c == '\0') break;
             *q++ = c;
         }
         *q = '\0';
@@ -166,7 +208,7 @@ PUB_FUNC void *scc_malloc(unsigned long size)
     void *ptr;
     ptr = SCC(malloc)(size);
     if (!ptr && size)
-        scc_error("memory full (malloc)");
+        scc_error("memory full (malloc(%ld))",size);
     return ptr;
 }
 
@@ -260,7 +302,7 @@ PUB_FUNC void *scc_malloc_debug(unsigned long size, const char *file, int line)
     MEM_DEBUG_CHECK3(header) = MEM_DEBUG_MAGIC3;
     header->line_num = line;
     ofs = SCC(strlen,int)(file) - MEM_DEBUG_FILE_LEN;
-    strncpy(header->file_name, file + (ofs > 0 ? ofs : 0), MEM_DEBUG_FILE_LEN);
+    SCC(strncpy)(header->file_name, file + (ofs > 0 ? ofs : 0), MEM_DEBUG_FILE_LEN);
     header->file_name[MEM_DEBUG_FILE_LEN] = 0;
 
     header->next = mem_debug_chain;
@@ -290,7 +332,7 @@ PUB_FUNC void scc_free_debug(void *ptr)
         header->prev->next = header->next;
     if (header == mem_debug_chain)
         mem_debug_chain = header->next;
-    free(header);
+    SCC(free)(header);
 }
 
 PUB_FUNC void *scc_mallocz_debug(unsigned long size, const char *file, int line)
@@ -517,36 +559,36 @@ LIBSCCAPI void scc_set_error_func(SCCState *s, void *error_opaque,
 /********************************************************/
 /* I/O layer */
 
-ST_FUNC void scc_open_bf(SCCState *s1, const char *filename, int initlen)
+ST_FUNC void scc_open_buf(SCCState *s1, const char *filename, int initlen)
 {
-    BufferedFile *bf;
+    BufferedFile *buf;
     int buflen = initlen ? initlen : IO_BUF_SIZE;
 
-    bf = scc_mallocz(sizeof(BufferedFile) + buflen);
-    bf->buf_ptr = bf->buffer;
-    bf->buf_end = bf->buffer + initlen;
-    bf->buf_end[0] = CH_EOB; /* put eob symbol */
-    pstrcpy(bf->filename, sizeof(bf->filename), filename);
-    bf->true_filename = bf->filename;
-    bf->line_num = 1;
-    bf->ifdef_stack_ptr = s1->ifdef_stack_ptr;
-    bf->fd = -1;
-    bf->prev = file;
-    file = bf;
+    buf = scc_mallocz(sizeof(BufferedFile) + buflen);
+    buf->buf_ptr = buf->buffer;
+    buf->buf_end = buf->buffer + initlen;
+    buf->buf_end[0] = CH_EOB; /* put eob symbol */
+    pstrcpy(buf->filename, sizeof(buf->filename), filename);
+    buf->true_filename = buf->filename;
+    buf->line_num = 1;
+    buf->ifdef_stack_ptr = s1->ifdef_stack_ptr;
+    buf->fd = -1;
+    buf->prev = file;
+    file = buf;
     tok_flags = TOK_FLAG_BOL | TOK_FLAG_BOF;
 }
 
 ST_FUNC void scc_close(void)
 {
-    BufferedFile *bf = file;
-    if (bf->fd > 0) {
-        SCC(close)(bf->fd);
-        total_lines += bf->line_num;
+    BufferedFile *buf = file;
+    if (buf->fd > 0) {
+        SCC(close)(buf->fd);
+        total_lines += buf->line_num;
     }
-    if (bf->true_filename != bf->filename)
-        scc_free(bf->true_filename);
-    file = bf->prev;
-    scc_free(bf);
+    if (buf->true_filename != buf->filename)
+        scc_free(buf->true_filename);
+    file = buf->prev;
+    scc_free(buf);
 }
 
 ST_FUNC int scc_open(SCCState *s1, const char *filename)
@@ -556,12 +598,14 @@ ST_FUNC int scc_open(SCCState *s1, const char *filename)
         fd = 0, filename = "<stdin>";
     else
         fd = SCC(open,int)(filename, O_RDONLY | O_BINARY);
+
     if ((s1->verbose == 2 && fd >= 0) || s1->verbose == 3)
        SCC(printf)("%s %*s%s\n", fd < 0 ? "nf":"->",
-               (int)(s1->include_stack_ptr - s1->include_stack), "", filename);
-    if (fd < 0)
-        return -1;
-    scc_open_bf(s1, filename, 0);
+               (s1->include_stack_ptr - s1->include_stack), "", filename);
+
+    if (fd < 0) return -1;
+
+    scc_open_buf(s1, filename, 0);
 #ifdef _WIN32
     normalize_slashes(file->filename);
 #endif
@@ -572,52 +616,64 @@ ST_FUNC int scc_open(SCCState *s1, const char *filename)
 /* compile the file opened in 'file'. Return non zero if errors. */
 static int scc_compile(SCCState *s1, int filetype)
 {
-    Sym *define_start;
-    int is_asm;
+	Sym *define_start;
+	int is_asm;
+	int is_sao;//TMP
 
-    define_start = define_stack;
-    is_asm = !!(filetype & (AFF_TYPE_ASM|AFF_TYPE_ASMPP));
-    scc_format_begin_file(s1);
+	define_start = define_stack;
+	is_asm = !!(filetype & (AFF_TYPE_ASM|AFF_TYPE_ASMPP));
+	is_sao = !!(filetype & (AFF_TYPE_SAO));
+	scc_format_begin_file(s1);
 
-    if (SCC(setjmp,int)(s1->error_jmp_buf) == 0) {
-        s1->nb_errors = 0;
-        s1->error_set_jmp_enabled = 1;
+	if (SCC(setjmp,int)(s1->error_jmp_buf) == 0) {
 
-        preprocess_start(s1, is_asm);
-        if (s1->output_type == SCC_OUTPUT_PREPROCESS) {
-            scc_preprocess(s1);
-        } else if (is_asm) {
+		s1->nb_errors = 0;
+		s1->error_set_jmp_enabled = 1;
+
+		preprocess_start(s1, is_asm);
+
+		if (s1->output_type == SCC_OUTPUT_PREPROCESS) {
+			scc_preprocess(s1);
+		} else if (is_asm) {
 #ifdef CONFIG_SCC_ASM
-            scc_assemble(s1, !!(filetype & AFF_TYPE_ASMPP));
+			scc_assemble(s1, !!(filetype & AFF_TYPE_ASMPP));
 #else
-            scc_error_noabort("asm not supported");//TODO add not supported %s,for_what
+			scc_error_noabort("asm not supported");
 #endif
-        } else {
-            sccgen_compile(s1);
-        }
-    }
-    s1->error_set_jmp_enabled = 0;
+		} else if (is_sao) {
+			//TODO find handler to handle !!
+			sao_compile(s1);
+		} else {
+			sccgen_compile(s1);
+		}
+	}
 
-    preprocess_end(s1);
-    free_inline_functions(s1);
-    /* reset define stack, but keep -D and built-ins */
-    free_defines(define_start);
-    sym_pop(&global_stack, NULL, 0);
-    sym_pop(&local_stack, NULL, 0);
-    scc_format_end_file(s1);
-    return s1->nb_errors != 0 ? -1 : 0;
+	s1->error_set_jmp_enabled = 0;
+
+	preprocess_end(s1);
+
+	free_inline_functions(s1);
+
+	/* reset define stack, but keep -D and built-ins */
+	free_defines(define_start);
+
+	sym_pop(&global_stack, NULL, 0);
+	sym_pop(&local_stack, NULL, 0);
+
+	scc_format_end_file(s1);
+	return s1->nb_errors != 0 ? -1 : 0;
 }
 
 LIBSCCAPI int scc_compile_string(SCCState *s, const char *str)
 {
-    int len, ret;
+	int len, ret;
 
-    len = SCC(strlen,int)(str);
-    scc_open_bf(s, "<string>", len);
-    SCC(memcpy)(file->buffer, str, len);
-    ret = scc_compile(s, s->filetype);
-    scc_close();
-    return ret;
+	len = SCC(strlen,int)(str);
+	scc_open_buf(s, "<string>", len);
+	SCC(memcpy)(file->buffer, str, len);
+	ret = scc_compile(s, s->filetype);
+	scc_close();
+	return ret;
 }
 
 /* define a preprocessor symbol. A value can also be provided with the '=' operator */
@@ -631,7 +687,7 @@ LIBSCCAPI void scc_define_symbol(SCCState *s1, const char *sym, const char *valu
     len2 = SCC(strlen,int)(value);
 
     /* init file structure */
-    scc_open_bf(s1, "<define>", len1 + len2 + 1);
+    scc_open_buf(s1, "<define>", len1 + len2 + 1);
     SCC(memcpy)(file->buffer, sym, len1);
     file->buffer[len1] = ' ';
     SCC(memcpy)(file->buffer + len1 + 1, value, len2);
@@ -671,188 +727,210 @@ static void scc_cleanup(void)
 
 LIBSCCAPI SCCState *scc_new(void)
 {
-    SCCState *s;
+	SCCState *s;
 
-    scc_cleanup();
+	scc_cleanup();
 
-    s = scc_mallocz(sizeof(SCCState));
-    if (!s)
-        return NULL;
-    scc_state = s;
-    ++nb_states;
+	s = scc_mallocz(sizeof(SCCState));
+	if (!s)
+		return NULL;
+	scc_state = s;
+	++nb_states;
 
-    s->nocommon = 1;
-    s->warn_implicit_function_declaration = 1;
-    s->ms_extensions = 1;
+	s->nocommon = 1;
+	s->warn_implicit_function_declaration = 1;
+	s->ms_extensions = 1;
 
 #ifdef CHAR_IS_UNSIGNED
-    s->char_is_unsigned = 1;
+	s->char_is_unsigned = 1;
 #endif
-#ifdef SCC_TARGET_I386
-    s->seg_size = 32;
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ //{
+# if __SCC_TARGET_CPU_BIT__==32
+	s->seg_size = 32;
+# elif __SCC_TARGET_CPU_BIT__==64
+	//s->seg_size = 64;//TODO
+# endif
+#endif //}
+	/* enable this if you want symbols with leading underscore on windows: */
+
+	//TODO PE?
+//	s->leading_underscore = 1;
+
+	//#ifdef _WIN32
+	//    scc_set_lib_path_w32(s);
+	//#else
+	//    scc_set_lib_path(s, CONFIG_SCCDIR);
+	//#endif
+
+	scc_set_lib_path(s, CONFIG_SCCDIR);
+
+	//TODO ELF/PE/MACHO divide
+	scc_format_new(s);
+
+	sccpp_new(s);
+
+	/* we add dummy defines for some special macros to speed up tests
+		 and to have working defined() */
+	define_push(TOK___LINE__, MACRO_OBJ, NULL, NULL);
+	define_push(TOK___FILE__, MACRO_OBJ, NULL, NULL);
+	define_push(TOK___DATE__, MACRO_OBJ, NULL, NULL);
+	define_push(TOK___TIME__, MACRO_OBJ, NULL, NULL);
+
+	define_push(TOK___COUNTER__, MACRO_OBJ, NULL, NULL);
+	{
+		char buffer[32]; int a,b,c;
+		SCC(sscanf)(SCC_VERSION, "%d.%d.%d", &a, &b, &c);
+		SCC(sprintf)(buffer, "%d", a*10000 + b*100 + c);
+		scc_define_symbol(s, "__SAOCC__", buffer);
+	}
+
+	//TODO forward symbol from current compiler to new compile env if not cross compile.
+	//how to say a cross compile? diff os/cpu-type/cpu-bit....
+
+	/* standard defines */
+	scc_define_symbol(s, "__STDC__", NULL);
+	scc_define_symbol(s, "__STDC_VERSION__", "199901L");
+	scc_define_symbol(s, "__STDC_HOSTED__", NULL);
+
+	//copy the config if not cross build...
+#if __SCC_TARGET_CROSS__==0
+# ifdef __SCC_TARGET_CPU__
+   scc_define_symbol(s, "__SCC_TARGET_CPU__", SCC_QUOTE(__SCC_TARGET_CPU__));
+# endif
+# ifdef __SCC_TARGET_CPU_BIT__
+   scc_define_symbol(s, "__SCC_TARGET_CPU_BIT__", SCC_QUOTE(__SCC_TARGET_CPU_BIT__));
+# endif
+# ifdef __SCC_TARGET_FORMAT__
+   scc_define_symbol(s, "__SCC_TARGET_FORMAT__", SCC_QUOTE(__SCC_TARGET_FORMAT__));
+# endif
+# ifdef __SCC_TARGET_OS__
+   scc_define_symbol(s, "__SCC_TARGET_OS__", SCC_QUOTE(__SCC_TARGET_OS__));
+# endif
 #endif
-    /* enable this if you want symbols with leading underscore on windows: */
-#if 0 /* def SCC_TARGET_PE */
-    s->leading_underscore = 1;
+	
+	/* target defines */
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__
+# if __SCC_TARGET_CPU_BIT__==32
+	scc_define_symbol(s, "__i386__", NULL);
+	scc_define_symbol(s, "__i386", NULL);
+	scc_define_symbol(s, "i386", NULL);
+# elif __SCC_TARGET_CPU_BIT__==64
+	scc_define_symbol(s, "__x86_64__", NULL);
+# endif
 #endif
 
-//#ifdef _WIN32
-//    scc_set_lib_path_w32(s);
-//#else
-//    scc_set_lib_path(s, CONFIG_SCCDIR);
-//#endif
-
-    scc_set_lib_path(s, CONFIG_SCCDIR);
-
-		//TODO ELF/PE/MACHO divide
-    scc_format_new(s);
-
-    sccpp_new(s);
-
-    /* we add dummy defines for some special macros to speed up tests
-       and to have working defined() */
-    define_push(TOK___LINE__, MACRO_OBJ, NULL, NULL);
-    define_push(TOK___FILE__, MACRO_OBJ, NULL, NULL);
-    define_push(TOK___DATE__, MACRO_OBJ, NULL, NULL);
-    define_push(TOK___TIME__, MACRO_OBJ, NULL, NULL);
-    define_push(TOK___COUNTER__, MACRO_OBJ, NULL, NULL);
-    {
-        /* define __SAOCC__ 92X  */
-        char buffer[32]; int a,b,c;
-        SCC(sscanf)(SCC_VERSION, "%d.%d.%d", &a, &b, &c);
-        SCC(sprintf)(buffer, "%d", a*10000 + b*100 + c);
-        scc_define_symbol(s, "__SAOCC__", buffer);
-    }
-
-		//TODO forward symbol from current compiler to new compile env if not cross compile.
-		//how to say a cross compile? diff os/cpu-type/cpu-bit....
-
-    /* standard defines */
-    scc_define_symbol(s, "__STDC__", NULL);
-    scc_define_symbol(s, "__STDC_VERSION__", "199901L");
-    scc_define_symbol(s, "__STDC_HOSTED__", NULL);
-
-    /* target defines */
-#if defined(SCC_TARGET_I386)
-    scc_define_symbol(s, "__i386__", NULL);
-    scc_define_symbol(s, "__i386", NULL);
-    scc_define_symbol(s, "i386", NULL);
-#elif defined(SCC_TARGET_X86_64)
-    scc_define_symbol(s, "__x86_64__", NULL);
-#elif defined(SCC_TARGET_ARM)
-    scc_define_symbol(s, "__ARM_ARCH_4__", NULL);
-    scc_define_symbol(s, "__arm_elf__", NULL);
-    scc_define_symbol(s, "__arm_elf", NULL);
-    scc_define_symbol(s, "arm_elf", NULL);
-    scc_define_symbol(s, "__arm__", NULL);
-    scc_define_symbol(s, "__arm", NULL);
-    scc_define_symbol(s, "arm", NULL);
-    scc_define_symbol(s, "__APCS_32__", NULL);
-    scc_define_symbol(s, "__ARMEL__", NULL);
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
+	scc_define_symbol(s, "__ARM_ARCH_4__", NULL);
+	scc_define_symbol(s, "__arm_elf__", NULL);
+	scc_define_symbol(s, "__arm_elf", NULL);
+	scc_define_symbol(s, "arm_elf", NULL);
+	scc_define_symbol(s, "__arm__", NULL);
+	scc_define_symbol(s, "__arm", NULL);
+	scc_define_symbol(s, "arm", NULL);
+	scc_define_symbol(s, "__APCS_32__", NULL);
+	scc_define_symbol(s, "__ARMEL__", NULL);
 #if defined(SCC_ARM_EABI)
-    scc_define_symbol(s, "__ARM_EABI__", NULL);
+	scc_define_symbol(s, "__ARM_EABI__", NULL);
 #endif
 #if defined(SCC_ARM_HARDFLOAT)
-    s->float_abi = ARM_HARD_FLOAT;
-    scc_define_symbol(s, "__ARM_PCS_VFP", NULL);
+	s->float_abi = ARM_HARD_FLOAT;
+	scc_define_symbol(s, "__ARM_PCS_VFP", NULL);
 #else
-    s->float_abi = ARM_SOFTFP_FLOAT;
+	s->float_abi = ARM_SOFTFP_FLOAT;
 #endif
-#elif defined(SCC_TARGET_ARM64)
-    scc_define_symbol(s, "__aarch64__", NULL);
-#elif defined SCC_TARGET_C67
-    scc_define_symbol(s, "__C67__", NULL);
+#elif (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
+	scc_define_symbol(s, "__aarch64__", NULL);
 #endif
 
-#ifdef SCC_TARGET_MACHO
-    scc_define_symbol(s, "__APPLE__", NULL);
+#if __SCC_OS_ID__==__SCC_OS_OSX__
+	scc_define_symbol(s, "__APPLE__", NULL);
 #endif
 
-#ifdef SCC_TARGET_PE
-    scc_define_symbol(s, "_WIN32", NULL);
-# ifdef SCC_TARGET_X86_64
-    scc_define_symbol(s, "_WIN64", NULL);
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
+	scc_define_symbol(s, "_WIN32", NULL);
+# if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+	scc_define_symbol(s, "_WIN64", NULL);
 # endif
 #else
-    scc_define_symbol(s, "__unix__", NULL);
-    scc_define_symbol(s, "__unix", NULL);
-    scc_define_symbol(s, "unix", NULL);
+	scc_define_symbol(s, "__unix__", NULL);
+	scc_define_symbol(s, "__unix", NULL);
+	scc_define_symbol(s, "unix", NULL);
 
-		//TODO should do it only when in run mode..!!!!
+	//TODO should do it only when in run mode..!!!!
 # if defined(__linux__)
-    scc_define_symbol(s, "__linux__", NULL);
-    scc_define_symbol(s, "__linux", NULL);
+	scc_define_symbol(s, "__linux__", NULL);
+	scc_define_symbol(s, "__linux", NULL);
 # endif
 
 # if defined(__FreeBSD__)
-    scc_define_symbol(s, "__FreeBSD__", "__FreeBSD__");
-    /* No 'Thread Storage Local' on FreeBSD with scc */
-    scc_define_symbol(s, "__NO_TLS", NULL);
+	scc_define_symbol(s, "__FreeBSD__", "__FreeBSD__");
+	/* No 'Thread Storage Local' on FreeBSD with scc */
+	scc_define_symbol(s, "__NO_TLS", NULL);
 # endif
 # if defined(__FreeBSD_kernel__)
-    scc_define_symbol(s, "__FreeBSD_kernel__", NULL);
+	scc_define_symbol(s, "__FreeBSD_kernel__", NULL);
 # endif
 # if defined(__NetBSD__)
-    scc_define_symbol(s, "__NetBSD__", "__NetBSD__");
+	scc_define_symbol(s, "__NetBSD__", "__NetBSD__");
 # endif
 # if defined(__OpenBSD__)
-    scc_define_symbol(s, "__OpenBSD__", "__OpenBSD__");
+	scc_define_symbol(s, "__OpenBSD__", "__OpenBSD__");
 # endif
 #endif
 
-    /* SaoCC & gcc defines */
+	/* SaoCC & gcc defines */
 #if PTR_SIZE == 4
-    /* 32bit systems. */
-    scc_define_symbol(s, "__SIZE_TYPE__", "unsigned int");
-    scc_define_symbol(s, "__PTRDIFF_TYPE__", "int");
-    scc_define_symbol(s, "__ILP32__", NULL);
+	/* 32bit systems. */
+	scc_define_symbol(s, "__SIZE_TYPE__", "unsigned int");
+	scc_define_symbol(s, "__PTRDIFF_TYPE__", "int");
+	scc_define_symbol(s, "__ILP32__", NULL);
 #elif LONG_SIZE == 4
-    /* 64bit Windows. */
-    scc_define_symbol(s, "__SIZE_TYPE__", "unsigned long long");
-    scc_define_symbol(s, "__PTRDIFF_TYPE__", "long long");
-    scc_define_symbol(s, "__LLP64__", NULL);
+	/* 64bit Windows. */
+	scc_define_symbol(s, "__SIZE_TYPE__", "unsigned long long");
+	scc_define_symbol(s, "__PTRDIFF_TYPE__", "long long");
+	scc_define_symbol(s, "__LLP64__", NULL);
 #else
-    /* Other 64bit systems. */
-    scc_define_symbol(s, "__SIZE_TYPE__", "unsigned long");
-    scc_define_symbol(s, "__PTRDIFF_TYPE__", "long");
-    scc_define_symbol(s, "__LP64__", NULL);
+	/* Other 64bit systems. */
+	scc_define_symbol(s, "__SIZE_TYPE__", "unsigned long");
+	scc_define_symbol(s, "__PTRDIFF_TYPE__", "long");
+	scc_define_symbol(s, "__LP64__", NULL);
 #endif
 
-#ifdef SCC_TARGET_PE
-    scc_define_symbol(s, "__WCHAR_TYPE__", "unsigned short");
-    scc_define_symbol(s, "__WINT_TYPE__", "unsigned short");
-#else
-    scc_define_symbol(s, "__WCHAR_TYPE__", "int");
-    /* wint_t is unsigned int by default, but (signed) int on BSDs
-       and unsigned short on windows.  Other OSes might have still
-       other conventions, sigh.  */
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__ //{
+	scc_define_symbol(s, "__WCHAR_TYPE__", "unsigned short");
+	scc_define_symbol(s, "__WINT_TYPE__", "unsigned short");
+#else //}:{
+	scc_define_symbol(s, "__WCHAR_TYPE__", "int");
+	/* wint_t is unsigned int by default, but (signed) int on BSDs
+		 and unsigned short on windows.  Other OSes might have still
+		 other conventions, sigh.  */
 # if defined(__FreeBSD__) || defined (__FreeBSD_kernel__) \
-  || defined(__NetBSD__) || defined(__OpenBSD__)
-    scc_define_symbol(s, "__WINT_TYPE__", "int");
+	|| defined(__NetBSD__) || defined(__OpenBSD__)
+	scc_define_symbol(s, "__WINT_TYPE__", "int");
 #  ifdef __FreeBSD__
-    /* define __GNUC__ to have some useful stuff from sys/cdefs.h
-       that are unconditionally used in FreeBSDs other system headers :/ */
-    scc_define_symbol(s, "__GNUC__", "2");
-    scc_define_symbol(s, "__GNUC_MINOR__", "7");
-    scc_define_symbol(s, "__builtin_alloca", "alloca");
+	/* define __GNUC__ to have some useful stuff from sys/cdefs.h
+		 that are unconditionally used in FreeBSDs other system headers :/ */
+	scc_define_symbol(s, "__GNUC__", "2");
+	scc_define_symbol(s, "__GNUC_MINOR__", "7");
+	scc_define_symbol(s, "__builtin_alloca", "alloca");
 #  endif
 # else
-    scc_define_symbol(s, "__WINT_TYPE__", "unsigned int");
-    /* glibc defines */
-    scc_define_symbol(s, "__REDIRECT(name, proto, alias)",
-        "name proto __asm__ (#alias)");
-    scc_define_symbol(s, "__REDIRECT_NTH(name, proto, alias)",
-        "name proto __asm__ (#alias) __THROW");
+	scc_define_symbol(s, "__WINT_TYPE__", "unsigned int");
+	/* glibc defines */
+	scc_define_symbol(s, "__REDIRECT(name, proto, alias)",
+			"name proto __asm__ (#alias)");
+	scc_define_symbol(s, "__REDIRECT_NTH(name, proto, alias)",
+			"name proto __asm__ (#alias) __THROW");
 # endif
 # if defined(SCC_MUSL)
-    scc_define_symbol(s, "__DEFINED_va_list", "");
-    scc_define_symbol(s, "__DEFINED___isoc_va_list", "");
-    scc_define_symbol(s, "__isoc_va_list", "void *");
+	scc_define_symbol(s, "__DEFINED_va_list", "");
+	scc_define_symbol(s, "__DEFINED___isoc_va_list", "");
+	scc_define_symbol(s, "__isoc_va_list", "void *");
 # endif /* SCC_MUSL */
-    /* Some GCC builtins that are simple to express as macros.  */
-    scc_define_symbol(s, "__builtin_extract_return_addr(x)", "x");
-#endif /* ndef SCC_TARGET_PE */
-    return s;
+	/* Some GCC builtins that are simple to express as macros.  */
+	scc_define_symbol(s, "__builtin_extract_return_addr(x)", "x");
+#endif //}
+	return s;
 }
 
 LIBSCCAPI void scc_delete(SCCState *s1)
@@ -884,7 +962,7 @@ LIBSCCAPI void scc_delete(SCCState *s1)
     dynarray_reset(&s1->pragma_libs, &s1->nb_pragma_libs);
     dynarray_reset(&s1->argv, &s1->argc);
 
-#ifdef SCC_IS_NATIVE
+#if __SCC_TARGET_CROSS__==0
     /* free runtime memory */
     scc_run_free(s1);
 #endif
@@ -896,51 +974,53 @@ LIBSCCAPI void scc_delete(SCCState *s1)
 
 LIBSCCAPI int scc_set_output_type(SCCState *s, int output_type)
 {
-    s->output_type = output_type;
+	s->output_type = output_type;
 
-    /* always elf for objects */
-    if (output_type == SCC_OUTPUT_OBJ)
-        s->output_format = SCC_OUTPUT_FORMAT_ELF;
+	/* always elf for objects */
+	if (output_type == SCC_OUTPUT_OBJ)
+		s->output_format = SCC_OUTPUT_FORMAT_ELF;
 
-    if (s->char_is_unsigned)
-        scc_define_symbol(s, "__CHAR_UNSIGNED__", NULL);
+	if (s->char_is_unsigned)
+		scc_define_symbol(s, "__CHAR_UNSIGNED__", NULL);
 
-    if (!s->nostdinc) {
-        /* default include paths */
-        /* -isystem paths have already been handled */
-        scc_add_sysinclude_path(s, CONFIG_SCC_SYSINCLUDEPATHS);
-    }
+	if (!s->nostdinc) {
+		/* default include paths */
+		/* -isystem paths have already been handled */
+		scc_add_sysinclude_path(s, CONFIG_SCC_SYSINCLUDEPATHS);
+	}
 
-    if (s->do_debug) {
-        /* add debug sections */
-        scc_format_stab_new(s);
-    }
+	if (s->do_debug) {
+		/* add debug sections */
+		scc_format_stab_new(s);
+	}
 
-    scc_add_library_path(s, CONFIG_SCC_LIBPATHS);
+	scc_add_library_path(s, CONFIG_SCC_LIBPATHS);
 
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 # ifdef _WIN32
-    if (!s->nostdlib && output_type != SCC_OUTPUT_OBJ)
-        scc_add_systemdir(s);
+	if (!s->nostdlib && output_type != SCC_OUTPUT_OBJ)
+	{
+		scc_add_systemdir(s);
+	}
 # endif
 #else
-    /* paths for crt objects */
-    scc_split_path(s, &s->crt_paths, &s->nb_crt_paths, CONFIG_SCC_CRTPREFIX);
-    /* add libc crt1/crti objects */
-#ifdef SCC_TARGET_MACHO
-		//TODO for apple??
+	/* paths for crt objects */
+	scc_split_path(s, &s->crt_paths, &s->nb_crt_paths, CONFIG_SCC_CRTPREFIX);
+	/* add libc crt1/crti objects */
+#if __SCC_OS_ID__==__SCC_OS_OSX__ //{
+	//TODO
 #else
-    if ((output_type == SCC_OUTPUT_EXE || output_type == SCC_OUTPUT_DLL) &&
-        !s->nostdlib)
-		{
-			if (output_type != SCC_OUTPUT_DLL){
-				scc_add_crt(s, "crt1.o");
-			}
-			scc_add_crt(s, "crti.o");
-    }
-#endif//SCC_TARGET_MACHO
+	if ((output_type == SCC_OUTPUT_EXE || output_type == SCC_OUTPUT_DLL) &&
+			!s->nostdlib)
+	{
+		if (output_type != SCC_OUTPUT_DLL){
+			scc_add_crt(s, "crt1.o");
+		}
+		scc_add_crt(s, "crti.o");
+	}
+#endif//}
 #endif
-    return 0;
+	return 0;
 }
 
 LIBSCCAPI int scc_add_include_path(SCCState *s, const char *pathname)
@@ -955,103 +1035,102 @@ LIBSCCAPI int scc_add_sysinclude_path(SCCState *s, const char *pathname)
     return 0;
 }
 
+//@ref ld_add_file()
 ST_FUNC int scc_add_file_internal(SCCState *s1, const char *filename, int flags)
 {
-    int ret;
+	int ret;
 
-    /* open the file */
-    ret = scc_open(s1, filename);
-    if (ret < 0) {
-        if (flags & AFF_PRINT_ERROR)
-            scc_error_noabort("scc_add_file_internal() file '%s' not found", filename);
-        return ret;
-    }
+	ret = scc_open(s1, filename);
+	if (ret < 0) {
+		if (flags & AFF_PRINT_ERROR)
+			scc_error_noabort("scc_add_file_internal() file '%s' not found", filename);
+		return ret;
+	}
 
-    /* update target deps */
-    dynarray_add(&s1->target_deps, &s1->nb_target_deps,
-            scc_strdup(filename));
+	//dependence
+	dynarray_add(&s1->target_deps, &s1->nb_target_deps, scc_strdup(filename));
 
-    if (flags & AFF_TYPE_BIN) {
-        ElfW(Ehdr) ehdr;
-        int fd, obj_type;
+	if (flags & AFF_TYPE_BIN) {
+		ElfW(Ehdr) ehdr;
+		int fd, obj_type;
 
-        fd = file->fd;
-        obj_type = scc_object_type(fd, &ehdr);
-        SCC(lseek)(fd, 0, SEEK_SET);
+		fd = file->fd;
+		obj_type = scc_object_type(fd, &ehdr);
+		SCC(lseek)(fd, 0, SEEK_SET);
 
-#ifdef SCC_TARGET_MACHO
-        if (0 == obj_type && 0 == SCC(strcmp,int)(scc_fileextension(filename), ".dylib"))
-            obj_type = AFF_BINTYPE_DYN;
-#endif
+#if __SCC_OS_ID__==__SCC_OS_OSX__ //{
+		if (0 == obj_type && 0 == SCC(strcmp,int)(scc_fileextension(filename), ".dylib"))
+			obj_type = AFF_BINTYPE_DYN;
+#endif //}
 
-        switch (obj_type) {
-        case AFF_BINTYPE_REL:
-            ret = scc_load_object_file(s1, fd, 0);
-            break;
-#ifndef SCC_TARGET_PE
-				case AFF_BINTYPE_DYN://NOTES: mostly .dylib from above, .so from scc_object_type()
-            if (s1->output_type == SCC_OUTPUT_MEMORY) {
-                ret = 0;
-#ifdef SCC_IS_NATIVE
-								//using libdl directly for sccrun...
-                if (NULL == scc_dlopen(filename))
-                    ret = -1;
-#endif
-						} else {
-							//scc_load_dylib or support MACHO ...
-							//ret = scc_load_dylib(s1, fd, filename, (flags & AFF_REFERENCED_DLL) != 0);
-							//@ref scc-$FORMAT
-							ret = scc_load_dll(s1, fd, filename, (flags & AFF_REFERENCED_DLL) != 0);
-						}
-            break;
-#endif
-        case AFF_BINTYPE_AR:
-            ret = scc_load_archive(s1, fd, !(flags & AFF_WHOLE_ARCHIVE));
-            break;
-//#ifdef SCC_TARGET_COFF
-//        case AFF_BINTYPE_C67:
-//            ret = scc_load_coff(s1, fd);
-//            break;
-//#endif
-        default:
-#ifdef SCC_TARGET_PE
-            ret = pe_load_file(s1, filename, fd);
+		switch (obj_type) {
+			case AFF_BINTYPE_REL:
+				ret = scc_load_object_file(s1, fd, 0);
+				break;
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 #else
-            /* as GNU ld, consider it is an ld script if not recognized */
-            ret = scc_load_ldscript(s1);
+			case AFF_BINTYPE_DYN://NOTES: mostly .dylib from above, .so from scc_object_type()
+				if (s1->output_type == SCC_OUTPUT_MEMORY) {
+					ret = 0;
+#if __SCC_TARGET_CROSS__==0
+					//using libdl directly for sccrun...
+					if (NULL == scc_dlopen(filename))
+						ret = -1;
 #endif
-            if (ret < 0)
-                scc_error_noabort("unrecognized file type");
-            break;
-        }
-    } else {
-        ret = scc_compile(s1, flags);
-    }
-    scc_close();
-    return ret;
-}
+				} else {
+					//scc_load_dylib or support MACHO ...
+					//ret = scc_load_dylib(s1, fd, filename, (flags & AFF_REFERENCED_DLL) != 0);
+					//@ref scc-$FORMAT
+					ret = scc_load_dll(s1, fd, filename, (flags & AFF_REFERENCED_DLL) != 0);
+				}
+				break;
+#endif
+			case AFF_BINTYPE_AR:
+				ret = scc_load_archive(s1, fd, !(flags & AFF_WHOLE_ARCHIVE));
+				break;
+			default:
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
+				ret = pe_load_file(s1, filename, fd);
+#else
+				/* as GNU ld, consider it is an ld script if not recognized */
+				ret = scc_load_ldscript(s1);
+#endif
+				if (ret < 0)
+					scc_error_noabort("unrecognized file type");
+				break;
+		}
+	} else {
+		ret = scc_compile(s1, flags);
+	}
+	scc_close();
+	return ret;
+}//scc_add_file_internal()
 
 LIBSCCAPI int scc_add_file(SCCState *s, const char *filename)
 {
-    int filetype = s->filetype;
-    if (0 == (filetype & AFF_TYPE_MASK)) {
-        /* use a file extension to detect a filetype */
-        const char *ext = scc_fileextension(filename);
-        if (ext[0]) {
-            ext++;
-            if (!SCC(strcmp,int)(ext, "S"))
-                filetype = AFF_TYPE_ASMPP;
-            else if (!SCC(strcmp,int)(ext, "s"))
-                filetype = AFF_TYPE_ASM;
-            else if (!PATHCMP(ext, "c") || !PATHCMP(ext, "i"))
-                filetype = AFF_TYPE_C;
-            else
-                filetype |= AFF_TYPE_BIN;
-        } else {
-            filetype = AFF_TYPE_C;
-        }
-    }
-    return scc_add_file_internal(s, filename, filetype | AFF_PRINT_ERROR);
+	int filetype = s->filetype;
+	if (0 == (filetype & AFF_TYPE_MASK)) {
+		//if not indicated by the caller, then try guessing from file extension
+		const char *ext = scc_fileextension(filename);
+		if (ext[0]) {
+			ext++;
+			if (!SCC(strcmp,int)(ext, "S")) {
+				filetype = AFF_TYPE_ASMPP;
+			} else if (!SCC(strcmp,int)(ext, "s")) {
+				filetype = AFF_TYPE_ASM;
+			}else if(!PATHCMP(ext, "c")|| !PATHCMP(ext, "h")|| !PATHCMP(ext, "i")){
+				//The .i files are also called as "Pure C files
+				filetype = AFF_TYPE_C;
+			} else if (!SCC(strcmp,int)(ext, "sao")){
+				//default using sao-lang-handler
+				filetype = AFF_TYPE_SAO;
+			} else
+				filetype |= AFF_TYPE_BIN;
+		} else { //default as c
+			filetype = AFF_TYPE_C;
+		}
+	}
+	return scc_add_file_internal(s, filename, filetype | AFF_PRINT_ERROR);
 }
 
 LIBSCCAPI int scc_add_library_path(SCCState *s, const char *pathname)
@@ -1093,10 +1172,10 @@ ST_FUNC int scc_add_crt(SCCState *s, const char *filename)
 /* the library name is the same as the argument of the '-l' option */
 LIBSCCAPI int scc_add_library(SCCState *s, const char *libraryname)
 {
-#if defined SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     const char *libs[] = { "%s/%s.def", "%s/lib%s.def", "%s/%s.dll", "%s/lib%s.dll", "%s/lib%s.a", NULL };
     const char **pp = s->static_link ? libs + 4 : libs;
-#elif defined SCC_TARGET_MACHO
+#elif __SCC_OS_ID__==__SCC_OS_OSX__
     const char *libs[] = { "%s/lib%s.dylib", "%s/lib%s.a", NULL };
     const char **pp = s->static_link ? libs + 1 : libs;
 #else
@@ -1131,7 +1210,7 @@ ST_FUNC void scc_add_pragma_libs(SCCState *s1)
 
 LIBSCCAPI int scc_add_symbol(SCCState *s, const char *name, const void *val)
 {
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     /* On x86_64 'val' might not be reachable with a 32bit offset.
        So it is handled here as if it were in a DLL. */
     pe_putimport(s, 0, name, (uintptr_t)val);
@@ -1286,112 +1365,111 @@ static void copy_linker_arg(char **pp, const char *s, int sep)
 /* set linker options */
 static int scc_set_linker(SCCState *s, const char *option)
 {
-    while (*option) {
+	while (*option) {
 
-        const char *p = NULL;
-        char *end = NULL;
-        int ignoring = 0;
-        int ret;
+		const char *p = NULL;
+		char *end = NULL;
+		int ignoring = 0;
+		int ret;
 
-        if (link_option(option, "Bsymbolic", &p)) {
-            s->symbolic = 1;
-        } else if (link_option(option, "nostdlib", &p)) {
-            s->nostdlib = 1;
-        } else if (link_option(option, "fini=", &p)) {
-            copy_linker_arg(&s->fini_symbol, p, 0);
-            ignoring = 1;
-        } else if (link_option(option, "image-base=", &p)
-                || link_option(option, "Ttext=", &p)) {
-            s->text_addr = SCC(strtoull,unsigned long long)(p, &end, 16);
-            s->has_text_addr = 1;
-        } else if (link_option(option, "init=", &p)) {
-            copy_linker_arg(&s->init_symbol, p, 0);
-            ignoring = 1;
-        } else if (link_option(option, "oformat=", &p)) {
-#if defined(SCC_TARGET_PE)
-            if (strstart("pe-", &p)) {
+		if (link_option(option, "Bsymbolic", &p)) {
+			s->symbolic = 1;
+		} else if (link_option(option, "nostdlib", &p)) {
+			s->nostdlib = 1;
+		} else if (link_option(option, "fini=", &p)) {
+			copy_linker_arg(&s->fini_symbol, p, 0);
+			ignoring = 1;
+		} else if (link_option(option, "image-base=", &p)
+				|| link_option(option, "Ttext=", &p)) {
+			s->text_addr = SCC(strtoull,unsigned long long)(p, &end, 16);
+			s->has_text_addr = 1;
+		} else if (link_option(option, "init=", &p)) {
+			copy_linker_arg(&s->init_symbol, p, 0);
+			ignoring = 1;
+		} else if (link_option(option, "oformat=", &p)) {
+			if(
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
+					strstart("pe-", &p)
 #elif PTR_SIZE == 8
-            if (strstart("elf64-", &p)) {
+					strstart("elf64-", &p)
 #else
-            if (strstart("elf32-", &p)) {
+					strstart("elf32-", &p)
 #endif
-                s->output_format = SCC_OUTPUT_FORMAT_ELF;
-            } else if (!SCC(strcmp,int)(p, "binary")) {
-                s->output_format = SCC_OUTPUT_FORMAT_BINARY;
-//#ifdef SCC_TARGET_COFF
-//            } else if (!SCC(strcmp,int)(p, "coff")) {
-//                s->output_format = SCC_OUTPUT_FORMAT_COFF;
-//#endif
-            } else
-                goto err;
+				){ 
+				s->output_format = SCC_OUTPUT_FORMAT_ELF;
+			} else if (!SCC(strcmp,int)(p, "binary")) {
+				s->output_format = SCC_OUTPUT_FORMAT_BINARY;
+			} else
+				goto err;
 
-        } else if (link_option(option, "as-needed", &p)) {
-            ignoring = 1;
-        } else if (link_option(option, "O", &p)) {
-            ignoring = 1;
-        } else if (link_option(option, "export-all-symbols", &p)) {
-            s->rdynamic = 1;
-        } else if (link_option(option, "export-dynamic", &p)) {
-            s->rdynamic = 1;
-        } else if (link_option(option, "rpath=", &p)) {
-            copy_linker_arg(&s->rpath, p, ':');
-        } else if (link_option(option, "enable-new-dtags", &p)) {
-            s->enable_new_dtags = 1;
-        } else if (link_option(option, "section-alignment=", &p)) {
-            s->section_align = SCC(strtoul,unsigned)(p, &end, 16);
-        } else if (link_option(option, "soname=", &p)) {
-            copy_linker_arg(&s->soname, p, 0);
-#ifdef SCC_TARGET_PE
-        } else if (link_option(option, "large-address-aware", &p)) {
-            s->pe_characteristics |= 0x20;
-        } else if (link_option(option, "file-alignment=", &p)) {
-            s->pe_file_align = SCC(strtoul,unsigned)(p, &end, 16);
-        } else if (link_option(option, "stack=", &p)) {
-            s->pe_stack_size = SCC(strtoul,unsigned)(p, &end, 10);
-        } else if (link_option(option, "subsystem=", &p)) {
-#if defined(SCC_TARGET_I386) || defined(SCC_TARGET_X86_64)
-            if (!SCC(strcmp,int)(p, "native")) {
-                s->pe_subsystem = 1;
-            } else if (!SCC(strcmp,int)(p, "console")) {
-                s->pe_subsystem = 3;
-            } else if (!SCC(strcmp,int)(p, "gui") || !SCC(strcmp,int)(p, "windows")) {
-                s->pe_subsystem = 2;
-            } else if (!SCC(strcmp,int)(p, "posix")) {
-                s->pe_subsystem = 7;
-            } else if (!SCC(strcmp,int)(p, "efiapp")) {
-                s->pe_subsystem = 10;
-            } else if (!SCC(strcmp,int)(p, "efiboot")) {
-                s->pe_subsystem = 11;
-            } else if (!SCC(strcmp,int)(p, "efiruntime")) {
-                s->pe_subsystem = 12;
-            } else if (!SCC(strcmp,int)(p, "efirom")) {
-                s->pe_subsystem = 13;
-#elif defined(SCC_TARGET_ARM)
-            if (!SCC(strcmp,int)(p, "wince")) {
-                s->pe_subsystem = 9;
+		} else if (link_option(option, "as-needed", &p)) {
+			ignoring = 1;
+		} else if (link_option(option, "O", &p)) {
+			ignoring = 1;
+		} else if (link_option(option, "export-all-symbols", &p)) {
+			s->rdynamic = 1;
+		} else if (link_option(option, "export-dynamic", &p)) {
+			s->rdynamic = 1;
+		} else if (link_option(option, "rpath=", &p)) {
+			copy_linker_arg(&s->rpath, p, ':');
+		} else if (link_option(option, "enable-new-dtags", &p)) {
+			s->enable_new_dtags = 1;
+		} else if (link_option(option, "section-alignment=", &p)) {
+			s->section_align = SCC(strtoul,unsigned)(p, &end, 16);
+		} else if (link_option(option, "soname=", &p)) {
+			copy_linker_arg(&s->soname, p, 0);
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
+		} else if (link_option(option, "large-address-aware", &p)) {
+			s->pe_characteristics |= 0x20;
+		} else if (link_option(option, "file-alignment=", &p)) {
+			s->pe_file_align = SCC(strtoul,unsigned)(p, &end, 16);
+		} else if (link_option(option, "stack=", &p)) {
+			s->pe_stack_size = SCC(strtoul,unsigned)(p, &end, 10);
+		} else if (link_option(option, "subsystem=", &p)) {
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ //{
+			if (!SCC(strcmp,int)(p, "native")) {
+				s->pe_subsystem = 1;
+			} else if (!SCC(strcmp,int)(p, "console")) {
+				s->pe_subsystem = 3;
+			} else if (!SCC(strcmp,int)(p, "gui") || !SCC(strcmp,int)(p, "windows")) {
+				s->pe_subsystem = 2;
+			} else if (!SCC(strcmp,int)(p, "posix")) {
+				s->pe_subsystem = 7;
+			} else if (!SCC(strcmp,int)(p, "efiapp")) {
+				s->pe_subsystem = 10;
+			} else if (!SCC(strcmp,int)(p, "efiboot")) {
+				s->pe_subsystem = 11;
+			} else if (!SCC(strcmp,int)(p, "efiruntime")) {
+				s->pe_subsystem = 12;
+			} else if (!SCC(strcmp,int)(p, "efirom")) {
+				s->pe_subsystem = 13;
+			}
+#elif (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
+			else if (!SCC(strcmp,int)(p, "wince")) {
+				s->pe_subsystem = 9;
+			}
 #endif
-            } else
-                goto err;
-#endif
-        } else if (ret = link_option(option, "?whole-archive", &p), ret) {
-            if (ret > 0)
-                s->filetype |= AFF_WHOLE_ARCHIVE;
-            else
-                s->filetype &= ~AFF_WHOLE_ARCHIVE;
-        } else if (p) {
-            return 0;
-        } else {
-    err:
-            scc_error("unsupported linker option '%s'", option);
-        }
+			else goto err;
+#endif //}
+		} else if (ret = link_option(option, "?whole-archive", &p), ret) {
+			if (ret > 0)
+				s->filetype |= AFF_WHOLE_ARCHIVE;
+			else
+				s->filetype &= ~AFF_WHOLE_ARCHIVE;
+		} else if (p) {
+			return 0;
+		} else {
+err:
+			scc_error("unsupported linker option '%s'", option);
+		}
 
-        if (ignoring && s->warn_unsupported)
-            scc_warning("unsupported linker option '%s'", option);
+		if (ignoring && s->warn_unsupported)
+			scc_warning("unsupported linker option '%s'", option);
 
-        option = skip_linker_arg(&p);
-    }
-    return 1;
-}
+		option = skip_linker_arg(&p);
+	}//while
+	return 1;
+}//scc_set_linker
 
 typedef struct SCCOption {
     const char *name;
@@ -1494,7 +1572,7 @@ static const SCCOption scc_options[] = {
     { "Wp,", SCC_OPTION_Wp, SCC_OPTION_HAS_ARG | SCC_OPTION_NOSEP },
     { "W", SCC_OPTION_W, SCC_OPTION_HAS_ARG | SCC_OPTION_NOSEP },
     { "O", SCC_OPTION_O, SCC_OPTION_HAS_ARG | SCC_OPTION_NOSEP },
-#ifdef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
     { "mfloat-abi", SCC_OPTION_mfloat_abi, SCC_OPTION_HAS_ARG },
 #endif
     { "m", SCC_OPTION_m, SCC_OPTION_HAS_ARG | SCC_OPTION_NOSEP },
@@ -1511,7 +1589,7 @@ static const SCCOption scc_options[] = {
     { "MF", SCC_OPTION_MF, SCC_OPTION_HAS_ARG },
     { "x", SCC_OPTION_x, SCC_OPTION_HAS_ARG },
     { "ar", SCC_OPTION_ar, 0},
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     { "impdef", SCC_OPTION_impdef, 0},
 #endif
     { NULL, 0, 0 },
@@ -1540,7 +1618,7 @@ static const FlagDef options_f[] = {
 
 static const FlagDef options_m[] = {
     { offsetof(SCCState, ms_bitfields), 0, "ms-bitfields" },
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
     { offsetof(SCCState, nosse), FD_INVERT, "sse" },
 #endif
     { 0, 0, NULL }
@@ -1626,293 +1704,309 @@ static void args_parser_listfile(SCCState *s,
 
 PUB_FUNC int scc_parse_args(SCCState *s, int *pargc, char ***pargv, int optind)
 {
-    const SCCOption *popt=NULL;
-    const char *optarg, *r;
-    const char *run = NULL;
-    int last_o = -1;
-    int x;
-    CString linker_arg; /* collect -Wl options */
-    int tool = 0, arg_start = 0, noaction = optind;
-    char **argv = *pargv;
-    int argc = *pargc;
+	const SCCOption *popt=NULL;
+	const char *optarg, *r;
+	const char *run = NULL;
+	int last_o = -1;
+	int x;
+	CString linker_arg; /* collect -Wl options */
+	int tool = 0, arg_start = 0, noaction = optind;
+	char **argv = *pargv;
+	int argc = *pargc;
 
-    cstr_new(&linker_arg);
+	cstr_new(&linker_arg);
 
-    while (optind < argc) {
-        r = argv[optind];
-        if (r[0] == '@' && r[1] != '\0') {
-            args_parser_listfile(s, r + 1, optind, &argc, &argv);
-	    continue;
-        }
-        optind++;
-        if (tool) {
-            if (r[0] == '-' && r[1] == 'v' && r[2] == 0)
-                ++s->verbose;
-            continue;
-        }
+	while (optind < argc) {
+		r = argv[optind];
+		if (r[0] == '@' && r[1] != '\0') {
+			args_parser_listfile(s, r + 1, optind, &argc, &argv);
+			continue;
+		}
+		optind++;
+		if (tool) {
+			if (r[0] == '-' && r[1] == 'v' && r[2] == 0)
+				++s->verbose;
+			continue;
+		}
 reparse:
-        if (r[0] != '-' || r[1] == '\0') {
-            if (r[0] != '@') /* allow "scc file(s) -run @ args ..." */
-                args_parser_add_file(s, r, s->filetype);
-            if (run) {
-                scc_set_options(s, run);
-                arg_start = optind - 1;
-                break;
-            }
-            continue;
-        }
+		if (r[0] != '-' || r[1] == '\0') {
+			if (r[0] != '@') /* allow "scc file(s) -run @ args ..." */
+				args_parser_add_file(s, r, s->filetype);
+			if (run) {
+				scc_set_options(s, run);
+				arg_start = optind - 1;
+				break;
+			}
+			continue;
+		}
 
-        /* find option in table */
-        for(popt = scc_options; ; ++popt) {
-            const char *p1 = popt->name;
-            const char *r1 = r + 1;
-            if (p1 == NULL)
-                scc_error("invalid option -- '%s'", r);
-            if (!strstart(p1, &r1))
-                continue;
-            optarg = r1;
-            if (popt->flags & SCC_OPTION_HAS_ARG) {
-                if (*r1 == '\0' && !(popt->flags & SCC_OPTION_NOSEP)) {
-                    if (optind >= argc)
-                arg_err:
-                        scc_error("argument to '%s' is missing", r);
-                    optarg = argv[optind++];
-                }
-            } else if (*r1 != '\0')
-                continue;
-            break;
-        }
+		/* find option in table */
+		for(popt = scc_options; ; ++popt) {
+			const char *p1 = popt->name;
+			const char *r1 = r + 1;
+			if (p1 == NULL)
+				scc_error("invalid option -- '%s'", r);
+			if (!strstart(p1, &r1))
+				continue;
+			optarg = r1;
+			if (popt->flags & SCC_OPTION_HAS_ARG) {
+				if (*r1 == '\0' && !(popt->flags & SCC_OPTION_NOSEP)) {
+					if (optind >= argc)
+						arg_err:
+							scc_error("argument to '%s' is missing", r);
+					optarg = argv[optind++];
+				}
+			} else if (*r1 != '\0')
+				continue;
+			break;
+		}
 
-        switch(popt->index) {
-        case SCC_OPTION_HELP:
-            return OPT_HELP;
-        case SCC_OPTION_HELP2:
-            return OPT_HELP2;
-        case SCC_OPTION_I:
-            scc_add_include_path(s, optarg);
-            break;
-        case SCC_OPTION_D:
-            parse_option_D(s, optarg);
-            break;
-        case SCC_OPTION_U:
-            scc_undefine_symbol(s, optarg);
-            break;
-        case SCC_OPTION_L:
-            scc_add_library_path(s, optarg);
-            break;
-        case SCC_OPTION_B:
-            /* set scc utilities path (mainly for scc development) */
-            scc_set_lib_path(s, optarg);
-            break;
-        case SCC_OPTION_l:
-            args_parser_add_file(s, optarg, AFF_TYPE_LIB | (s->filetype & ~AFF_TYPE_MASK));
-            s->nb_libraries++;
-            break;
-        case SCC_OPTION_pthread:
-            parse_option_D(s, "_REENTRANT");
-            s->option_pthread = 1;
-            break;
-        case SCC_OPTION_bench:
-            s->do_bench = 1;
-            break;
+		switch(popt->index) {
+			case SCC_OPTION_HELP:
+				return OPT_HELP;
+			case SCC_OPTION_HELP2:
+				return OPT_HELP2;
+			case SCC_OPTION_I:
+				scc_add_include_path(s, optarg);
+				break;
+			case SCC_OPTION_D:
+				parse_option_D(s, optarg);
+				break;
+			case SCC_OPTION_U:
+				scc_undefine_symbol(s, optarg);
+				break;
+			case SCC_OPTION_L://-L
+				scc_add_library_path(s, optarg);
+				break;
+			case SCC_OPTION_B:
+				/* set scc utilities path (mainly for scc development) */
+				scc_set_lib_path(s, optarg);
+				break;
+			case SCC_OPTION_l://-l??
+				args_parser_add_file(s, optarg, AFF_TYPE_LIB | (s->filetype & ~AFF_TYPE_MASK));
+				s->nb_libraries++;
+				break;
+			case SCC_OPTION_pthread:
+				parse_option_D(s, "_REENTRANT");
+				s->option_pthread = 1;
+				break;
+			case SCC_OPTION_bench:
+				s->do_bench = 1;
+				break;
 #ifdef CONFIG_SCC_BACKTRACE
-        case SCC_OPTION_bt:
-            scc_set_num_callers(SCC(atoi,int)(optarg));
-            break;
+			case SCC_OPTION_bt:
+				scc_set_num_callers(SCC(atoi,int)(optarg));
+				break;
 #endif
-        case SCC_OPTION_g:
-            s->do_debug = 1;
-            break;
-        case SCC_OPTION_c:
-            x = SCC_OUTPUT_OBJ;
-        set_output_type:
-            if (s->output_type)
-                scc_warning("-%s: overriding compiler action already specified", popt->name);
-            s->output_type = x;
-            break;
-        case SCC_OPTION_d:
-            if (*optarg == 'D')
-                s->dflag = 3;
-            else if (*optarg == 'M')
-                s->dflag = 7;
-            else if (*optarg == 't')
-                s->dflag = 16;
-            else if (isnum(*optarg))
-                g_debug = SCC(atoi,int)(optarg);
-            else
-                goto unsupported_option;
-            break;
-        case SCC_OPTION_static:
-            s->static_link = 1;
-            break;
-        case SCC_OPTION_std:
-    	    /* silently ignore, a current purpose:
-    	       allow to use a scc as a reference compiler for "make test" */
-            break;
-        case SCC_OPTION_shared:
-            x = SCC_OUTPUT_DLL;
-            goto set_output_type;
-        case SCC_OPTION_soname:
-            s->soname = scc_strdup(optarg);
-            break;
-        case SCC_OPTION_o:
-            if (s->outfile) {
-                scc_warning("multiple -o option");
-                scc_free(s->outfile);
-            }
-            s->outfile = scc_strdup(optarg);
-            break;
-        case SCC_OPTION_r:
-            /* generate a .o merging several output files */
-            s->option_r = 1;
-            x = SCC_OUTPUT_OBJ;
-            goto set_output_type;
-        case SCC_OPTION_isystem:
-            scc_add_sysinclude_path(s, optarg);
-            break;
-	case SCC_OPTION_include:
-	    dynarray_add(&s->cmd_include_files,
-			 &s->nb_cmd_include_files, scc_strdup(optarg));
-	    break;
-        case SCC_OPTION_nostdinc:
-            s->nostdinc = 1;
-            break;
-        case SCC_OPTION_nostdlib:
-            s->nostdlib = 1;
-            break;
-        case SCC_OPTION_run:
-#ifndef SCC_IS_NATIVE
-            scc_error("-run is not available in a cross compiler");
+			case SCC_OPTION_g:
+				s->do_debug = 1;
+				break;
+			case SCC_OPTION_c:
+				x = SCC_OUTPUT_OBJ;
+set_output_type:
+				if (s->output_type)
+					scc_warning("-%s: overriding compiler action already specified", popt->name);
+				s->output_type = x;
+				break;
+			case SCC_OPTION_d:
+				if (*optarg == 'D')
+					s->dflag = 3;
+				else if (*optarg == 'M')
+					s->dflag = 7;
+				else if (*optarg == 't')
+					s->dflag = 16;
+				else if (isnum(*optarg))
+					g_debug = SCC(atoi,int)(optarg);
+				else
+					goto unsupported_option;
+				break;
+			case SCC_OPTION_static:
+				s->static_link = 1;
+				break;
+			case SCC_OPTION_std:
+				/* silently ignore, a current purpose:
+					 allow to use a scc as a reference compiler for "make test" */
+				break;
+			case SCC_OPTION_shared:
+				x = SCC_OUTPUT_DLL;
+				goto set_output_type;
+			case SCC_OPTION_soname:
+				s->soname = scc_strdup(optarg);
+				break;
+			case SCC_OPTION_o:
+				if (s->outfile) {
+					scc_warning("multiple -o option");
+					scc_free(s->outfile);
+				}
+				s->outfile = scc_strdup(optarg);
+				break;
+			case SCC_OPTION_r:
+				/* generate a .o merging several output files */
+				s->option_r = 1;
+				x = SCC_OUTPUT_OBJ;
+				goto set_output_type;
+			case SCC_OPTION_isystem:
+				scc_add_sysinclude_path(s, optarg);
+				break;
+			case SCC_OPTION_include:
+				dynarray_add(&s->cmd_include_files,
+						&s->nb_cmd_include_files, scc_strdup(optarg));
+				break;
+			case SCC_OPTION_nostdinc:
+				s->nostdinc = 1;
+				break;
+			case SCC_OPTION_nostdlib:
+				s->nostdlib = 1;
+				break;
+			case SCC_OPTION_run:
+#if __SCC_TARGET_CROSS__==1
+				scc_warning("%s = %s", "__SCC_TARGET_CPU__", SCC_QUOTE(__SCC_TARGET_CPU__));
+				scc_warning("%s = %s", "__SCC_TARGET_OS__", SCC_QUOTE(__SCC_TARGET_OS__));
+				scc_warning("%s = %s", "__SCC_TARGET_FORMAT__", SCC_QUOTE(__SCC_TARGET_FORMAT__));
+				scc_warning("%s = %s", "__SCC_TARGET_CPU_BIT__", SCC_QUOTE(__SCC_TARGET_CPU_BIT__));
+
+				scc_warning("%s = %s", "__SCC_CPU__", SCC_QUOTE(__SCC_CPU__));
+				scc_warning("%s = %s", "__SCC_OS__", SCC_QUOTE(__SCC_OS__));
+				scc_warning("%s = %s", "__SCC_OS_FORMAT__", SCC_QUOTE(__SCC_OS_FORMAT__));
+				scc_warning("%s = %s", "__SCC_CPU_BIT__", SCC_QUOTE(__SCC_CPU_BIT__));
+
+				scc_warning("%s,%s,%s,%s", "__SCC_OS_ID__,__SCC_TARGET_OS_ID__", SCC_QUOTE(__SCC_OS_ID__),SCC_QUOTE(__SCC_TARGET_OS_ID__));
+				scc_warning("%s,%s,%s,%s", "__SCC_CPU_ID__,__SCC_TARGET_CPU_ID__", SCC_QUOTE(__SCC_CPU_ID__),SCC_QUOTE(__SCC_TARGET_CPU_ID__));
+				scc_warning("%s,%s,%s,%s", "__SCC_OS_FORMAT_ID__,__SCC_TARGET_FORMAT_ID__", SCC_QUOTE(__SCC_OS_FORMAT_ID__),SCC_QUOTE(__SCC_TARGET_FORMAT_ID__));
+				//scc_error("-run is not available in a cross compiler");
+				scc_warning("-run might work fail for cross compiler!");
 #endif
-            run = optarg;
-            x = SCC_OUTPUT_MEMORY;
-            goto set_output_type;
-        case SCC_OPTION_v:
-            do ++s->verbose; while (*optarg++ == 'v');
-            ++noaction;
-            break;
-        case SCC_OPTION_f:
-            if (set_flag(s, options_f, optarg) < 0)
-                goto unsupported_option;
-            break;
-#ifdef SCC_TARGET_ARM
-        case SCC_OPTION_mfloat_abi:
-            /* scc doesn't support soft float yet */
-            if (!SCC(strcmp,int)(optarg, "softfp")) {
-                s->float_abi = ARM_SOFTFP_FLOAT;
-                scc_undefine_symbol(s, "__ARM_PCS_VFP");
-            } else if (!SCC(strcmp,int)(optarg, "hard"))
-                s->float_abi = ARM_HARD_FLOAT;
-            else
-                scc_error("unsupported float abi '%s'", optarg);
-            break;
+				run = optarg;
+				x = SCC_OUTPUT_MEMORY;
+				goto set_output_type;
+			case SCC_OPTION_v:
+				do ++s->verbose; while (*optarg++ == 'v');
+				++noaction;
+				break;
+			case SCC_OPTION_f:
+				if (set_flag(s, options_f, optarg) < 0)
+					goto unsupported_option;
+				break;
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
+			case SCC_OPTION_mfloat_abi:
+				//TODO doesn't support soft float yet
+				if (!SCC(strcmp,int)(optarg, "softfp")) {
+					s->float_abi = ARM_SOFTFP_FLOAT;
+					scc_undefine_symbol(s, "__ARM_PCS_VFP");
+				} else if (!SCC(strcmp,int)(optarg, "hard"))
+					s->float_abi = ARM_HARD_FLOAT;
+				else
+					scc_error("unsupported float abi '%s'", optarg);
+				break;
 #endif
-        case SCC_OPTION_m:
-            if (set_flag(s, options_m, optarg) < 0) {
-                if (x = SCC(atoi,int)(optarg), x != 32 && x != 64)
-                    goto unsupported_option;
-                if (PTR_SIZE != x/8)
-                    return x;
-                ++noaction;
-            }
-            break;
-        case SCC_OPTION_W:
-            if (set_flag(s, options_W, optarg) < 0)
-                goto unsupported_option;
-            break;
-        case SCC_OPTION_w:
-            s->warn_none = 1;
-            break;
-        case SCC_OPTION_rdynamic:
-            s->rdynamic = 1;
-            break;
-        case SCC_OPTION_Wl:
-            if (linker_arg.size)
-                --linker_arg.size, cstr_ccat(&linker_arg, ',');
-            cstr_cat(&linker_arg, optarg, 0);
-            if (scc_set_linker(s, linker_arg.data))
-                cstr_free(&linker_arg);
-            break;
-	case SCC_OPTION_Wp:
-	    r = optarg;
-	    goto reparse;
-        case SCC_OPTION_E:
-            x = SCC_OUTPUT_PREPROCESS;
-            goto set_output_type;
-        case SCC_OPTION_P:
-            s->Pflag = SCC(atoi,int)(optarg) + 1;
-            break;
-        case SCC_OPTION_MD:
-            s->gen_deps = 1;
-            break;
-        case SCC_OPTION_MF:
-            s->deps_outfile = scc_strdup(optarg);
-            break;
-        case SCC_OPTION_dumpversion:
-           SCC(printf)("%s\n", SCC_VERSION);
-            SCC(exit)(0);
-            break;
-        case SCC_OPTION_x:
-            x = 0;
-            if (*optarg == 'c')
-                x = AFF_TYPE_C;
-            else if (*optarg == 'a')
-                x = AFF_TYPE_ASMPP;
-            else if (*optarg == 'b')
-                x = AFF_TYPE_BIN;
-            else if (*optarg == 'n')
-                x = AFF_TYPE_NONE;
-            else
-                scc_warning("unsupported language '%s'", optarg);
-            s->filetype = x | (s->filetype & ~AFF_TYPE_MASK);
-            break;
-        case SCC_OPTION_O:
-            last_o = SCC(atoi,int)(optarg);
-            break;
-        case SCC_OPTION_print_search_dirs:
-            x = OPT_PRINT_DIRS;
-            goto extra_action;
-        case SCC_OPTION_impdef:
-            x = OPT_IMPDEF;
-            goto extra_action;
-        case SCC_OPTION_ar:
-            x = OPT_AR;
-        extra_action:
-            arg_start = optind - 1;
-            if (arg_start != noaction)
-                scc_error("cannot parse %s here", r);
-            tool = x;
-            break;
-        case SCC_OPTION_traditional:
-        case SCC_OPTION_pedantic:
-        case SCC_OPTION_pipe:
-        case SCC_OPTION_s:
-            /* ignored */
-            break;
-        default:
+			case SCC_OPTION_m:
+				if (set_flag(s, options_m, optarg) < 0) {
+					if (x = SCC(atoi,int)(optarg), x != 32 && x != 64)
+						goto unsupported_option;
+					if (PTR_SIZE != x/8)
+						return x;
+					++noaction;
+				}
+				break;
+			case SCC_OPTION_W:
+				if (set_flag(s, options_W, optarg) < 0)
+					goto unsupported_option;
+				break;
+			case SCC_OPTION_w:
+				s->warn_none = 1;
+				break;
+			case SCC_OPTION_rdynamic:
+				s->rdynamic = 1;
+				break;
+			case SCC_OPTION_Wl:
+				if (linker_arg.size)
+					--linker_arg.size, cstr_ccat(&linker_arg, ',');
+				cstr_cat(&linker_arg, optarg, 0);
+				if (scc_set_linker(s, linker_arg.data))
+					cstr_free(&linker_arg);
+				break;
+			case SCC_OPTION_Wp:
+				r = optarg;
+				goto reparse;
+			case SCC_OPTION_E:
+				x = SCC_OUTPUT_PREPROCESS;
+				goto set_output_type;
+			case SCC_OPTION_P:
+				s->Pflag = SCC(atoi,int)(optarg) + 1;
+				break;
+			case SCC_OPTION_MD:
+				s->gen_deps = 1;
+				break;
+			case SCC_OPTION_MF:
+				s->deps_outfile = scc_strdup(optarg);
+				break;
+			case SCC_OPTION_dumpversion:
+				SCC(printf)("%s\n", SCC_VERSION);
+				SCC(exit)(0);
+				break;
+			case SCC_OPTION_x:
+				x = 0;
+				if (*optarg == 'c')
+					x = AFF_TYPE_C;
+				else if (*optarg == 'a')
+					x = AFF_TYPE_ASMPP;
+				else if (*optarg == 'b')
+					x = AFF_TYPE_BIN;
+				else if (*optarg == 's')
+					x = AFF_TYPE_SAO;
+				else if (*optarg == 'n')
+					x = AFF_TYPE_NONE;
+				else
+					scc_warning("unsupported language -x '%s'", optarg);
+				s->filetype = x | (s->filetype & ~AFF_TYPE_MASK);
+				break;
+			case SCC_OPTION_O:
+				last_o = SCC(atoi,int)(optarg);
+				break;
+			case SCC_OPTION_print_search_dirs:
+				x = OPT_PRINT_DIRS;
+				goto extra_action;
+			case SCC_OPTION_impdef:
+				x = OPT_IMPDEF;
+				goto extra_action;
+			case SCC_OPTION_ar:
+				x = OPT_AR;
+extra_action:
+				arg_start = optind - 1;
+				if (arg_start != noaction)
+					scc_error("cannot parse %s here", r);
+				tool = x;
+				break;
+			case SCC_OPTION_traditional:
+			case SCC_OPTION_pedantic:
+			case SCC_OPTION_pipe:
+			case SCC_OPTION_s:
+				/* ignored */
+				break;
+			default:
 unsupported_option:
-            if (s->warn_unsupported)
-                scc_warning("unsupported option '%s'", r);
-            break;
-        }
-    }
-    if (last_o > 0)
-        scc_define_symbol(s, "__OPTIMIZE__", NULL);
-    if (linker_arg.size) {
-        r = linker_arg.data;
-        goto arg_err;
-    }
-    *pargc = argc - arg_start;
-    *pargv = argv + arg_start;
-    if (tool)
-        return tool;
-    if (optind != noaction)
-        return 0;
-    if (s->verbose == 2)
-        return OPT_PRINT_DIRS;
-    if (s->verbose)
-        return OPT_V;
-    return OPT_HELP;
+				if (s->warn_unsupported)
+					scc_warning("unsupported option '%s'", r);
+				break;
+		}
+	}
+	if (last_o > 0)
+		scc_define_symbol(s, "__OPTIMIZE__", NULL);
+	if (linker_arg.size) {
+		r = linker_arg.data;
+		goto arg_err;
+	}
+	*pargc = argc - arg_start;
+	*pargv = argv + arg_start;
+	if (tool)
+		return tool;
+	if (optind != noaction)
+		return 0;
+	if (s->verbose == 2)
+		return OPT_PRINT_DIRS;
+	if (s->verbose)
+		return OPT_V;
+	return OPT_HELP;
 }
 
 LIBSCCAPI void scc_set_options(SCCState *s, const char *r)

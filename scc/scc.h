@@ -4,7 +4,7 @@
 //#define _GNU_SOURCE
 
 #include "config.h"//which from ./configure
-//#define SCC_VERSION "SCCOS_0_0_10"
+//#define SCC_VERSION "SAOOS_0_0_10"
 
 #include "scc_platform.h"
 #include "scc_libc.h"
@@ -51,51 +51,10 @@
 /* assembler debug */
 /* #define ASM_DEBUG */
 
-/* target selection */
-/* #define SCC_TARGET_I386   *//* i386 code generator */
-/* #define SCC_TARGET_X86_64 *//* x86-64 code generator */
-/* #define SCC_TARGET_ARM    *//* ARMv4 code generator */
-/* #define SCC_TARGET_ARM64  *//* ARMv8 code generator */
-/* #define SCC_TARGET_C67    *//* TMS320C67xx code generator */
-
-/* default target is I386 */
-#if !defined(SCC_TARGET_I386) && !defined(SCC_TARGET_ARM) && \
-    !defined(SCC_TARGET_ARM64) && !defined(SCC_TARGET_C67) && \
-    !defined(SCC_TARGET_X86_64)
-# if defined __x86_64__ || defined _AMD64_
-#  define SCC_TARGET_X86_64
-# elif defined __arm__
-#  define SCC_TARGET_ARM
-#  define SCC_ARM_EABI
-#  define SCC_ARM_HARDFLOAT
-# elif defined __aarch64__
-#  define SCC_TARGET_ARM64
-# else
-#  define SCC_TARGET_I386
-# endif
-# ifdef _WIN32
-#  define SCC_TARGET_PE 1
-# endif
-#endif
-
-/* only native compiler supports -run */
-#if defined _WIN32 == defined SCC_TARGET_PE
-# if (defined __i386__ || defined _X86_) && defined SCC_TARGET_I386
-#  define SCC_IS_NATIVE
-# elif (defined __x86_64__ || defined _AMD64_) && defined SCC_TARGET_X86_64
-#  define SCC_IS_NATIVE
-# elif defined __arm__ && defined SCC_TARGET_ARM
-#  define SCC_IS_NATIVE
-# elif defined __aarch64__ && defined SCC_TARGET_ARM64
-#  define SCC_IS_NATIVE
-# endif
-#endif
-
-#if defined SCC_IS_NATIVE && !defined CONFIG_SCCBOOT
-//TODO WIN32 some problem for the headers...
-#ifndef _WIN32
-//# define CONFIG_SCC_BACKTRACE
-#endif
+#if (__SCC_TARGET_CROSS__==0) && !defined CONFIG_SCCBOOT
+//#ifndef _WIN32
+# define CONFIG_SCC_BACKTRACE
+//#endif
 #endif
 
 /* ------------ path configuration ------------ */
@@ -127,7 +86,7 @@
 
 /* system include paths */
 #ifndef CONFIG_SCC_SYSINCLUDEPATHS
-# ifdef SCC_TARGET_PE
+# if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 //#  define CONFIG_SCC_SYSINCLUDEPATHS "{B}/include"PATHSEP"{B}/include/winapi"
 #  define CONFIG_SCC_SYSINCLUDEPATHS "{B}"
 # else
@@ -140,7 +99,7 @@
 
 /* library search paths */
 #ifndef CONFIG_SCC_LIBPATHS
-# ifdef SCC_TARGET_PE
+# if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 //#  define CONFIG_SCC_LIBPATHS "{B}/lib"
 #  define CONFIG_SCC_LIBPATHS "{B}"
 # else
@@ -156,7 +115,7 @@
 # if defined __FreeBSD__
 #  define CONFIG_SCC_ELFINTERP "/libexec/ld-elf.so.1"
 # elif defined __FreeBSD_kernel__
-#  if defined(SCC_TARGET_X86_64)
+#  if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
 #   define CONFIG_SCC_ELFINTERP "/lib/ld-kfreebsd-x86-64.so.1"
 #  else
 #   define CONFIG_SCC_ELFINTERP "/lib/ld.so.1"
@@ -167,17 +126,17 @@
 #  define CONFIG_SCC_ELFINTERP "/usr/libexec/ld.elf_so"
 # elif defined __GNU__
 #  define CONFIG_SCC_ELFINTERP "/lib/ld.so"
-# elif defined(SCC_TARGET_PE)
+# elif __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 #  define CONFIG_SCC_ELFINTERP "-"
 # elif defined(SCC_UCLIBC)
 #  define CONFIG_SCC_ELFINTERP "/lib/ld-uClibc.so.0" /* is there a uClibc for x86_64 ? */
-# elif defined SCC_TARGET_ARM64
+# elif (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
 #  if defined(SCC_MUSL)
 #   define CONFIG_SCC_ELFINTERP "/lib/ld-musl-aarch64.so.1"
 #  else
 #   define CONFIG_SCC_ELFINTERP "/lib/ld-linux-aarch64.so.1"
 #  endif
-# elif defined(SCC_TARGET_X86_64)
+# elif (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
 #  if defined(SCC_MUSL)
 #   define CONFIG_SCC_ELFINTERP "/lib/ld-musl-x86_64.so.1"
 #  else
@@ -201,9 +160,10 @@
 #endif
 
 /* (target specific) libscc1.a */
-#ifndef SCC_LIBSCC1
-# define SCC_LIBSCC1 "libscc1.a"
-#endif
+//TODO rm scc1
+//#ifndef SCC_LIBSCC1
+//# define SCC_LIBSCC1 "libscc1.a"
+//#endif
 
 /* library to use with CONFIG_USE_LIBGCC instead of libscc1.a */
 #if defined CONFIG_USE_LIBGCC && !defined SCC_LIBGCC
@@ -303,10 +263,6 @@ LAST_UNUSED_STAB_CODE
 #include SCC_QUOTE(link-__SCC_TARGET_CPU__-__SCC_TARGET_CPU_BIT__-__SCC_TARGET_OS__-__SCC_TARGET_FORMAT__.c)
 #include SCC_QUOTE(asm-__SCC_TARGET_CPU__-__SCC_TARGET_CPU_BIT__.c)
 
-#ifdef MAKE_DEBUG
-#pragma message "CPU/BIT/OS/FMT/PTR_SIZE:" SCC_QUOTE(__SCC_TARGET_CPU__,__SCC_TARGET_CPU_BIT__,__SCC_TARGET_OS__,__SCC_TARGET_FORMAT__,PTR_SIZE)
-#endif
-
 #undef TARGET_DEFS_ONLY
 
 /* -------------------------------------------- */
@@ -331,7 +287,7 @@ LAST_UNUSED_STAB_CODE
 #define addr_t ElfW(Addr)
 #define ElfSym ElfW(Sym)
 
-#if PTR_SIZE == 8 && !defined SCC_TARGET_PE
+#if PTR_SIZE == 8 && !(__SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__)
 # define LONG_SIZE 8
 #else
 # define LONG_SIZE 4
@@ -363,7 +319,7 @@ typedef struct TokenSym {
     char str[1];
 } TokenSym;
 
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 typedef unsigned short nwchar_t;
 #else
 typedef int nwchar_t;
@@ -607,7 +563,7 @@ struct sym_attr {
     unsigned plt_offset;
     int plt_sym;
     int dyn_index;
-#ifdef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
     unsigned char plt_thumb_stub:1;
 #endif
 };
@@ -649,7 +605,7 @@ struct SCCState {
 
     /* compile with debug symbol (and use them if error during execution) */
     int do_debug;
-#ifdef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
     enum float_abi float_abi; /* float ABI of the generated code*/
 #endif
     int run_test; /* nth test to run with -dt -run */
@@ -662,13 +618,13 @@ struct SCCState {
     char *init_symbol; /* symbols to call at load-time (not used currently) */
     char *fini_symbol; /* symbols to call at unload-time (not used currently) */
 
-#ifdef SCC_TARGET_I386
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__
+# if __SCC_TARGET_CPU_BIT__==32
+# elif __SCC_TARGET_CPU_BIT__==64
+    int nosse; /* For -mno-sse support. */
+# endif
     int seg_size; /* 32. Can be 16 with i386 assembler (.code16) */
 #endif
-#ifdef SCC_TARGET_X86_64
-    int nosse; /* For -mno-sse support. */
-#endif
-
     /* array of all loaded dlls (including those referenced by loaded dlls) */
     DLLReference **loaded_dlls;
     int nb_loaded_dlls;
@@ -700,15 +656,19 @@ struct SCCState {
     //typeof(SCC(jmp_buf)) error_jmp_buf;//segment fault
     int nb_errors;
 
-    /* output file for preprocessing (-E) */
+		//-E
     FILE *ppfp;
+
+		//-P
 		enum {
-			LINE_MACRO_OUTPUT_FORMAT_GCC,//
-			LINE_MACRO_OUTPUT_FORMAT_NONE,//
-			LINE_MACRO_OUTPUT_FORMAT_STD,//
-			LINE_MACRO_OUTPUT_FORMAT_P10 = 11
-		} Pflag; /* -P switch */
-    char dflag; /* -dX value */
+			LINE_MACRO_OUTPUT_FORMAT_GCC,//not use
+			LINE_MACRO_OUTPUT_FORMAT_NONE,//1 => not output pp line
+			LINE_MACRO_OUTPUT_FORMAT_STD,//like #line %d %s
+			LINE_MACRO_OUTPUT_FORMAT_P10 = 11 //@ref scc_preprocess(), num to decimal
+		} Pflag;
+
+		//-dX
+    char dflag;
 
     /* for -MD/-MF: collected dependencies for this compilation */
     char **target_deps;
@@ -758,21 +718,21 @@ struct SCCState {
     struct sym_attr *sym_attrs;
     int nb_sym_attrs;
 
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     /* PE info */
     int pe_subsystem;
     unsigned pe_characteristics;
     unsigned pe_file_align;
     unsigned pe_stack_size;
     addr_t pe_imagebase;
-# ifdef SCC_TARGET_X86_64
+# if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
     Section *uw_pdata;
     int uw_sym;
     unsigned uw_offs;
 # endif
 #endif
 
-#ifdef SCC_IS_NATIVE
+#if __SCC_TARGET_CROSS__==0
     const char *runtime_main;
     void **runtime_mem;
     int nb_runtime_mem;
@@ -957,7 +917,7 @@ struct filespec {
 #define TOK_ASMDIR_FIRST TOK_ASMDIR_byte
 #define TOK_ASMDIR_LAST TOK_ASMDIR_section
 
-#if defined SCC_TARGET_I386 || defined SCC_TARGET_X86_64
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ //{
 /* only used for i386 asm opcodes definitions */
 #define DEF_BWL(x) \
  DEF(TOK_ASM_ ## x ## b, #x "b") \
@@ -968,7 +928,7 @@ struct filespec {
  DEF(TOK_ASM_ ## x ## w, #x "w") \
  DEF(TOK_ASM_ ## x ## l, #x "l") \
  DEF(TOK_ASM_ ## x, #x)
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
 # define DEF_BWLQ(x) \
  DEF(TOK_ASM_ ## x ## b, #x "b") \
  DEF(TOK_ASM_ ## x ## w, #x "w") \
@@ -1034,13 +994,17 @@ struct filespec {
  DEF_ASM(x ## nle ## suffix) \
  DEF_ASM(x ## g ## suffix)
 
-#endif /* defined SCC_TARGET_I386 || defined SCC_TARGET_X86_64 */
+#endif //}__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__
 
 //WARNING: the sequence does matter.
 //@ref scc_keywords in pp.c
-enum //scc_token
+enum scc_token
 {
-    TOK_LAST = TOK_IDENT - 1
+    TOK_LAST = TOK_IDENT - 1 //wrap-ing-up never used...
+#if 0
+scc.h:#define DEF(id, str) ,id
+sccpp.c:#define DEF(id, str) str "\0"
+#endif
 #define DEF(id, str) ,id
 #include "scctok.h"
 #undef DEF
@@ -1110,29 +1074,32 @@ ST_INLN Sym *struct_find(int v);
 ST_INLN Sym *sym_find(int v);
 ST_FUNC Sym *global_identifier_push(int v, int t, int c);
 
-ST_FUNC void scc_open_bf(SCCState *s1, const char *filename, int initlen);
+ST_FUNC void scc_open_buf(SCCState *s1, const char *filename, int initlen);
 ST_FUNC int scc_open(SCCState *s1, const char *filename);
 ST_FUNC void scc_close(void);
 
 ST_FUNC int scc_add_file_internal(SCCState *s1, const char *filename, int flags);
+
 /* flags: */
-#define AFF_PRINT_ERROR     0x10 /* print error if file not found */
-#define AFF_REFERENCED_DLL  0x20 /* load a referenced dll from another dll */
-#define AFF_TYPE_BIN        0x40 /* file to add is binary */
-#define AFF_WHOLE_ARCHIVE   0x80 /* load all objects from archive */
+#define AFF_PRINT_ERROR     0x100 // if file not found
+#define AFF_REFERENCED_DLL  0x200 // load a referenced dll from another dll
+#define AFF_TYPE_BIN        0x400 // 
+#define AFF_WHOLE_ARCHIVE   0x800 // load all objects from archive
+
 /* s->filetype: */
 #define AFF_TYPE_NONE   0
-#define AFF_TYPE_C      1
-#define AFF_TYPE_ASM    2
-#define AFF_TYPE_ASMPP  4
-#define AFF_TYPE_LIB    8
-#define AFF_TYPE_MASK   (15 | AFF_TYPE_BIN)
-/* values from scc_object_type(...) */
+#define AFF_TYPE_C      0x1  //.c || .i => \b0001
+#define AFF_TYPE_ASM    0x2  //.s => \b0010
+#define AFF_TYPE_ASMPP  0x4  //.S => \b0100
+#define AFF_TYPE_LIB    0x8  // => \b1000
+	//@ref scc_object_type() and scc_add_file_internal()
+#define AFF_TYPE_SAO    0x10 //.sao
+#define AFF_TYPE_MASK   (0xFF | AFF_TYPE_BIN) 
+
+//@ref scc_object_type()
 #define AFF_BINTYPE_REL 1
 #define AFF_BINTYPE_DYN 2
 #define AFF_BINTYPE_AR  3
-#define AFF_BINTYPE_C67 4
-
 
 ST_FUNC int scc_add_crt(SCCState *s, const char *filename);
 ST_FUNC int scc_add_dll(SCCState *s, const char *filename, int flags);
@@ -1210,7 +1177,7 @@ ST_FUNC void label_pop(Sym **ptop, Sym *slast, int keep);
 ST_FUNC void parse_define(void);
 ST_FUNC void preprocess(int is_bof);
 ST_FUNC void next_nomacro(void);
-ST_FUNC void next(void);
+ST_FUNC void next(void);//
 ST_INLN void unget_tok(int last_tok);
 ST_FUNC void preprocess_start(SCCState *s1, int is_asm);
 ST_FUNC void preprocess_end(SCCState *s1);
@@ -1270,6 +1237,9 @@ ST_FUNC void scc_debug_funcstart(SCCState *s1, Sym *sym);
 ST_FUNC void scc_debug_funcend(SCCState *s1, int size);
 ST_FUNC void scc_debug_line(SCCState *s1);
 
+//@ref libsao.c
+ST_FUNC int sao_compile(SCCState *s1);
+
 ST_FUNC int sccgen_compile(SCCState *s1);
 ST_FUNC void free_inline_functions(SCCState *s);
 ST_FUNC void check_vstack(void);
@@ -1287,7 +1257,7 @@ ST_FUNC void vpush_global_sym(CType *type, int v);
 ST_FUNC void vrote(SValue *e, int n);
 ST_FUNC void vrott(int n);
 ST_FUNC void vrotb(int n);
-#ifdef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
 ST_FUNC int get_reg_ex(int rc, int rc2);
 ST_FUNC void lexpand_nr(void);
 #endif
@@ -1314,15 +1284,16 @@ ST_FUNC void expr_prod(void);
 ST_FUNC void expr_sum(void);
 ST_FUNC void gexpr(void);
 ST_FUNC int expr_const(void);
-#if defined SCC_TARGET_X86_64 && !defined SCC_TARGET_PE
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64) && !(__SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__)
 ST_FUNC int classify_x86_64_va_arg(CType *ty);
 #endif
 
-/* ------------ sccelf.c ------------ */
+/* ------------ scctools.c ------------ */
+#define ARFMAGIC "`\n"
 
-#define SCC_OUTPUT_FORMAT_ELF    0 /* default output format: ELF */
-#define SCC_OUTPUT_FORMAT_BINARY 1 /* binary image output */
-#define SCC_OUTPUT_FORMAT_COFF   2 /* COFF */
+/* ------------ sccelf.c ------------ */
+#define SCC_OUTPUT_FORMAT_ELF    0 // default output format ELF
+#define SCC_OUTPUT_FORMAT_BINARY 1 
 
 #define ARMAG  "!<arch>\012"    /* For COFF and a.out archives */
 
@@ -1393,11 +1364,12 @@ ST_FUNC struct sym_attr *get_sym_attr(SCCState *s1, int index, int alloc);
 ST_FUNC void squeeze_multi_relocs(Section *sec, size_t oldrelocoffset);
 
 ST_FUNC addr_t get_elf_sym_addr(SCCState *s, const char *name, int err);
-#if defined SCC_IS_NATIVE || defined SCC_TARGET_PE
+#if (__SCC_TARGET_CROSS__==0) || __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 ST_FUNC void *scc_get_symbol_err(SCCState *s, const char *name);
 #endif
 
-#ifndef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
+#else
 ST_FUNC int scc_load_dll(SCCState *s1, int fd, const char *filename, int level);
 ST_FUNC int scc_load_ldscript(SCCState *s1);
 ST_FUNC uint8_t *parse_comment(uint8_t *p);
@@ -1440,9 +1412,10 @@ ST_FUNC void gen_fill_nops(int);
 ST_FUNC int gjmp(int t);
 ST_FUNC void gjmp_addr(int a);
 ST_FUNC int gtst(int inv, int t);
-#if defined SCC_TARGET_I386 || defined SCC_TARGET_X86_64
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__
 ST_FUNC void gtst_addr(int inv, int a);
 #else
+//TODO
 #define gtst_addr(inv, a) gsym_addr(gtst(inv, 0), a)
 #endif
 ST_FUNC void gen_opi(int op);
@@ -1450,10 +1423,9 @@ ST_FUNC void gen_opf(int op);
 ST_FUNC void gen_cvt_ftoi(int t);
 ST_FUNC void gen_cvt_ftof(int t);
 ST_FUNC void ggoto(void);
-#ifndef SCC_TARGET_C67
 ST_FUNC void o(unsigned int c);
-#endif
-#ifndef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
+#else
 ST_FUNC void gen_cvt_itof(int t);
 #endif
 ST_FUNC void gen_vla_sp_save(int addr);
@@ -1486,7 +1458,7 @@ static inline void add64le(unsigned char *p, int64_t x) {
 }
 
 /* ------------ i386-gen.c ------------ */
-#if defined SCC_TARGET_I386 || defined SCC_TARGET_X86_64
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__
 ST_FUNC void g(int c);
 ST_FUNC void gen_le16(int c);
 ST_FUNC void gen_le32(int c);
@@ -1495,16 +1467,18 @@ ST_FUNC void gen_addrpc32(int r, Sym *sym, int c);
 #endif
 
 /* ------------ gen-X86-?.c ------------ */
-#ifdef SCC_TARGET_X86_64
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__
+# if __SCC_TARGET_CPU_BIT__==64
 ST_FUNC void gen_addr64(int r, Sym *sym, int64_t c);
 ST_FUNC void gen_opl(int op);
-#ifdef SCC_TARGET_PE
+#  if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 ST_FUNC void gen_vla_result(int addr);
-#endif
+#  endif
+# endif
 #endif
 
 /* ------------ arm-gen.c ------------ */
-#ifdef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
 
 //#if defined(SCC_ARM_EABI) && !defined(CONFIG_SCC_ELFINTERP)
 //PUB_FUNC const char *default_elfinterp(struct SCCState *s);
@@ -1515,7 +1489,7 @@ ST_FUNC void gen_cvt_itof1(int t);
 #endif
 
 /* ------------ arm64-gen.c ------------ */
-#ifdef SCC_TARGET_ARM64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
 ST_FUNC void gen_cvt_sxtw(void);
 ST_FUNC void gen_opl(int op);
 ST_FUNC void gfunc_return(CType *func_type);
@@ -1523,16 +1497,6 @@ ST_FUNC void gen_va_start(void);
 ST_FUNC void gen_va_arg(CType *t);
 ST_FUNC void gen_clear_cache(void);
 #endif
-
-/* ------------ c67-gen.c ------------ */
-#ifdef SCC_TARGET_C67
-#endif
-
-/* ------------ scccoff.c ------------ */
-//#ifdef SCC_TARGET_COFF
-//ST_FUNC int scc_output_coff(SCCState *s1, FILE *f);
-//ST_FUNC int scc_load_coff(SCCState * s1, int fd);
-//#endif
 
 /* ------------ sccasm.c ------------ */
 ST_FUNC void asm_instr(void);
@@ -1546,7 +1510,7 @@ ST_FUNC int scc_assemble(SCCState *s1, int do_preprocess);
 
 /* ------------ asm-X86.c ------------ */
 ST_FUNC void gen_expr32(ExprValue *pe);
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
 ST_FUNC void gen_expr64(ExprValue *pe);
 #endif
 ST_FUNC void asm_opcode(SCCState *s1, int opcode);
@@ -1558,26 +1522,26 @@ ST_FUNC void asm_clobber(uint8_t *clobber_regs, const char *str);
 #endif
 
 /* ------------ sccpe.c -------------- */
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__ //{
 ST_FUNC int pe_load_file(struct SCCState *s1, const char *filename, int fd);
 ST_FUNC int pe_output_file(SCCState * s1, const char *filename);
 ST_FUNC int pe_putimport(SCCState *s1, int dllindex, const char *name, addr_t value);
-#if defined SCC_TARGET_I386 || defined SCC_TARGET_X86_64
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__
 ST_FUNC SValue *pe_getimport(SValue *sv, SValue *v2);
-#endif
-#ifdef SCC_TARGET_X86_64
+# if __SCC_TARGET_CPU_BIT__==64
 ST_FUNC void pe_add_unwind_data(unsigned start, unsigned end, unsigned stack);
+# endif
 #endif
 PUB_FUNC int scc_get_dllexports(const char *filename, char **pp);
 /* symbol properties stored in Elf32_Sym->st_other */
 # define ST_PE_EXPORT 0x10
 # define ST_PE_IMPORT 0x20
 # define ST_PE_STDCALL 0x40
-#endif
+#endif //}
 #define ST_ASM_SET 0x04
 
 /* ------------ sccrun.c ----------------- */
-#ifdef SCC_IS_NATIVE
+#if __SCC_TARGET_CROSS__==0
 #ifdef CONFIG_SCC_STATIC
 #define RTLD_LAZY       0x001
 #define RTLD_NOW        0x002
@@ -1598,7 +1562,7 @@ ST_FUNC void scc_set_num_callers(int n);
 #endif//CONFIG_SCC_BACKTRACE
 
 ST_FUNC void scc_run_free(SCCState *s1);
-#endif//SCC_IS_NATIVE
+#endif//__SCC_TARGET_CROSS__==0
 
 /********************************************************/
 #undef ST_DATA

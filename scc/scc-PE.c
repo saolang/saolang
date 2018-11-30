@@ -1,5 +1,5 @@
 #include "scc_format.c"
 
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 #include "sccpe.c"
 #endif

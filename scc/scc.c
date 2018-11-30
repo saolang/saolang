@@ -2,6 +2,8 @@
 
 #if ONE_SOURCE
 # include "libscc.c"
+//TMP for SAO
+# include "libsao.c"
 #endif
 
 #include "scctools.c"
@@ -41,7 +43,7 @@ static const char help[] =
     "  -bt N       show N callers in stack traces\n"
 #endif
     "Misc. options:\n"
-    "  -x[c|a|b|n] specify type of the next infile (C,ASM,BIN,NONE)\n"
+    "  -x[c|a|b|s|n] specify type of the next infile (C,ASM,BIN,SAO,NONE)\n"
     "  -nostdinc   do not use standard system include paths\n"
     "  -nostdlib   do not link with standard crt and libraries\n"
     "  -Bdir       set scc's private include/library dir\n"
@@ -50,7 +52,7 @@ static const char help[] =
     "  -m32/64     defer to i386/x86_64 cross compiler\n"
     "Tools:\n"
     "  create library  : scc -ar [rcsv] lib.a files\n"
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     "  create def file : scc -impdef lib.dll [-v] [-o lib.def]\n"
 #endif
     ;
@@ -86,10 +88,10 @@ static const char help2[] =
     "  dollars-in-identifiers        allow '$' in C symbols\n"
     "-m... target specific options:\n"
     "  ms-bitfields                  use MSVC bitfield layout\n"
-#ifdef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
     "  float-abi                     hard/softfp on arm\n"
 #endif
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
     "  no-sse                        disable floats on x86_64\n"
 #endif
     "-Wl,... linker options:\n"
@@ -99,7 +101,7 @@ static const char help2[] =
     "  -export-dynamic               same as -rdynamic\n"
     "  -image-base= -Ttext=          set base address of executable\n"
     "  -section-alignment=           set section alignment in executable\n"
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     "  -file-alignment=              set PE file alignment\n"
     "  -stack=                       set PE stack reserve\n"
     "  -large-address-aware          set related PE option\n"
@@ -122,29 +124,13 @@ static const char help2[] =
 
 static const char version[] =
     "scc version "SCC_VERSION" ("
-#ifdef SCC_TARGET_I386
-        "i386"
-#elif defined SCC_TARGET_X86_64
-        "x86_64"
-#elif defined SCC_TARGET_C67
-        "C67"
-#elif defined SCC_TARGET_ARM
-        "ARM"
-#elif defined SCC_TARGET_ARM64
-        "AArch64"
-#endif
 #ifdef SCC_ARM_HARDFLOAT
         " Hard Float"
 #endif
-#ifdef SCC_TARGET_PE
-        " Windows"
-#elif defined(SCC_TARGET_MACHO)
-        " Darwin"
-#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
-        " FreeBSD"
-#else
-        " Linux"
-#endif
+				//
+				" "SCC_QUOTE(__SCC_TARGET_OS__)
+				" "SCC_QUOTE(__SCC_TARGET_CPU_BIT__)
+				" "SCC_QUOTE(__SCC_TARGET_FORMAT__)
     ")\n"
     ;
 
@@ -162,18 +148,9 @@ static void print_search_dirs(SCCState *s)
 	/* print_dirs("programs", NULL, 0); */
 	print_dirs("include", s->sysinclude_paths, s->nb_sysinclude_paths);
 	print_dirs("libraries", s->library_paths, s->nb_library_paths);
-#ifdef SCC_TARGET_PE
-#ifdef SCC_LIBSCC1
-	SCC(printf)("libscc1(win):\n  %s/"SCC_LIBSCC1"\n", s->scc_lib_path);
-#endif
-#elif defined(SCC_TARGET_MACHO)
-#ifdef SCC_LIBSCC1
-	SCC(printf)("libscc1(osx):\n  %s/"SCC_LIBSCC1"\n", s->scc_lib_path);
-#endif
-#else //assume ELF
-#ifdef SCC_LIBSCC1
-	SCC(printf)("libscc1(elf):\n  %s/"SCC_LIBSCC1"\n", s->scc_lib_path);
-#endif
+	//TODO rm scc1
+	//SCC(printf)("libscc1("SCC_QUOTE(__SCC_OS__)"):\n  %s/"SCC_LIBSCC1"\n", s->scc_lib_path);
+#if __SCC_OS_FORMAT_ID__==__SCC_OS_FORMAT_ELF__
 	print_dirs("crt", s->crt_paths, s->nb_crt_paths);
 	SCC(printf)("elfinterp:\n  %s\n",  DEFAULT_ELFINTERP(s));
 #endif
@@ -207,7 +184,7 @@ static char *default_outputfile(SCCState *s, const char *first_file)
         name = scc_basename(first_file);
     SCC(snprintf)(buf, sizeof(buf), "%s", name);
     ext = scc_fileextension(buf);
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     if (s->output_type == SCC_OUTPUT_DLL)
         SCC(strcpy)(ext, ".dll");
     else
@@ -237,137 +214,139 @@ static unsigned getclock_ms(void)
 int main(int argc0, char **argv0)
 #else
 //output as dll/so with scc_main()
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 //#include <windows.h>
 __declspec(dllexport) int scc_main(int argc0, char **argv0)
+//DLFCN_EXPORT int scc_main(int argc0, char **argv0)
 #else
 int scc_main(int argc0, char **argv0)
 #endif
 
 #endif
 {
-    SCCState *s;
-    int ret, opt, n = 0, t = 0;
-    unsigned start_time = 0;
-    const char *first_file;
-    int argc; char **argv;
-    FILE *ppfp = SCCSTD(out);
+	SCCState *s;
+	int ret, opt, n = 0, t = 0;
+	unsigned start_time = 0;
+	const char *first_file;
+	int argc; char **argv;
+	FILE *ppfp = SCCSTD(out);
 
 redo:
-    argc = argc0, argv = argv0;
-    s = scc_new();
-    opt = scc_parse_args(s, &argc, &argv, 1);
+	argc = argc0, argv = argv0;
+	s = scc_new();
+	opt = scc_parse_args(s, &argc, &argv, 1);
 
-    if ((n | t) == 0) {
-        if (opt == OPT_HELP)
-            return SCC(printf)(help), 1;
-        if (opt == OPT_HELP2)
-            return SCC(printf)(help2), 1;
-        if (opt == OPT_M32 || opt == OPT_M64)
-            scc_tool_cross(s, argv, opt); /* never returns */
-        if (s->verbose)
-            SCC(printf)(version);
-        if (opt == OPT_AR)
-            return scc_tool_ar(s, argc, argv);
-#ifdef SCC_TARGET_PE
-        if (opt == OPT_IMPDEF)
-            return scc_tool_impdef(s, argc, argv);
+	if ((n | t) == 0) {
+		if (opt == OPT_HELP)
+			return SCC(printf)(help), 1;
+		if (opt == OPT_HELP2)
+			return SCC(printf)(help2), 1;
+		if (opt == OPT_M32 || opt == OPT_M64)
+			scc_tool_cross(s, argv, opt); /* never returns */
+		if (s->verbose)
+			SCC(printf)(version);
+		if (opt == OPT_AR)
+			return scc_tool_ar(s, argc, argv);
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
+		if (opt == OPT_IMPDEF)
+			return scc_tool_impdef(s, argc, argv);
 #endif
-        if (opt == OPT_V)
-            return 0;
-        if (opt == OPT_PRINT_DIRS) {
-            /* initialize search dirs */
-            set_environment(s);
-            scc_set_output_type(s, SCC_OUTPUT_MEMORY);
-            print_search_dirs(s);
-            return 0;
-        }
+		if (opt == OPT_V)
+			return 0;
+		if (opt == OPT_PRINT_DIRS) {
+			/* initialize search dirs */
+			set_environment(s);
+			scc_set_output_type(s, SCC_OUTPUT_MEMORY);
+			print_search_dirs(s);
+			return 0;
+		}
 
-        n = s->nb_files;
-        if (n == 0)
-            scc_error("no input files\n");
-
-        if (s->output_type == SCC_OUTPUT_PREPROCESS) {
-            if (s->outfile) {
-                ppfp = SCC(fopen)(s->outfile, "w");
-                if (!ppfp)
-                    scc_error("PREPROCESS: could not write '%s'", s->outfile);
-            }
-        } else if (s->output_type == SCC_OUTPUT_OBJ && !s->option_r) {
-            if (s->nb_libraries)
-                scc_error("cannot specify libraries with -c");
-            if (n > 1 && s->outfile)
-                scc_error("cannot specify output file with -c many files");
-        } else {
-            if (s->option_pthread) {
-                scc_set_options(s, "-lpthread");
 		n = s->nb_files;
-	    }
-        }
+		if (n == 0)
+			scc_error("no input files\n");
 
-        if (s->do_bench)
-            start_time = getclock_ms();
-    }
+		if (s->output_type == SCC_OUTPUT_PREPROCESS) {
+			if (s->outfile) {
+				ppfp = SCC(fopen)(s->outfile, "w");
+				if (!ppfp)
+					scc_error("PREPROCESS: could not write '%s'", s->outfile);
+			}
+		} else if (s->output_type == SCC_OUTPUT_OBJ && !s->option_r) {
+			if (s->nb_libraries)
+				scc_error("cannot specify libraries with -c");
+			if (n > 1 && s->outfile)
+				scc_error("cannot specify output file with -c many files");
+		} else {
+			if (s->option_pthread) {
+				scc_set_options(s, "-lpthread");
+				n = s->nb_files;
+			}
+		}
 
-    set_environment(s);
-    if (s->output_type == 0)
-        s->output_type = SCC_OUTPUT_EXE;
-    scc_set_output_type(s, s->output_type);
-    s->ppfp = ppfp;
+		if (s->do_bench)
+			start_time = getclock_ms();
+	}
 
-    if ((s->output_type == SCC_OUTPUT_MEMORY
-      || s->output_type == SCC_OUTPUT_PREPROCESS) && (s->dflag & 16))
-        s->dflag |= t ? 32 : 0, s->run_test = ++t, n = s->nb_files;
+	set_environment(s);
+	if (s->output_type == 0)
+		s->output_type = SCC_OUTPUT_EXE;
+	scc_set_output_type(s, s->output_type);
+	s->ppfp = ppfp;
 
-    /* compile or add each files or library */
-    for (first_file = NULL, ret = 0;;) {
-        struct filespec *f = s->files[s->nb_files - n];
-        s->filetype = f->type;
-        if (f->type & AFF_TYPE_LIB) {
-            if (scc_add_library_err(s, f->name) < 0)
-                ret = 1;
-        } else {
-            if (1 == s->verbose)
-                SCC(printf)("-> %s\n", f->name);
-            if (!first_file)
-                first_file = f->name;
-            if (scc_add_file(s, f->name) < 0)
-                ret = 1;
-        }
-        if (--n == 0 || ret
-            || (s->output_type == SCC_OUTPUT_OBJ && !s->option_r))
-            break;
-    }
+	if ((s->output_type == SCC_OUTPUT_MEMORY
+				|| s->output_type == SCC_OUTPUT_PREPROCESS) && (s->dflag & 16))
+		s->dflag |= t ? 32 : 0, s->run_test = ++t, n = s->nb_files;
 
-    if (s->run_test) {
-        t = 0;
-    } else if (s->output_type == SCC_OUTPUT_PREPROCESS) {
-			//TODO plan to add preprocess-ed .c
-        ;
-    } else if (0 == ret) {
-        if (s->output_type == SCC_OUTPUT_MEMORY) {
-#ifdef SCC_IS_NATIVE
-            ret = scc_run(s, argc, argv);
+	/* compile or add each files or library */
+	for (first_file = NULL, ret = 0;;) {
+		struct filespec *f = s->files[s->nb_files - n];
+		s->filetype = f->type;
+		if (f->type & AFF_TYPE_LIB) {
+			if (scc_add_library_err(s, f->name) < 0)
+				ret = 1;
+		} else {
+			if (1 == s->verbose)
+				SCC(printf)("-> %s\n", f->name);
+			if (!first_file)
+				first_file = f->name;
+			if (scc_add_file(s, f->name) < 0){
+				ret = 1;
+			}
+		}
+		if (--n == 0 || ret
+				|| (s->output_type == SCC_OUTPUT_OBJ && !s->option_r))
+			break;
+	}
+
+	if (s->run_test) {
+		t = 0;
+	} else if (s->output_type == SCC_OUTPUT_PREPROCESS) {
+		//TODO plan to add preprocess-ed .c
+		;
+	} else if (0 == ret) {
+		if (s->output_type == SCC_OUTPUT_MEMORY) {
+#if __SCC_TARGET_CROSS__==0
+			ret = scc_run(s, argc, argv);
 #endif
-        } else {
-            if (!s->outfile)
-                s->outfile = default_outputfile(s, first_file);
-						//TODO support +macho
-            if (scc_output_file(s, s->outfile))
-                ret = 1;
-            else if (s->gen_deps)
-                gen_makedeps(s, s->outfile, s->deps_outfile);
-        }
-    }
+		} else {
+			if (!s->outfile)
+				s->outfile = default_outputfile(s, first_file);
+			//TODO support +macho
+			if (scc_output_file(s, s->outfile))
+				ret = 1;
+			else if (s->gen_deps)
+				gen_makedeps(s, s->outfile, s->deps_outfile);
+		}
+	}
 
-    if (s->do_bench && (n | t | ret) == 0)
-        scc_print_stats(s, getclock_ms() - start_time);
-    scc_delete(s);
-    if (ret == 0 && n)
-        goto redo; /* compile more files with -c */
-    if (t)
-        goto redo; /* run more tests with -dt -run */
-    if (ppfp && ppfp != SCCSTD(out))
-        SCC(fclose)(ppfp);
-    return ret;
+	if (s->do_bench && (n | t | ret) == 0)
+		scc_print_stats(s, getclock_ms() - start_time);
+	scc_delete(s);
+	if (ret == 0 && n)
+		goto redo; /* compile more files with -c */
+	if (t)
+		goto redo; /* run more tests with -dt -run */
+	if (ppfp && ppfp != SCCSTD(out))
+		SCC(fclose)(ppfp);
+	return ret;
 }

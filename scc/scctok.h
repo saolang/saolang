@@ -1,4 +1,4 @@
-/* keywords */
+/* c */
 DEF(TOK_INT, "int")
 DEF(TOK_VOID, "void")
 DEF(TOK_CHAR, "char")
@@ -18,28 +18,29 @@ DEF(TOK_SWITCH, "switch")
 DEF(TOK_CASE, "case")
 
 DEF(TOK_CONST1, "const")
-DEF(TOK_CONST2, "__const") /* gcc keyword */
-DEF(TOK_CONST3, "__const__") /* gcc keyword */
+DEF(TOK_CONST2, "__const") // gcc
+DEF(TOK_CONST3, "__const__") // gcc 
 DEF(TOK_VOLATILE1, "volatile")
-DEF(TOK_VOLATILE2, "__volatile") /* gcc keyword */
-DEF(TOK_VOLATILE3, "__volatile__") /* gcc keyword */
+DEF(TOK_VOLATILE2, "__volatile") // gcc 
+DEF(TOK_VOLATILE3, "__volatile__") // gcc
 DEF(TOK_LONG, "long")
 DEF(TOK_REGISTER, "register")
 DEF(TOK_SIGNED1, "signed")
-DEF(TOK_SIGNED2, "__signed") /* gcc keyword */
-DEF(TOK_SIGNED3, "__signed__") /* gcc keyword */
+DEF(TOK_SIGNED2, "__signed") // gcc 
+DEF(TOK_SIGNED3, "__signed__") // gcc 
 DEF(TOK_AUTO, "auto")
 DEF(TOK_INLINE1, "inline")
-DEF(TOK_INLINE2, "__inline") /* gcc keyword */
-DEF(TOK_INLINE3, "__inline__") /* gcc keyword */
+DEF(TOK_INLINE2, "__inline") // gcc 
+DEF(TOK_INLINE3, "__inline__") // gcc
 DEF(TOK_RESTRICT1, "restrict")
 DEF(TOK_RESTRICT2, "__restrict")
 DEF(TOK_RESTRICT3, "__restrict__")
-DEF(TOK_EXTENSION, "__extension__") /* gcc keyword */
+DEF(TOK_EXTENSION, "__extension__") // gcc 
 
-//since c11, we don't actually use...
+//c11
 DEF(TOK_GENERIC, "_Generic")
 
+//
 DEF(TOK_FLOAT, "float")
 DEF(TOK_DOUBLE, "double")
 DEF(TOK_BOOL, "_Bool")
@@ -62,13 +63,11 @@ DEF(TOK_ASM1, "asm")
 DEF(TOK_ASM2, "__asm")
 DEF(TOK_ASM3, "__asm__")
 
-#ifdef SCC_TARGET_ARM64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
 DEF(TOK_UINT128, "__uint128_t")
 #endif
 
-/*********************************************************************/
-/* the following are not keywords. They are included to ease parsing */
-/* preprocessor only */
+/* preprocess */
 DEF(TOK_DEFINE, "define")
 DEF(TOK_INCLUDE, "include")
 DEF(TOK_INCLUDE_NEXT, "include_next")
@@ -90,16 +89,14 @@ DEF(TOK___FUNCTION__, "__FUNCTION__")
 DEF(TOK___VA_ARGS__, "__VA_ARGS__")
 DEF(TOK___COUNTER__, "__COUNTER__")
 
-/* special identifiers */
 DEF(TOK___FUNC__, "__func__")
 
-/* special floating point values */
+//
 DEF(TOK___NAN__, "__nan__")
 DEF(TOK___SNAN__, "__snan__")
 DEF(TOK___INF__, "__inf__")
 
-/* attribute identifiers */
-/* XXX: handle all tokens generically since speed is not critical */
+// attribute
 DEF(TOK_SECTION1, "section")
 DEF(TOK_SECTION2, "__section__")
 DEF(TOK_ALIGNED1, "aligned")
@@ -143,23 +140,38 @@ DEF(TOK_builtin_constant_p, "__builtin_constant_p")
 DEF(TOK_builtin_frame_address, "__builtin_frame_address")
 DEF(TOK_builtin_return_address, "__builtin_return_address")
 DEF(TOK_builtin_expect, "__builtin_expect")
-/*DEF(TOK_builtin_va_list, "__builtin_va_list")*/
-#if defined SCC_TARGET_PE && defined SCC_TARGET_X86_64
+
+//DEF(TOK_builtin_va_list, "__builtin_va_list")
+
+#if __SCC_TARGET_CPU_BIT__==64
+# if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__ && __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__
 DEF(TOK_builtin_va_start, "__builtin_va_start")
-#elif defined SCC_TARGET_X86_64
+# elif __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__
 DEF(TOK_builtin_va_arg_types, "__builtin_va_arg_types")
-#elif defined SCC_TARGET_ARM64
+# elif __SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__
 DEF(TOK___va_start, "__va_start")
 DEF(TOK___va_arg, "__va_arg")
-#endif
+# endif
+#endif//64
 
-/* pragma */
+//#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__ && (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+//DEF(TOK_builtin_va_start, "__builtin_va_start")
+//#elif (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+//DEF(TOK_builtin_va_arg_types, "__builtin_va_arg_types")
+//#elif (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
+//DEF(TOK___va_start, "__va_start")
+//DEF(TOK___va_arg, "__va_arg")
+//#endif
+
+/* pragma { */
 DEF(TOK_pack, "pack")
-#if !defined(SCC_TARGET_I386) && !defined(SCC_TARGET_X86_64)
-/* already defined for assembler */
+
+#if __SCC_TARGET_CPU_ID__!=__SCC_CPU_X86__
+// should already defined for assembler for non X86 arch
 DEF(TOK_ASM_push, "push")
 DEF(TOK_ASM_pop, "pop")
 #endif
+
 DEF(TOK_comment, "comment")
 DEF(TOK_lib, "lib")
 DEF(TOK_push_macro, "push_macro")
@@ -167,7 +179,8 @@ DEF(TOK_pop_macro, "pop_macro")
 DEF(TOK_once, "once")
 DEF(TOK_option, "option")
 
-/* builtin functions or variables */
+/* pragma } */
+
 #ifndef SCC_ARM_EABI
 DEF(TOK_memcpy, "memcpy")
 DEF(TOK_memmove, "memmove")
@@ -185,13 +198,13 @@ DEF(TOK___floatundidf, "__floatundidf")
 DEF(TOK___floatundixf, "__floatundixf")
 DEF(TOK___fixunsxfdi, "__fixunsxfdi")
 # endif
-//libscc1.c :: __fixunssfdi 
-DEF(TOK___fixunssfdi, "__fixunssfdi")
+DEF(TOK___fixunssfdi, "__fixunssfdi") //libscc1.c
 DEF(TOK___fixunsdfdi, "__fixunsdfdi")
 #endif
 
-#if defined SCC_TARGET_ARM
-# ifdef SCC_ARM_EABI
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__
+# if __SCC_TARGET_CPU_BIT__==32
+# ifdef SCC_ARM_EABI//{
 DEF(TOK_memcpy, "__aeabi_memcpy")
 DEF(TOK_memcpy4, "__aeabi_memcpy4")
 DEF(TOK_memcpy8, "__aeabi_memcpy8")
@@ -214,48 +227,39 @@ DEF(TOK___floatundisf, "__aeabi_ul2f")
 DEF(TOK___floatundidf, "__aeabi_ul2d")
 DEF(TOK___fixunssfdi, "__aeabi_f2ulz")
 DEF(TOK___fixunsdfdi, "__aeabi_d2ulz")
-# else
+# else//}:{
 DEF(TOK___modsi3, "__modsi3")
 DEF(TOK___umodsi3, "__umodsi3")
 DEF(TOK___divsi3, "__divsi3")
 DEF(TOK___udivsi3, "__udivsi3")
 DEF(TOK___floatdisf, "__floatdisf")
 DEF(TOK___floatdidf, "__floatdidf")
-#  ifndef SCC_ARM_VFP
+#  ifndef SCC_ARM_VFP//{
 DEF(TOK___floatdixf, "__floatdixf")
 DEF(TOK___fixunssfsi, "__fixunssfsi")
 DEF(TOK___fixunsdfsi, "__fixunsdfsi")
 DEF(TOK___fixunsxfsi, "__fixunsxfsi")
 DEF(TOK___fixxfdi, "__fixxfdi")
-#  endif
+#  endif //}SCC_ARM_VFP
 DEF(TOK___fixsfdi, "__fixsfdi")
 DEF(TOK___fixdfdi, "__fixdfdi")
+# endif//}
 # endif
 #endif
 
-//#if defined SCC_TARGET_C67
-//DEF(TOK__divi, "_divi")
-//DEF(TOK__divu, "_divu")
-//DEF(TOK__divf, "_divf")
-//DEF(TOK__divd, "_divd")
-//DEF(TOK__remi, "_remi")
-//DEF(TOK__remu, "_remu")
-//#endif
-
-#if defined SCC_TARGET_I386
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__
+# if __SCC_TARGET_CPU_BIT__==32
 DEF(TOK___fixsfdi, "__fixsfdi")
 DEF(TOK___fixdfdi, "__fixdfdi")
 DEF(TOK___fixxfdi, "__fixxfdi")
+# endif
+DEF(TOK_alloca, "alloca") //lib/alloca??.S
 #endif
 
-#if defined SCC_TARGET_I386 || defined SCC_TARGET_X86_64
-DEF(TOK_alloca, "alloca")
-#endif
-
-#if defined SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 DEF(TOK___chkstk, "__chkstk")
 #endif
-#ifdef SCC_TARGET_ARM64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
 DEF(TOK___arm64_clear_cache, "__arm64_clear_cache")
 DEF(TOK___addtf3, "__addtf3")
 DEF(TOK___subtf3, "__subtf3")
@@ -281,62 +285,65 @@ DEF(TOK___gttf2, "__gttf2")
 DEF(TOK___getf2, "__getf2")
 #endif
 
-//# ifdef SCC_TARGET_PE
+//TODO
+//#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 //DEF(TOK_malloc, "malloc")
 //DEF(TOK_free, "free")
 //DEF(TOK_realloc, "realloc")
 //DEF(TOK_memalign, "memalign")
 //DEF(TOK_calloc, "calloc")
 //# endif
+
 //DEF(TOK_strlen, "strlen")
 //DEF(TOK_strcpy, "strcpy")
 
-/* Tiny Assembler */
-	DEF_ASMDIR(byte)              /* must be first directive */
-	DEF_ASMDIR(word)
-	DEF_ASMDIR(align)
-	DEF_ASMDIR(balign)
-	DEF_ASMDIR(p2align)
-	DEF_ASMDIR(set)
-	DEF_ASMDIR(skip)
-	DEF_ASMDIR(space)
-	DEF_ASMDIR(string)
-	DEF_ASMDIR(asciz)
-	DEF_ASMDIR(ascii)
-	DEF_ASMDIR(file)
-	DEF_ASMDIR(globl)
-	DEF_ASMDIR(global)
-	DEF_ASMDIR(weak)
-	DEF_ASMDIR(hidden)
-	DEF_ASMDIR(ident)
-	DEF_ASMDIR(size)
-	DEF_ASMDIR(type)
-	DEF_ASMDIR(text)
-	DEF_ASMDIR(data)
-	DEF_ASMDIR(bss)
-	DEF_ASMDIR(previous)
-	DEF_ASMDIR(pushsection)
-	DEF_ASMDIR(popsection)
-	DEF_ASMDIR(fill)
-	DEF_ASMDIR(rept)
-	DEF_ASMDIR(endr)
-	DEF_ASMDIR(org)
+// Core Assembler..
+DEF_ASMDIR(byte)              // must be first
+DEF_ASMDIR(word)
+DEF_ASMDIR(align)
+DEF_ASMDIR(balign)
+DEF_ASMDIR(p2align)
+DEF_ASMDIR(set)
+DEF_ASMDIR(skip)
+DEF_ASMDIR(space)
+DEF_ASMDIR(string)
+DEF_ASMDIR(asciz)
+DEF_ASMDIR(ascii)
+DEF_ASMDIR(file)
+DEF_ASMDIR(globl)
+DEF_ASMDIR(global)
+DEF_ASMDIR(weak)
+DEF_ASMDIR(hidden)
+DEF_ASMDIR(ident)
+DEF_ASMDIR(size)
+DEF_ASMDIR(type)
+DEF_ASMDIR(text)
+DEF_ASMDIR(data)
+DEF_ASMDIR(bss)
+DEF_ASMDIR(previous)
+DEF_ASMDIR(pushsection)
+DEF_ASMDIR(popsection)
+DEF_ASMDIR(fill)
+DEF_ASMDIR(rept)
+DEF_ASMDIR(endr)
+DEF_ASMDIR(org)
 DEF_ASMDIR(quad)
-#if defined(SCC_TARGET_I386)
-	DEF_ASMDIR(code16)
-DEF_ASMDIR(code32)
-#elif defined(SCC_TARGET_X86_64)
-DEF_ASMDIR(code64)
-#endif
-	DEF_ASMDIR(short)
-	DEF_ASMDIR(long)
-	DEF_ASMDIR(int)
-DEF_ASMDIR(section)            /* must be last directive */
 
-#if defined SCC_TARGET_I386 || defined SCC_TARGET_X86_64
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__//{
+# if __SCC_TARGET_CPU_BIT__==32
+DEF_ASMDIR(code16)
+DEF_ASMDIR(code32)
+# elif __SCC_TARGET_CPU_BIT__==64
+DEF_ASMDIR(code64)
+# endif
+#endif//}
+DEF_ASMDIR(short)
+DEF_ASMDIR(long)
+DEF_ASMDIR(int)
+DEF_ASMDIR(section)            // must be last 
+
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__//{
 #include "tok-X86.h"
-#endif
+#endif//}
 
 DEF(TOK_message, "message")
-DEF(TOK_warning, "warning")
-DEF(TOK_error, "error")

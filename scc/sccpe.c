@@ -9,7 +9,7 @@
 //#include <sys/stat.h> /* chmod() */
 #endif
 
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
 # define ADDR3264 ULONGLONG
 # define PE_IMAGE_REL IMAGE_REL_BASED_DIR64
 # define REL_TYPE_DIRECT R_X86_64_64
@@ -18,7 +18,7 @@
 # define IMAGE_FILE_MACHINE 0x8664
 # define RSRC_RELTYPE 3
 
-#elif defined SCC_TARGET_ARM
+#elif (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
 # define ADDR3264 DWORD
 # define PE_IMAGE_REL IMAGE_REL_BASED_HIGHLOW
 # define REL_TYPE_DIRECT R_ARM_ABS32
@@ -27,7 +27,7 @@
 # define IMAGE_FILE_MACHINE 0x01C0
 # define RSRC_RELTYPE 7 /* ??? (not tested) */
 
-#elif defined SCC_TARGET_I386
+#elif __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==32 //{
 # define ADDR3264 DWORD
 # define PE_IMAGE_REL IMAGE_REL_BASED_HIGHLOW
 # define REL_TYPE_DIRECT R_386_32
@@ -36,7 +36,7 @@
 # define IMAGE_FILE_MACHINE 0x014C
 # define RSRC_RELTYPE 7 /* DIR32NB */
 
-#endif
+#endif //}
 
 #ifndef IMAGE_NT_SIGNATURE
 /* ----------------------------------------------------------- */
@@ -102,7 +102,8 @@ typedef struct _IMAGE_OPTIONAL_HEADER {
     DWORD   SizeOfUninitializedData;
     DWORD   AddressOfEntryPoint;
     DWORD   BaseOfCode;
-#ifndef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#else
     DWORD   BaseOfData;
 #endif
     /* NT additional fields. */
@@ -228,7 +229,7 @@ struct pe_header
     BYTE dosstub[0x40];
     DWORD nt_sig;
     IMAGE_FILE_HEADER filehdr;
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
     IMAGE_OPTIONAL_HEADER64 opthdr;
 #else
 #ifdef _WIN64
@@ -510,15 +511,15 @@ static int pe_write(struct pe_info *pe)
     0x00000000, /*DWORD   TimeDateStamp; */
     0x00000000, /*DWORD   PointerToSymbolTable; */
     0x00000000, /*DWORD   NumberOfSymbols; */
-#if defined(SCC_TARGET_X86_64)
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
     0x00F0, /*WORD    SizeOfOptionalHeader; */
     0x022F  /*WORD    Characteristics; */
 #define CHARACTERISTICS_DLL 0x222E
-#elif defined(SCC_TARGET_I386)
+#elif __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==32 //{
     0x00E0, /*WORD    SizeOfOptionalHeader; */
     0x030F  /*WORD    Characteristics; */
 #define CHARACTERISTICS_DLL 0x230E
-#elif defined(SCC_TARGET_ARM)
+#elif (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
     0x00E0, /*WORD    SizeOfOptionalHeader; */
     0x010F, /*WORD    Characteristics; */
 #define CHARACTERISTICS_DLL 0x230F
@@ -526,7 +527,7 @@ static int pe_write(struct pe_info *pe)
 },{
     /* IMAGE_OPTIONAL_HEADER opthdr */
     /* Standard fields. */
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
     0x020B, /*WORD    Magic; */
 #else
     0x010B, /*WORD    Magic; */
@@ -538,11 +539,12 @@ static int pe_write(struct pe_info *pe)
     0x00000000, /*DWORD   SizeOfUninitializedData; */
     0x00000000, /*DWORD   AddressOfEntryPoint; */
     0x00000000, /*DWORD   BaseOfCode; */
-#ifndef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#else
     0x00000000, /*DWORD   BaseOfData; */
 #endif
     /* NT additional fields. */
-#if defined(SCC_TARGET_ARM)
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
     0x00100000,	    /*DWORD   ImageBase; */
 #else
     0x00400000,	    /*DWORD   ImageBase; */
@@ -617,7 +619,8 @@ static int pe_write(struct pe_info *pe)
                 break;
 
             case sec_data:
-#ifndef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#else
                 pe_header.opthdr.BaseOfData = addr;
 #endif
                 break;
@@ -821,13 +824,14 @@ static void pe_build_imports(struct pe_info *pe)
                 else
                     ordinal = 0, v = imp_sym->st_value; /* address from scc_add_symbol() */
 
-#ifdef SCC_IS_NATIVE
+#if __SCC_TARGET_CROSS__==0
                 if (pe->type == PE_RUN) {
                     if (dllref) {
                         if ( !dllref->handle )
 													//TODO from windows.h and ....
 													//TODO dlopen + dlsym later
-                            dllref->handle = LoadLibrary(dllref->name);
+                            //dllref->handle = LoadLibrary(dllref->name);
+                            dllref->handle = SCC(LoadLibrary)(dllref->name);
                         v = SCC(GetProcAddress,ADDR3264)(dllref->handle, ordinal?(char*)0+ordinal:name);
                     }
                     if (!v)
@@ -1223,14 +1227,14 @@ static int pe_check_symbols(struct pe_info *pe)
 
                     offset = text_section->data_offset;
                     /* add the 'jmp IAT[x]' instruction */
-#ifdef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
                     p = section_ptr_add(text_section, 8+4); // room for code and address
                     (*(DWORD*)(p)) = 0xE59FC000; // arm code ldr ip, [pc] ; PC+8+0 = 0001xxxx
                     (*(DWORD*)(p+2)) = 0xE59CF000; // arm code ldr pc, [ip]
 #else
                     p = section_ptr_add(text_section, 8);
                     *p = 0x25FF;
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
                     *(DWORD*)(p+1) = (DWORD)-4;
 #endif
 #endif
@@ -1241,7 +1245,7 @@ static int pe_check_symbols(struct pe_info *pe)
                         symtab_section, 0, sizeof(DWORD),
                         ELFW(ST_INFO)(STB_GLOBAL, STT_OBJECT),
                         0, SHN_UNDEF, buffer);
-#ifdef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
                     put_elf_reloc(symtab_section, text_section,
                         offset + 8, R_XXX_THUNKFIX, is->iat_index); // offset to IAT position
 #else
@@ -1428,7 +1432,7 @@ static void pe_print_sections(SCCState *s1, const char *fname)
 /* ------------------------------------------------------------- */
 /* helper function for load/store to insert one more indirection */
 
-#if defined SCC_TARGET_I386 || defined SCC_TARGET_X86_64
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ //{
 ST_FUNC SValue *pe_getimport(SValue *sv, SValue *v2)
 {
     int r2;
@@ -1735,7 +1739,7 @@ ST_FUNC int pe_load_file(struct SCCState *s1, const char *filename, int fd)
 }
 
 /* ------------------------------------------------------------- */
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
 static unsigned pe_add_uwwind_info(SCCState *s1)
 {
     if (NULL == s1->uw_pdata) {
@@ -1796,7 +1800,7 @@ ST_FUNC void pe_add_unwind_data(unsigned start, unsigned end, unsigned stack)
 }
 #endif
 /* ------------------------------------------------------------- */
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
 #define PE_STDSYM(n,s) n
 #else
 #define PE_STDSYM(n,s) "_" n s
@@ -1805,74 +1809,74 @@ ST_FUNC void pe_add_unwind_data(unsigned start, unsigned end, unsigned stack)
 //@ref pe_output_file()
 static void pe_add_runtime(SCCState *s1, struct pe_info *pe)
 {
-    const char *start_symbol;
-    int pe_type = 0;
-    int unicode_entry = 0;
+	const char *start_symbol;
+	int pe_type = 0;
+	int unicode_entry = 0;
 
-    if (find_elf_sym(symtab_section, PE_STDSYM("WinMain","@16")))
-        pe_type = PE_GUI;
-    else
-    if (find_elf_sym(symtab_section, PE_STDSYM("wWinMain","@16"))) {
-        pe_type = PE_GUI;
-        unicode_entry = PE_GUI;
-    }
-    else
-    if (SCC_OUTPUT_DLL == s1->output_type) {
-        pe_type = PE_DLL;
-        /* need this for 'sccelf.c:relocate_section()' */
-        s1->output_type = SCC_OUTPUT_EXE;
-    }
-    else {
-        pe_type = PE_EXE;
-        if (find_elf_sym(symtab_section, "wmain"))
-            unicode_entry = PE_EXE;
-    }
+	if (find_elf_sym(symtab_section, PE_STDSYM("WinMain","@16")))
+		pe_type = PE_GUI;
+	else
+		if (find_elf_sym(symtab_section, PE_STDSYM("wWinMain","@16"))) {
+			pe_type = PE_GUI;
+			unicode_entry = PE_GUI;
+		}
+		else
+			if (SCC_OUTPUT_DLL == s1->output_type) {
+				pe_type = PE_DLL;
+				/* need this for 'sccelf.c:relocate_section()' */
+				s1->output_type = SCC_OUTPUT_EXE;
+			}
+			else {
+				pe_type = PE_EXE;
+				if (find_elf_sym(symtab_section, "wmain"))
+					unicode_entry = PE_EXE;
+			}
 
-    start_symbol =
-        SCC_OUTPUT_MEMORY == s1->output_type
-        ? PE_GUI == pe_type ? (unicode_entry ? "__runwwinmain" : "__runwinmain")
-            : (unicode_entry ? "__runwmain" : "__runmain")
-        : PE_DLL == pe_type ? PE_STDSYM("__dllstart","@12")
-            : PE_GUI == pe_type ? (unicode_entry ? "__wwinstart": "__winstart")
-                : (unicode_entry ? "__wstart" : "__start")
-        ;
+	start_symbol =
+		SCC_OUTPUT_MEMORY == s1->output_type
+		? PE_GUI == pe_type ? (unicode_entry ? "__runwwinmain" : "__runwinmain")
+		: (unicode_entry ? "__runwmain" : "__runmain")
+		: PE_DLL == pe_type ? PE_STDSYM("__dllstart","@12")
+		: PE_GUI == pe_type ? (unicode_entry ? "__wwinstart": "__winstart")
+		: (unicode_entry ? "__wstart" : "__start")
+		;
 
-    if (!s1->leading_underscore || SCC(strchr,char*)(start_symbol, '@'))
-        ++start_symbol;
+	if (!s1->leading_underscore || SCC(strchr,char*)(start_symbol, '@'))
+		++start_symbol;
 
-    /* grab the startup code from libscc1 */
-#ifdef SCC_IS_NATIVE
-    if (SCC_OUTPUT_MEMORY != s1->output_type || s1->runtime_main)
+	// grab the startup code from libscc1 TODO rm
+#if __SCC_TARGET_CROSS__==0
+	if (SCC_OUTPUT_MEMORY != s1->output_type || s1->runtime_main)
 #endif
-    set_elf_sym(symtab_section,
-        0, 0,
-        ELFW(ST_INFO)(STB_GLOBAL, STT_NOTYPE), 0,
-        SHN_UNDEF, start_symbol);
+		set_elf_sym(symtab_section,
+				0, 0,
+				ELFW(ST_INFO)(STB_GLOBAL, STT_NOTYPE), 0,
+				SHN_UNDEF, start_symbol);
 
-    if (0 == s1->nostdlib) {
-        static const char *libs[] = {
-#ifdef SCC_LIBSCC1
-            SCC_LIBSCC1,
-#endif
-						"msvcrt", "kernel32", "", "user32", "gdi32", NULL
-        };
-        const char **pp, *p;
-        for (pp = libs; 0 != (p = *pp); ++pp) {
-            if (0 == *p) {
-                if (PE_DLL != pe_type && PE_GUI != pe_type)
-                    break;
-            } else if (pp == libs && scc_add_dll(s1, p, 0) >= 0) {
-                continue;
-            } else {
-                scc_add_library_err(s1, p);
-            }
-        }
-    }
+	if (0 == s1->nostdlib) { //add runtime
+		static const char *libs[] = {
+//#ifdef SCC_LIBSCC1
+//			SCC_LIBSCC1,
+//#endif
+			"msvcrt", "kernel32", "", "user32", "gdi32", NULL
+		};
+		const char **pp, *p;
+		for (pp = libs; 0 != (p = *pp); ++pp) {
+			if (0 == *p) {
+				if (PE_DLL != pe_type && PE_GUI != pe_type)
+					break;
+			} else if (pp == libs && scc_add_dll(s1, p, 0) >= 0) {
+				continue;
+			} else {
+				scc_add_library_err(s1, p);
+			}
+		}
+	}
 
-    if (SCC_OUTPUT_MEMORY == s1->output_type)
-        pe_type = PE_RUN;
-    pe->type = pe_type;
-    pe->start_symbol = start_symbol;
+	if (SCC_OUTPUT_MEMORY == s1->output_type)
+		pe_type = PE_RUN;
+	pe->type = pe_type;
+	pe->start_symbol = start_symbol;
 }
 
 static void pe_set_options(SCCState * s1, struct pe_info *pe)
@@ -1881,14 +1885,14 @@ static void pe_set_options(SCCState * s1, struct pe_info *pe)
         /* XXX: check if is correct for arm-pe target */
         pe->imagebase = 0x10000000;
     } else {
-#if defined(SCC_TARGET_ARM)
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
         pe->imagebase = 0x00010000;
 #else
         pe->imagebase = 0x00400000;
 #endif
     }
 
-#if defined(SCC_TARGET_ARM)
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
     /* we use "console" subsystem by default */
     pe->subsystem = 9;
 #else
@@ -1925,57 +1929,57 @@ static void pe_set_options(SCCState * s1, struct pe_info *pe)
 //@ref sccrun.c::scc_relocate_ex() => speciall for PE, need add pe runtime for 
 ST_FUNC int pe_output_file(SCCState *s1, const char *filename)
 {
-    int ret;
-    struct pe_info pe;
-    int i;
+	int ret;
+	struct pe_info pe;
+	int i;
 
-    SCC(memset)(&pe, 0, sizeof pe);
-    pe.filename = filename;
-    pe.s1 = s1;
+	SCC(memset)(&pe, 0, sizeof pe);
+	pe.filename = filename;
+	pe.s1 = s1;
 
-    scc_add_runtime(s1);
-    pe_add_runtime(s1, &pe);
-    resolve_common_syms(s1);
-    pe_set_options(s1, &pe);
+	scc_add_runtime(s1);
+	pe_add_runtime(s1, &pe);
+	resolve_common_syms(s1);
+	pe_set_options(s1, &pe);
 
-    ret = pe_check_symbols(&pe);
-    if (ret)
-        ;
-    else if (filename) {
-        pe_assign_addresses(&pe);
-        relocate_syms(s1, s1->symtab, 0);
-        s1->pe_imagebase = pe.imagebase;
-        for (i = 1; i < s1->nb_sections; ++i) {
-            Section *s = s1->sections[i];
-            if (s->reloc) {
-                relocate_section(s1, s);
-            }
-        }
-        pe.start_addr = (DWORD)
-            ((uintptr_t)scc_get_symbol_err(s1, pe.start_symbol)
-                - pe.imagebase);
-        if (s1->nb_errors)
-            ret = -1;
-        else
-            ret = pe_write(&pe);
-        scc_free(pe.sec_info);
-    } else {
-#ifdef SCC_IS_NATIVE
-        pe.thunk = data_section;
-        pe_build_imports(&pe);
-        s1->runtime_main = pe.start_symbol;
-#ifdef SCC_TARGET_X86_64
-        s1->uw_pdata = find_section(s1, ".pdata");
+	ret = pe_check_symbols(&pe);
+	if (ret)
+		;
+	else if (filename) {
+		pe_assign_addresses(&pe);
+		relocate_syms(s1, s1->symtab, 0);
+		s1->pe_imagebase = pe.imagebase;
+		for (i = 1; i < s1->nb_sections; ++i) {
+			Section *s = s1->sections[i];
+			if (s->reloc) {
+				relocate_section(s1, s);
+			}
+		}
+		pe.start_addr = (DWORD)
+			((uintptr_t)scc_get_symbol_err(s1, pe.start_symbol)
+			 - pe.imagebase);
+		if (s1->nb_errors)
+			ret = -1;
+		else
+			ret = pe_write(&pe);
+		scc_free(pe.sec_info);
+	} else {
+#if __SCC_TARGET_CROSS__==0
+		pe.thunk = data_section;
+		pe_build_imports(&pe);
+		s1->runtime_main = pe.start_symbol;
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+		s1->uw_pdata = find_section(s1, ".pdata");
 #endif
 #endif
-    }
+	}
 
-    pe_free_imports(&pe);
+	pe_free_imports(&pe);
 
 #ifdef PE_PRINT_SECTIONS
-    pe_print_sections(s1, "scc.log");
+	pe_print_sections(s1, "scc.log");
 #endif
-    return ret;
+	return ret;
 }
 
 //TODO

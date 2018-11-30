@@ -486,7 +486,7 @@ zero_pad:
 			ind += size;
 			break;
 		case TOK_ASMDIR_quad:
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
 			size = 8;
 			goto asm_data;
 #else
@@ -535,7 +535,7 @@ asm_data:
 				if (sec->sh_type != SHT_NOBITS) {
 					if (size == 4) {
 						gen_expr32(&e);
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
 					} else if (size == 8) {
 						gen_expr64(&e);
 #endif
@@ -857,7 +857,7 @@ asm_data:
 			next();
 			pop_section(s1);
 			break;
-#ifdef SCC_TARGET_I386
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==32 //{
 		case TOK_ASMDIR_code16:
 			{
 				next();
@@ -870,8 +870,8 @@ asm_data:
 				s1->seg_size = 32;
 			}
 			break;
-#endif
-#ifdef SCC_TARGET_X86_64
+#endif //}
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64 //{
 			/* added for compatibility with GAS */
 		case TOK_ASMDIR_code64:
 			next();
@@ -971,7 +971,7 @@ static void scc_assemble_inline(SCCState *s1, char *str, int len, int global)
     const int *saved_macro_ptr = macro_ptr;
     int dotid = set_idnum('.', IS_ID);
 
-    scc_open_bf(s1, ":asm:", len);
+    scc_open_buf(s1, ":asm:", len);
     SCC(memcpy)(file->buffer, str, len);
     macro_ptr = NULL;
     scc_assemble_internal(s1, 0, global);
@@ -1257,4 +1257,7 @@ ST_FUNC void asm_global_instr(void)
     nocode_wanted = saved_nocode_wanted;
 }
 
+#else
+//TODO NOTES: a warning of
+//ranlib: file: libscc.a(sccasm.o) has no symbols
 #endif /* CONFIG_SCC_ASM */

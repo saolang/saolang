@@ -376,10 +376,10 @@ if ! echo "$cc" | grep -q "scc"; then
     OPT1="$OPT1 -fheinous-gnu-extensions"
     OPT2="$OPT2 -Wstring-plus-int"
   fi
-	# for gcc
-  if echo "$cc" | grep -q "gcc"; then
-    OPT2="$OPT2 -Wunused-but-set-variable"
-  fi
+	# for gcc ...todo again for docker gcc later...
+  #if echo "$cc" | grep -q "gcc"; then
+  #  OPT2="$OPT2 -Wunused-but-set-variable"
+  #fi
   $cc $OPT1 $OPT2 -o a.out -c -xc - < /dev/null > cc_msg.txt 2>&1
   for o in $OPT1; do # enable these options
     if ! grep -q -- $o cc_msg.txt; then CFLAGS="$CFLAGS $o"; fi

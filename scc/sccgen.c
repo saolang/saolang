@@ -1,4 +1,5 @@
 #include "scc.h"
+
 /* loc : local variable index
    ind : output code index
    rsym: return symbol
@@ -15,6 +16,7 @@ ST_DATA Sym *local_stack;
 ST_DATA Sym *define_stack;
 ST_DATA Sym *global_label_stack;
 ST_DATA Sym *local_label_stack;
+
 static int local_scope;
 static int in_sizeof;
 static int section_sym;
@@ -93,10 +95,9 @@ ST_FUNC int ieee_finite(double d)
 }
 
 /* compiling intel long double natively */
-#if (defined __i386__ || defined __x86_64__) \
-    && (defined SCC_TARGET_I386 || defined SCC_TARGET_X86_64)
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ //{
 # define SCC_IS_NATIVE_387
-#endif
+#endif //}
 
 ST_FUNC void test_lvalue(void)
 {
@@ -111,49 +112,34 @@ ST_FUNC void check_vstack(void)
 }
 
 /* ------------------------------------------------------------------------- */
-/* vstack debugging aid */
-
-#if 0
-void pv (const char *lbl, int a, int b)
-{
-    int i;
-    for (i = a; i < a + b; ++i) {
-        SValue *p = &vtop[-i];
-        printf("%s vtop[-%d] : type.t:%04x  r:%04x  r2:%04x  c.i:%d\n",
-            lbl, i, p->type.t, p->r, p->r2, (int)p->c.i);
-    }
-}
-#endif
-
-/* ------------------------------------------------------------------------- */
 /* start of translation unit info */
 ST_FUNC void scc_debug_start(SCCState *s1)
 {
-    if (s1->do_debug) {
-        char buf[512];
+	if (s1->do_debug) {
+		char buf[512];
 
-        /* file info: full path + filename */
-        section_sym = put_elf_sym(symtab_section, 0, 0,
-                                  ELFW(ST_INFO)(STB_LOCAL, STT_SECTION), 0,
-                                  text_section->sh_num, NULL);
-        SCC(getcwd)(buf, sizeof(buf));
+		/* file info: full path + filename */
+		section_sym = put_elf_sym(symtab_section, 0, 0,
+				ELFW(ST_INFO)(STB_LOCAL, STT_SECTION), 0,
+				text_section->sh_num, NULL);
+		SCC(getcwd)(buf, sizeof(buf));
 #ifdef _WIN32
-        normalize_slashes(buf);
+		normalize_slashes(buf);
 #endif
-        pstrcat(buf, sizeof(buf), "/");
-        put_stabs_r(buf, N_SO, 0, 0,
-                    text_section->data_offset, text_section, section_sym);
-        put_stabs_r(file->filename, N_SO, 0, 0,
-                    text_section->data_offset, text_section, section_sym);
-        last_ind = 0;
-        last_line_num = 0;
-    }
+		pstrcat(buf, sizeof(buf), "/");
+		put_stabs_r(buf, N_SO, 0, 0,
+				text_section->data_offset, text_section, section_sym);
+		put_stabs_r(file->filename, N_SO, 0, 0,
+				text_section->data_offset, text_section, section_sym);
+		last_ind = 0;
+		last_line_num = 0;
+	}
 
-    /* an elf symbol of type STT_FILE must be put so that STB_LOCAL
-       symbols can be safely used */
-    put_elf_sym(symtab_section, 0, 0,
-                ELFW(ST_INFO)(STB_LOCAL, STT_FILE), 0,
-                SHN_ABS, file->filename);
+	/* an elf symbol of type STT_FILE must be put so that STB_LOCAL
+		 symbols can be safely used */
+	put_elf_sym(symtab_section, 0, 0,
+			ELFW(ST_INFO)(STB_LOCAL, STT_FILE), 0,
+			SHN_ABS, file->filename);
 }
 
 /* put end of translation unit info */
@@ -210,50 +196,50 @@ ST_FUNC void scc_debug_funcend(SCCState *s1, int size)
 /* ------------------------------------------------------------------------- */
 ST_FUNC int sccgen_compile(SCCState *s1)
 {
-    cur_text_section = NULL;
-    funcname = "";
-    anon_sym = SYM_FIRST_ANOM;
-    section_sym = 0;
-    const_wanted = 0;
-    nocode_wanted = 0x80000000;
+	cur_text_section = NULL;
+	funcname = "";
+	anon_sym = SYM_FIRST_ANOM;
+	section_sym = 0;
+	const_wanted = 0;
+	nocode_wanted = 0x80000000;
 
-    /* define some often used types */
-    int_type.t = VT_INT;
-    char_pointer_type.t = VT_BYTE;
-    mk_pointer(&char_pointer_type);
+	/* define some often used types */
+	int_type.t = VT_INT;
+	char_pointer_type.t = VT_BYTE;
+	mk_pointer(&char_pointer_type);
 #if PTR_SIZE == 4
-    size_type.t = VT_INT | VT_UNSIGNED;
-    ptrdiff_type.t = VT_INT;
+	size_type.t = VT_INT | VT_UNSIGNED;
+	ptrdiff_type.t = VT_INT;
 #elif LONG_SIZE == 4
-    size_type.t = VT_LLONG | VT_UNSIGNED;
-    ptrdiff_type.t = VT_LLONG;
+	size_type.t = VT_LLONG | VT_UNSIGNED;
+	ptrdiff_type.t = VT_LLONG;
 #else
-    size_type.t = VT_LONG | VT_LLONG | VT_UNSIGNED;
-    ptrdiff_type.t = VT_LONG | VT_LLONG;
+	size_type.t = VT_LONG | VT_LLONG | VT_UNSIGNED;
+	ptrdiff_type.t = VT_LONG | VT_LLONG;
 #endif
-    func_old_type.t = VT_FUNC;
-    func_old_type.ref = sym_push(SYM_FIELD, &int_type, 0, 0);
-    func_old_type.ref->f.func_call = FUNC_CDECL;
-    func_old_type.ref->f.func_type = FUNC_OLD;
+	func_old_type.t = VT_FUNC;
+	func_old_type.ref = sym_push(SYM_FIELD, &int_type, 0, 0);
+	func_old_type.ref->f.func_call = FUNC_CDECL;
+	func_old_type.ref->f.func_type = FUNC_OLD;
 
-    scc_debug_start(s1);
+	scc_debug_start(s1);
 
-#ifdef SCC_TARGET_ARM
-    arm_init(s1);
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
+	arm_init(s1);
 #endif
 
 #ifdef INC_DEBUG
-    printf("%s: **** new file\n", file->filename);
+	printf("%s: **** new file\n", file->filename);
 #endif
 
-    parse_flags = PARSE_FLAG_PREPROCESS | PARSE_FLAG_TOK_NUM | PARSE_FLAG_TOK_STR;
-    next();
-    decl(VT_CONST);
-    gen_inline_functions(s1);
-    check_vstack();
-    /* end of translation unit info */
-    scc_debug_end(s1);
-    return 0;
+	parse_flags= PARSE_FLAG_PREPROCESS |PARSE_FLAG_TOK_NUM |PARSE_FLAG_TOK_STR;
+	next();
+	decl(VT_CONST);
+	gen_inline_functions(s1);
+	check_vstack();
+
+	scc_debug_end(s1);
+	return 0;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -289,7 +275,7 @@ ST_FUNC void update_storage(Sym *sym)
         esym->st_info = ELFW(ST_INFO)(sym_bind, ELFW(ST_TYPE)(esym->st_info));
     }
 
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     if (sym->a.dllimport)
         esym->st_other |= ST_PE_IMPORT;
     if (sym->a.dllexport)
@@ -335,7 +321,7 @@ ST_FUNC void put_extern_sym2(Sym *sym, int sh_num,
         else
             sym_bind = STB_GLOBAL;
         other = 0;
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
         if (sym_type == STT_FUNC && sym->type.ref) {
             Sym *ref = sym->type.ref;
             if (ref->a.nodecorate) {
@@ -446,18 +432,21 @@ ST_INLN void sym_free(Sym *sym)
 #endif
 }
 
-/* push, without hashing */
+//push without hashing
 ST_FUNC Sym *sym_push2(Sym **ps, int v, int t, int c)
 {
     Sym *s;
 
     s = sym_malloc();
     SCC(memset)(s, 0, sizeof *s);
+
     s->v = v;
     s->type.t = t;
     s->c = c;
+
     /* add in stack */
     s->prev = *ps;
+
     *ps = s;
     return s;
 }
@@ -494,16 +483,19 @@ ST_INLN Sym *sym_find(int v)
     return table_ident[v]->sym_identifier;
 }
 
-/* push a given symbol on the symbol stack */
+// push a given symbol on the symbol stack
 ST_FUNC Sym *sym_push(int v, CType *type, int r, int c)
 {
     Sym *s, **ps;
     TokenSym *ts;
 
-    if (local_stack)
-        ps = &local_stack;
-    else
-        ps = &global_stack;
+//    if (local_stack)
+//        ps = &local_stack;
+//    else
+//        ps = &global_stack;
+
+		ps = (local_stack) ? &local_stack : & global_stack;
+
     s = sym_push2(ps, v, type->t, c);
     s->type.ref = type->ref;
     s->r = r;
@@ -544,34 +536,28 @@ ST_FUNC Sym *global_identifier_push(int v, int t, int c)
     return s;
 }
 
-/* pop symbols until top reaches 'b'.  If KEEP is non-zero don't really
-   pop them yet from the list, but do remove them from the token array.  */
+//pop symbols until *$b, and free it unless $keep
 ST_FUNC void sym_pop(Sym **ptop, Sym *b, int keep)
 {
-    Sym *s, *ss, **ps;
-    TokenSym *ts;
-    int v;
+	Sym *s, *ss, **ps;
+	TokenSym *ts;
+	int v;
 
-    s = *ptop;
-    while(s != b) {
-        ss = s->prev;
-        v = s->v;
-        /* remove symbol in token array */
-        /* XXX: simplify */
-        if (!(v & SYM_FIELD) && (v & ~SYM_STRUCT) < SYM_FIRST_ANOM) {
-            ts = table_ident[(v & ~SYM_STRUCT) - TOK_IDENT];
-            if (v & SYM_STRUCT)
-                ps = &ts->sym_struct;
-            else
-                ps = &ts->sym_identifier;
-            *ps = s->prev_tok;
-        }
+	s = *ptop;
+	while(s != b) {
+		ss = s->prev;
+		v = s->v;
+		if (!(v & SYM_FIELD) && (v & ~SYM_STRUCT) < SYM_FIRST_ANOM) {
+			ts = table_ident[(v & ~SYM_STRUCT) - TOK_IDENT];
+			ps = (v & SYM_STRUCT) ? &ts->sym_struct : &ts->sym_identifier;
+			*ps = s->prev_tok;
+		}
+		if (!keep)
+			sym_free(s);
+		s = ss;
+	}
 	if (!keep)
-	    sym_free(s);
-        s = ss;
-    }
-    if (!keep)
-	*ptop = b;
+		*ptop = b;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -628,12 +614,12 @@ ST_FUNC void vpop(void)
 {
     int v;
     v = vtop->r & VT_VALMASK;
-#if defined(SCC_TARGET_I386) || defined(SCC_TARGET_X86_64)
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ //{
     /* for x86, we need to pop the FP stack */
     if (v == TREG_ST0) {
         o(0xd8dd); /* fstp %st(0) */
     } else
-#endif
+#endif //}
     if (v == VT_JMP || v == VT_JMPI) {
         /* need to put correct jump if && or || without test */
         gsym(vtop->c.i);
@@ -808,11 +794,17 @@ static void patch_type(Sym *sym, CType *type)
         sym->type.ref = type->ref;
     }
 
+		//TODO fix later
     if (!is_compatible_types(&sym->type, type)) {
-        scc_error("incompatible types for redefinition of '%s'",
-                  get_tok_str(sym->v, NULL));
 
-    } else if ((sym->type.t & VT_BTYPE) == VT_FUNC) {
+//TMP...
+//        scc_error("patch_type(): incompatible types for redefinition of '%s' (%d/%d)",
+//						get_tok_str(sym->v, NULL), sym->type.t, type->t);
+        scc_warning("TODO patch_type(): incompatible types for redefinition of '%s' (%d/%d)",
+						get_tok_str(sym->v, NULL), sym->type.t, type->t);
+    }
+
+		if ((sym->type.t & VT_BTYPE) == VT_FUNC) {
         int static_proto = sym->type.t & VT_STATIC;
         /* warn if static follows non-static function declaration */
         if ((type->t & VT_STATIC) && !static_proto && !(type->t & VT_INLINE))
@@ -848,7 +840,7 @@ static void patch_storage(Sym *sym, AttributeDef *ad, CType *type)
     if (type)
         patch_type(sym, type);
 
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     if (sym->a.dllimport != ad->a.dllimport)
         scc_error("incompatible dll linkage for redefinition of '%s'",
             get_tok_str(sym->v, NULL));
@@ -951,12 +943,12 @@ ST_FUNC void save_reg_upstack(int r, int n)
                 sv.r = VT_LOCAL | VT_LVAL;
                 sv.c.i = loc;
                 store(r, &sv);
-#if defined(SCC_TARGET_I386) || defined(SCC_TARGET_X86_64)
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ //{
                 /* x86 specific: need to pop fp register ST0 if saved */
                 if (r == TREG_ST0) {
                     o(0xd8dd); /* fstp %st(0) */
                 }
-#endif
+#endif //}
 #if PTR_SIZE == 4
                 /* special long long case */
                 if ((type->t & VT_BTYPE) == VT_LLONG) {
@@ -982,7 +974,7 @@ ST_FUNC void save_reg_upstack(int r, int n)
     }
 }
 
-#ifdef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
 /* find a register of class 'rc2' with at most one reference on stack.
  * If none, call get_reg(rc) */
 ST_FUNC int get_reg_ex(int rc, int rc2)
@@ -1228,10 +1220,11 @@ ST_FUNC int gv(int rc)
         }
         r = vtop->r & VT_VALMASK;
         rc2 = (rc & RC_FLOAT) ? RC_FLOAT : RC_INT;
-#ifndef SCC_TARGET_ARM64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
+#else
         if (rc == RC_IRET)
             rc2 = RC_LRET;
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
         else if (rc == RC_FRET)
             rc2 = RC_QRET;
 #endif
@@ -1335,11 +1328,6 @@ ST_FUNC int gv(int rc)
             }
         }
         vtop->r = r;
-//#ifdef SCC_TARGET_C67
-//        /* uses register pairs for doubles */
-//        if ((vtop->type.t & VT_BTYPE) == VT_DOUBLE) 
-//            vtop->r2 = r+1;
-//#endif
     }
     return r;
 }
@@ -1376,11 +1364,12 @@ ST_FUNC void gv2(int rc1, int rc2)
     }
 }
 
-#ifndef SCC_TARGET_ARM64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
+#else
 /* wrapper around RC_FRET to return a register by type */
 static int rc_fret(int t)
 {
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
     if (t == VT_LDOUBLE) {
         return RC_ST0;
     }
@@ -1392,7 +1381,7 @@ static int rc_fret(int t)
 /* wrapper around REG_FRET to return a register by type */
 static int reg_fret(int t)
 {
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
     if (t == VT_LDOUBLE) {
         return TREG_ST0;
     }
@@ -1423,7 +1412,7 @@ static void lexpand(void)
 }
 #endif
 
-#ifdef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
 /* expand long long on stack */
 ST_FUNC void lexpand_nr(void)
 {
@@ -1497,7 +1486,7 @@ static void gv_dup(void)
         sv.type.t = VT_INT;
         if (is_float(t)) {
             rc = RC_FLOAT;
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
             if ((t & VT_BTYPE) == VT_LDOUBLE) {
                 rc = RC_ST0;
             }
@@ -1580,7 +1569,6 @@ static void gen_opl(int op)
     case '*':
     case '+':
     case '-':
-        //pv("gen_opl A",0,2);
         t = vtop->type.t;
         vswap();
         lexpand();
@@ -1595,7 +1583,6 @@ static void gen_opl(int op)
         vtop[-3] = tmp;
         vswap();
         /* stack: H1 H2 L1 L2 */
-        //pv("gen_opl B",0,4);
         if (op == '*') {
             vpushv(vtop - 1);
             vpushv(vtop - 1);
@@ -2250,13 +2237,16 @@ redo:
         gv(is_float(vtop->type.t & VT_BTYPE) ? RC_FLOAT : RC_INT);
 }//gen_op
 
-#ifndef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32) //{
+//arm32 see gen-ARM-32.c
+#else //}:{
 /* generic itof for unsigned long long case */
 static void gen_cvt_itof1(int t)
 {
-#ifdef SCC_TARGET_ARM64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64) //{
+	//arm64
     gen_cvt_itof(t);
-#else
+#else //}:{
     if ((vtop->type.t & (VT_BTYPE | VT_UNSIGNED)) == 
         (VT_LLONG | VT_UNSIGNED)) {
 
@@ -2275,16 +2265,19 @@ static void gen_cvt_itof1(int t)
     } else {
         gen_cvt_itof(t);
     }
-#endif
+#endif //}
 }
-#endif
+#endif //}
 
 /* generic ftoi for unsigned long long case */
+//@ref gen_cast()
 static void gen_cvt_ftoi1(int t)
 {
-#ifdef SCC_TARGET_ARM64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
+	//arm64
     gen_cvt_ftoi(t);
 #else
+		//else
     int st;
 
     if (t == (VT_LLONG | VT_UNSIGNED)) {
@@ -2377,7 +2370,7 @@ static void gen_cast(CType *type)
         df = is_float(dbt);
         c = (vtop->r & (VT_VALMASK | VT_LVAL | VT_SYM)) == VT_CONST;
         p = (vtop->r & (VT_VALMASK | VT_LVAL | VT_SYM)) == (VT_CONST | VT_SYM);
-#if !defined SCC_IS_NATIVE && !defined SCC_IS_NATIVE_387
+#if !(__SCC_TARGET_CROSS__==0) && !defined SCC_IS_NATIVE_387
         c &= dbt != VT_LDOUBLE;
 #endif
         if (c) {
@@ -2501,18 +2494,19 @@ static void gen_cast(CType *type)
                 if ((sbt & VT_BTYPE) != VT_LLONG &&
                     (sbt & VT_BTYPE) != VT_PTR &&
                     (sbt & VT_BTYPE) != VT_FUNC) {
-                    /* need to convert from 32bit to 64bit */
+
+                    // convert from 32bit to 64bit
                     gv(RC_INT);
                     if (sbt != (VT_INT | VT_UNSIGNED)) {
-#if defined(SCC_TARGET_ARM64)
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
                         gen_cvt_sxtw();
-#elif defined(SCC_TARGET_X86_64)
+#elif (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
                         int r = gv(RC_INT);
                         /* x86_64 specific: movslq */
                         o(0x6348);
                         o(0xc0 + (REG_VALUE(r) << 3) + REG_VALUE(r));
-#else
-#error
+#else//??
+//TODO
 #endif
                     }
                 }
@@ -2588,21 +2582,21 @@ ST_FUNC int type_size(CType *type, int *a)
         *a = LDOUBLE_ALIGN;
         return LDOUBLE_SIZE;
     } else if (bt == VT_DOUBLE || bt == VT_LLONG) {
-#ifdef SCC_TARGET_I386
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==32 //{
+# if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
         *a = 8;
-#else
+# else
         *a = 4;
-#endif
-#elif defined(SCC_TARGET_ARM)
-#ifdef SCC_ARM_EABI
+# endif
+#elif (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
+# ifdef SCC_ARM_EABI
         *a = 8; 
-#else
+# else
         *a = 4;
-#endif
+# endif
 #else
         *a = 8;
-#endif
+#endif //}
         return 8;
     } else if (bt == VT_INT || bt == VT_FLOAT) {
         *a = 4;
@@ -3081,7 +3075,7 @@ ST_FUNC void vstore(void)
             rc = RC_INT;
             if (is_float(ft)) {
                 rc = RC_FLOAT;
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
                 if ((ft & VT_BTYPE) == VT_LDOUBLE) {
                     rc = RC_ST0;
                 } else if ((ft & VT_BTYPE) == VT_QFLOAT) {
@@ -3276,7 +3270,7 @@ redo:
         case TOK_STDCALL3:
             ad->f.func_call = FUNC_STDCALL;
             break;
-#ifdef SCC_TARGET_I386
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==32//{
         case TOK_REGPARM1:
         case TOK_REGPARM2:
             skip('(');
@@ -3294,7 +3288,7 @@ redo:
         case TOK_FASTCALL3:
             ad->f.func_call = FUNC_FASTCALLW;
             break;            
-#endif
+#endif //}
         case TOK_MODE:
             skip('(');
             switch(tok) {
@@ -3955,7 +3949,7 @@ static int parse_btype(CType *type, AttributeDef *ad)
             }
             next();
             break;
-#ifdef SCC_TARGET_ARM64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
         case TOK_UINT128:
             /* GCC's __uint128_t appears in some Linux header files. Make it a
                synonym for long double to get the size and alignment right. */
@@ -4105,7 +4099,7 @@ the_end:
     bt = t & (VT_BTYPE|VT_LONG);
     if (bt == VT_LONG)
         t |= LONG_SIZE == 8 ? VT_LLONG : VT_INT;
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     if (bt == VT_LDOUBLE)
         t = (t & ~(VT_BTYPE|VT_LONG)) | VT_DOUBLE;
 #endif
@@ -4520,7 +4514,7 @@ ST_FUNC void unary(void)
         next();
         goto tok_next;
     case TOK_LCHAR:
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
         t = VT_SHORT|VT_UNSIGNED;
         goto push_tokc;
 #endif
@@ -4580,7 +4574,7 @@ ST_FUNC void unary(void)
         }
         break;
     case TOK_LSTR:
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
         t = VT_SHORT | VT_UNSIGNED;
 #else
         t = VT_INT;
@@ -4799,8 +4793,8 @@ ST_FUNC void unary(void)
             }
         }
         break;
-#ifdef SCC_TARGET_X86_64
-#ifdef SCC_TARGET_PE
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
     case TOK_builtin_va_start:
 	parse_builtin_params(0, "ee");
         r = vtop->r & VT_VALMASK;
@@ -4823,7 +4817,7 @@ ST_FUNC void unary(void)
 #endif
 #endif
 
-#ifdef SCC_TARGET_ARM64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
     case TOK___va_start: {
 	parse_builtin_params(0, "ee");
         //xx check types
@@ -4991,7 +4985,7 @@ special_math_val:
             /* for simple function calls, we tolerate undeclared
                external reference to int() function */
             if (scc_state->warn_implicit_function_declaration
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
                 /* people must be warned about using undeclared WINAPI functions
                    (which usually start with uppercase letter) */
                 || (name[0] >= 'A' && name[0] <= 'Z')
@@ -5096,7 +5090,7 @@ special_math_val:
                 if (!ret_nregs) {
                     /* get some space for the returned structure */
                     size = type_size(&s->type, &align);
-#ifdef SCC_TARGET_ARM64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
                 /* On arm64, a small struct is return in registers.
                    It is much easier to write it to memory if we know
                    that we are allowed to write some extra bytes, so
@@ -5123,13 +5117,14 @@ special_math_val:
                 /* return in register */
                 if (is_float(ret.type.t)) {
                     ret.r = reg_fret(ret.type.t);
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
                     if ((ret.type.t & VT_BTYPE) == VT_QFLOAT)
                       ret.r2 = REG_QRET;
 #endif
                 } else {
-#ifndef SCC_TARGET_ARM64
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
+#else
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
                     if ((ret.type.t & VT_BTYPE) == VT_QLONG)
 #else
                     if ((ret.type.t & VT_BTYPE) == VT_LLONG)
@@ -5402,7 +5397,7 @@ static void expr_cond(void)
                each branch */
             if (is_float(vtop->type.t)) {
                 rc = RC_FLOAT;
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
                 if ((vtop->type.t & VT_BTYPE) == VT_LDOUBLE) {
                     rc = RC_ST0;
                 }
@@ -5519,7 +5514,7 @@ static void expr_cond(void)
             rc = RC_INT;
             if (is_float(type.t)) {
                 rc = RC_FLOAT;
-#ifdef SCC_TARGET_X86_64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
                 if ((type.t & VT_BTYPE) == VT_LDOUBLE) {
                     rc = RC_ST0;
                 }
@@ -5649,7 +5644,8 @@ static int is_label(void)
     }
 }
 
-#ifndef SCC_TARGET_ARM64
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==64)
+#else
 static void gfunc_return(CType *func_type)
 {
     if ((func_type->t & VT_BTYPE) == VT_STRUCT) {
@@ -5712,7 +5708,7 @@ static void gfunc_return(CType *func_type)
         gv(RC_IRET);
     }
     vtop--; /* NOT vpop() because on x86 it would flush the fp stack */
-}//gfunc_return for SCC_TARGET_ARM64
+}//gfunc_return()
 #endif
 
 static int case_cmp(const void *pa, const void *pb)
@@ -5724,62 +5720,62 @@ static int case_cmp(const void *pa, const void *pb)
 
 static void gcase(struct case_t **base, int len, int *bsym)
 {
-    struct case_t *p;
-    int e;
-    int ll = (vtop->type.t & VT_BTYPE) == VT_LLONG;
-    gv(RC_INT);
-    while (len > 4) {
-        /* binary search */
-        p = base[len/2];
-        vdup();
-	if (ll)
-	    vpushll(p->v2);
-	else
-	    vpushi(p->v2);
-        gen_op(TOK_LE);
-        e = gtst(1, 0);
-        vdup();
-	if (ll)
-	    vpushll(p->v1);
-	else
-	    vpushi(p->v1);
-        gen_op(TOK_GE);
-        gtst_addr(0, p->sym); /* v1 <= x <= v2 */
-        /* x < v1 */
-        gcase(base, len/2, bsym);
-        if (cur_switch->def_sym)
-            gjmp_addr(cur_switch->def_sym);
-        else
-            *bsym = gjmp(*bsym);
-        /* x > v2 */
-        gsym(e);
-        e = len/2 + 1;
-        base += e; len -= e;
-    }
-    /* linear scan */
-    while (len--) {
-        p = *base++;
-        vdup();
-	if (ll)
-	    vpushll(p->v2);
-	else
-	    vpushi(p->v2);
-        if (p->v1 == p->v2) {
-            gen_op(TOK_EQ);
-            gtst_addr(0, p->sym);
-        } else {
-            gen_op(TOK_LE);
-            e = gtst(1, 0);
-            vdup();
-	    if (ll)
-	        vpushll(p->v1);
-	    else
-	        vpushi(p->v1);
-            gen_op(TOK_GE);
-            gtst_addr(0, p->sym);
-            gsym(e);
-        }
-    }
+	struct case_t *p;
+	int e;
+	int ll = (vtop->type.t & VT_BTYPE) == VT_LLONG;
+	gv(RC_INT);
+	while (len > 4) {
+		/* binary search */
+		p = base[len/2];
+		vdup();
+		if (ll)
+			vpushll(p->v2);
+		else
+			vpushi(p->v2);
+		gen_op(TOK_LE);
+		e = gtst(1, 0);
+		vdup();
+		if (ll)
+			vpushll(p->v1);
+		else
+			vpushi(p->v1);
+		gen_op(TOK_GE);
+		gtst_addr(0, p->sym); /* v1 <= x <= v2 */
+		/* x < v1 */
+		gcase(base, len/2, bsym);
+		if (cur_switch->def_sym)
+			gjmp_addr(cur_switch->def_sym);
+		else
+			*bsym = gjmp(*bsym);
+		/* x > v2 */
+		gsym(e);
+		e = len/2 + 1;
+		base += e; len -= e;
+	}
+	/* linear scan */
+	while (len--) {
+		p = *base++;
+		vdup();
+		if (ll)
+			vpushll(p->v2);
+		else
+			vpushi(p->v2);
+		if (p->v1 == p->v2) {
+			gen_op(TOK_EQ);
+			gtst_addr(0, p->sym);
+		} else {
+			gen_op(TOK_LE);
+			e = gtst(1, 0);
+			vdup();
+			if (ll)
+				vpushll(p->v1);
+			else
+				vpushi(p->v1);
+			gen_op(TOK_GE);
+			gtst_addr(0, p->sym);
+			gsym(e);
+		}
+	}
 }
 
 static void block(int *bsym, int *csym, int is_expr)
@@ -6199,7 +6195,7 @@ static void parse_init_elem(int expr_type)
         if (((vtop->r & (VT_VALMASK | VT_LVAL)) != VT_CONST
 	     && ((vtop->r & (VT_SYM|VT_LVAL)) != (VT_SYM|VT_LVAL)
 		 || vtop->sym->v < SYM_FIRST_ANOM))
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
                  || ((vtop->r & VT_SYM) && vtop->sym->a.dllimport)
 #endif
             )
@@ -6219,7 +6215,7 @@ static void init_putz(Section *sec, unsigned long c, int size)
     } else {
         vpush_global_sym(&func_old_type, TOK_memset);
         vseti(VT_LOCAL, c);
-#ifdef SCC_TARGET_ARM
+#if (__SCC_TARGET_CPU_ID__==__SCC_CPU_ARM__ && __SCC_TARGET_CPU_BIT__==32)
         vpushs(size);
         vpushi(0);
 #else
@@ -6597,7 +6593,7 @@ static void decl_initializer(CType *type, Section *sec, unsigned long c,
         /* only parse strings here if correct type (otherwise: handle
            them as ((w)char *) expressions */
         if ((tok == TOK_LSTR && 
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
              (t1->t & VT_BTYPE) == VT_SHORT && (t1->t & VT_UNSIGNED)
 #else
              (t1->t & VT_BTYPE) == VT_INT
@@ -6894,7 +6890,7 @@ static void decl_initializer_alloc(CType *type, AttributeDef *ad, int r,
 
 		vla_runtime_type_size(type, &a);
 		gen_vla_alloc(type, a);
-#if defined SCC_TARGET_PE && defined SCC_TARGET_X86_64
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__ && (__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ && __SCC_TARGET_CPU_BIT__==64)
 		/* on _WIN64, because of the function args scratch area, the
 			 result of alloca differs from RSP and is returned in RAX.  */
 		gen_vla_result(addr), addr = (loc -= PTR_SIZE);
@@ -7106,7 +7102,7 @@ static int decl0(int l, int is_for_loop_init, Sym *func_sym)
 					expect(";");
 			}
 
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 			if (ad.a.dllimport || ad.a.dllexport) {
 				if (type.t & (VT_STATIC|VT_TYPEDEF))
 					scc_error("cannot have dll linkage with static or typedef");

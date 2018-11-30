@@ -56,7 +56,10 @@
   SCC_OBSTRUCT(WHILE_INDIRECT1) () (macro,__VA_ARGS__)\
 )
 #define WHILE_INDIRECT1() SCC_WHILE1
+#define SCC_ITR1(...) SCC_EVAL(SCC_WHILE1(__VA_ARGS__))
 
+#if 0
+//TODO buggy, need rewrite again...
 // eat 2 value every time
 #define SCC_WHILE2(macro,value1,value2, ...)\
 	SCC_WHEN(SCC_NOT(SCC_IS_PAREN(value2 ())))\
@@ -75,12 +78,11 @@
 )
 #define SCC_WHILE_INDIRECT3() SCC_WHILE3
 
-// ITR => WHILE
-#define SCC_ITR1(...) SCC_EVAL(SCC_WHILE1(__VA_ARGS__))
 #define SCC_ITR2(...) SCC_EVAL(SCC_WHILE2(__VA_ARGS__))
 #define SCC_ITR3(...) SCC_EVAL(SCC_WHILE3(__VA_ARGS__))
 //#define SCC_ITR4(...) SCC_EVAL(SCC_WHILE4(__VA_ARGS__))
 #define SCC_ITR(n,...) SCC_EVAL(SCC_WHILE##n(__VA_ARGS__))
+#endif
 
 // YYY,ZZZ => "YYY,ZZZ"
 #define SCC_QUOTE_PACK(...) #__VA_ARGS__
@@ -94,16 +96,16 @@
 //99% SOLUTION FOR MCAT(): Variable Argument Macro (VA_MACRO) up to 9 arguments 
 #define SCC_NUM_ARGS_(_1, _2, _3, _4, _5, _6, _7, _8, _9, TOTAL, ...) TOTAL
 #define SCC_NUM_ARGS(...) SCC_NUM_ARGS_(__VA_ARGS__, 9, 8, 7, 6, 5, 4, 3, 2, 1)
-#define SCC_MCAT(...) SCC_CAT(MCAT, SCC_NUM_ARGS(__VA_ARGS__))(__VA_ARGS__)
+#define SCC_MCAT(...) SCC_CAT(SCC_MCAT, SCC_NUM_ARGS(__VA_ARGS__))(__VA_ARGS__)
 #define SCC_MCAT1(_1) _1
-#define SCC_MCAT2(_1, _2) SCC_CAT(MCAT1(_1),_2)
-#define SCC_MCAT3(_1, _2, _3) SCC_CAT(MCAT2(_1,_2),_3)
-#define SCC_MCAT4(_1, _2, _3, _4) SCC_CAT(MCAT3(_1,_2,_3),_4)
-#define SCC_MCAT5(_1, _2, _3, _4, _5) SCC_CAT(MCAT4(_1,_2,_3,_4),_5)
-#define SCC_MCAT6(_1, _2, _3, _4, _5, _6) SCC_CAT(MCAT5(_1,_2,_3,_4,_5),_6)
-#define SCC_MCAT7(_1, _2, _3, _4, _5, _6,_7) SCC_CAT(MCAT5(_1,_2,_3,_4,_5),_6)
-#define SCC_MCAT8(_1, _2, _3, _4, _5, _6,_7,_8) SCC_CAT(MCAT5(_1,_2,_3,_4,_5,_6),_7)
-#define SCC_MCAT9(_1, _2, _3, _4, _5, _6,_7,_8,_9) SCC_CAT(MCAT5(_1,_2,_3,_4,_5,_6,_7),_8)
+#define SCC_MCAT2(_1, _2)  SCC_CAT(SCC_MCAT1(_1),_2)
+#define SCC_MCAT3(_1, _2, _3)  SCC_CAT(SCC_MCAT2(_1,_2),_3)
+#define SCC_MCAT4(_1, _2, _3, _4)  SCC_CAT(SCC_MCAT3(_1,_2,_3),_4)
+#define SCC_MCAT5(_1, _2, _3, _4, _5)  SCC_CAT(SCC_MCAT4(_1,_2,_3,_4),_5)
+#define SCC_MCAT6(_1, _2, _3, _4, _5, _6) SCC_CAT(SCC_MCAT5(_1,_2,_3,_4,_5),_6)
+#define SCC_MCAT7(_1, _2, _3, _4, _5, _6,_7) SCC_CAT(SCC_MCAT6(_1,_2,_3,_4,_5,_6),_7)
+#define SCC_MCAT8(_1, _2, _3, _4, _5, _6,_7,_8) SCC_CAT(SCC_MCAT7(_1,_2,_3,_4,_5,_6,_7),_8)
+#define SCC_MCAT9(_1, _2, _3, _4, _5, _6,_7,_8,_9) SCC_CAT(SCC_MCAT8(_1,_2,_3,_4,_5,_6,_7,_8),_9)
 
 
 //@ref:

@@ -96,21 +96,20 @@ typedef struct
    array.  The macros under each EI_* macro are the values the byte
    may have.  */
 
-#define EI_MAG0		0		/* File identification byte 0 index */
-#define ELFMAG0		0x7f		/* Magic number byte 0 */
+//#define EI_MAGIC0		0		/* File identification byte 0 index */
+#define ELFMAGIC0		0x7f		/* Magic number byte 0 */
 
-#define EI_MAG1		1		/* File identification byte 1 index */
-#define ELFMAG1		'E'		/* Magic number byte 1 */
+//#define EI_MAGIC1		1		/* File identification byte 1 index */
+#define ELFMAGIC1		'E'		/* Magic number byte 1 */
 
-#define EI_MAG2		2		/* File identification byte 2 index */
-#define ELFMAG2		'L'		/* Magic number byte 2 */
+//#define EI_MAGIC2		2		/* File identification byte 2 index */
+#define ELFMAGIC2		'L'		/* Magic number byte 2 */
 
-#define EI_MAG3		3		/* File identification byte 3 index */
-#define ELFMAG3		'F'		/* Magic number byte 3 */
+//#define EI_MAGIC3		3		/* File identification byte 3 index */
+#define ELFMAGIC3		'F'		/* Magic number byte 3 */
 
-/* Conglomeration of the identification bytes, for easy testing as a word.  */
-#define	ELFMAG		"\177ELF"
-#define	SELFMAG		4
+#define	ELFMAGIC		"\177ELF"
+#define	SELFMAGIC		4
 
 #define EI_CLASS	4		/* File class byte index */
 #define ELFCLASSNONE	0		/* Invalid class */
@@ -2517,26 +2516,6 @@ typedef Elf32_Addr Elf32_Conflict;
 #define R_ARM_RBASE		255
 /* Keep this the last entry.  */
 #define R_ARM_NUM		256
-
-/* TMS320C67xx specific declarations */
-
-/* XXX: no ELF standard yet*/
-
-/* TMS320C67xx relocs. */
-#define R_C60_32       1
-#define R_C60_GOT32     3               /* 32 bit GOT entry */
-#define R_C60_PLT32     4               /* 32 bit PLT address */
-#define R_C60_COPY      5               /* Copy symbol at runtime */
-#define R_C60_GLOB_DAT  6               /* Create GOT entry */
-#define R_C60_JMP_SLOT  7               /* Create PLT entry */
-#define R_C60_RELATIVE  8               /* Adjust by program base */
-#define R_C60_GOTOFF    9               /* 32 bit offset to GOT */
-#define R_C60_GOTPC     10              /* 32 bit PC relative offset to GOT */
-
-#define R_C60LO16      0x54       /* low 16 bit MVKL embedded */
-#define R_C60HI16      0x55       /* high 16 bit MVKH embedded */
-/* Keep this the last entry.  */
-#define R_C60_NUM      0x56
 
 /* IA-64 specific declarations.  */
 

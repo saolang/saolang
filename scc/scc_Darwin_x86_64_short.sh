@@ -3,11 +3,13 @@
 #../configure --prefix=. --cc=clang --config-musl --extra-cflags="-Wall -g -O2 -I ../include"
 # --extra-cflags="-Wall -g -O2 -DMAKE_DEBUG"
 
+#../configure --prefix=. --cc=clang --config-musl
+
 arch=$(uname -s)_$(uname -m)
 echo arch=$arch
 mkdir -p build_$arch/
 cd build_$arch/
-../configure --prefix=. --cc=clang --config-musl
+../configure --cc=clang --config-musl
 make clean
 make makedebug
 make libscc.so
@@ -27,18 +29,32 @@ echo ./build_Darwin_x86_64/scc -run -B build_Darwin_x86_64/ -I build_Darwin_x86_
 #echo ./build_Darwin_x86_64/scc -run -B build_Darwin_x86_64/ -I include -I. -D __APPLE__ scc.c -v
 #./build_Darwin_x86_64/scc -run -B build_Darwin_x86_64/ -I include -I. -D __APPLE__ scc.c -v
 
-echo ./build_Darwin_x86_64/scc -run -B build_Darwin_x86_64/ -I. scc.c -vv
-./build_Darwin_x86_64/scc -run -B build_Darwin_x86_64/ -I. scc.c -vv
+echo ./build_Darwin_x86_64/scc -run -B build_Darwin_x86_64/ -I. -I build_Darwin_x86_64 scc.c -vv
+./build_Darwin_x86_64/scc -run -B build_Darwin_x86_64/ -I. -I build_Darwin_x86_64 scc.c -vv
 
 #echo ./build_Darwin_x86_64/scc -run -B build_Darwin_x86_64/ -I. examples/test_scc_error_internal.c
 #./build_Darwin_x86_64/scc -run -B build_Darwin_x86_64/ -I. examples/test_scc_error_internal.c
 
 echo ./build_Darwin_x86_64/scc -run -B build_Darwin_x86_64/ -I. examples/test_scc_h.c
-./build_Darwin_x86_64/scc -run -B build_Darwin_x86_64/ -I. examples/test_scc_h.c
+./build_Darwin_x86_64/scc -run -B build_Darwin_x86_64/ -I. -I build_Darwin_x86_64 examples/test_scc_h.c
 
 echo
-echo ./build_Darwin_x86_64/scc -B build_Darwin_x86_64/ -I. -E -P0 scc.c \> scc.osx.pp.c
-./build_Darwin_x86_64/scc -B build_Darwin_x86_64/ -I. -E -P0 scc.c > scc.osx.pp.c
+echo ./build_Darwin_x86_64/scc -B build_Darwin_x86_64/ -I. -I build_Darwin_x86_64 -E -P0 scc.c \> scc.osx.i
+./build_Darwin_x86_64/scc -B build_Darwin_x86_64/ -I. -I build_Darwin_x86_64 -E -P0 scc.c > scc.osx.i
 
 # dev OSX ..
-./build_Darwin_x86_64/scc -I include_osx -I . -DMAKE_DEBUG -run scc.c -I. -Wunsupported -c examples/test_scc_h.c 
+#./build_Darwin_x86_64/scc -B build_Darwin_x86_64 -D__APPLE__ -D__SCC_TARGET_FORMAT__=MACHO -I include_osx -I . -DMAKE_DEBUG -run scc.c -I. -Wunsupported -c examples/test_scc_h.c 
+#./build_Darwin_x86_64/scc -B build_Darwin_x86_64 -D__APPLE__ -D__SCC_TARGET_FORMAT__=MACHO -I include_osx -I. -run scc.c -I. -Wunsupported -c examples/test_scc_h.c 
+#./build_Darwin_x86_64/scc -B build_Darwin_x86_64 -DSCC_TARGET_MACHO -D__APPLE__ -D__SCC_TARGET_FORMAT__=MACHO -I include_osx -I. -run scc.c
+#./build_Darwin_x86_64/scc -B build_Darwin_x86_64 -D__APPLE__ -D__SCC_TARGET_FORMAT__=MACHO -I build_Darwin_x86_64 -I include_osx -I. -run scc.c
+
+./build_Darwin_x86_64/scc -B build_Darwin_x86_64 -I build_Darwin_x86_64 -I include_osx -I. -run scc.c
+./build_Darwin_x86_64/scc -B build_Darwin_x86_64 -I build_Darwin_x86_64 -I include_osx -I. -D SCC_TARGET_X86_64 -run scc.c
+
+cd build_Darwin_x86_64
+./scc -I . -I ..  -run ../scc.c -I. -I.. -run ../test/test_SCC.c
+./scc -I . -I ..  -run ../scc.c -I. -I.. -run ../scc.c -I. -I.. -run ../test/test_SCC.c
+./scc -I . -I ..  -run ../scc.c -I. -I.. -run ../scc.c -I. -I.. -run ../scc.c -I. -I.. -run ../test/test_SCC.c
+
+
+

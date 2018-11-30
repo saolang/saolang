@@ -1,15 +1,10 @@
 # --------------------------------------------------------------------------
-#
 # Sao C Compiler Makefile
-#
 
 ifndef TOP
  TOP = .
  INCLUDED = no
 endif
-
-#include $(TOP)/Makefile.env
-#include Makefile.env
 
 ENV_MAK=Makefile.env
 ifeq ($(ENV_MAK), $(wildcard $(ENV_MAK)))
@@ -40,12 +35,14 @@ CFLAGS += $(CPPFLAGS)
 VPATH = $(TOPSRC)
 
 ifdef CONFIG_WIN32
+
  ifneq ($(CONFIG_static),yes)
   LIBSCC = libscc$(DLLSUF)
   LIBSCCDEF = libscc.def
  endif
  CFGWIN = -win
  NATIVE_TARGET = $(SCC_ARCH)-WIN$(if $(findstring ARM,$(SCC_ARCH)),CE,32)
+
 else
 
 ifdef CONFIG_OSX
@@ -55,6 +52,7 @@ else
   LIBS+=-ldl
  endif
 endif
+
  # make libscc as static or dynamic library?
  ifeq ($(CONFIG_static),no)
   LIBSCC=libscc$(DLLSUF)
@@ -67,20 +65,10 @@ endif
 
  NATIVE_TARGET = $(SCC_ARCH)-$(SCC_OS)
  
-# NATIVE_TARGET = $(SCC_ARCH)
  ifdef CONFIG_OSX
-#  NATIVE_TARGET = $(SCC_ARCH)-OSX
-ifeq (-$(findstring $(CC),scc)-,-scc-)
-  LDFLAGS += -flat_namespace
-else
-
-ifdef CONFIG_OSX
-  LDFLAGS += -flat_namespace
-else
-  LDFLAGS += -flat_namespace -undefined warning
-endif
-
-endif
+  ifeq (-$(findstring $(CC),scc)-,-scc-)
+    LDFLAGS += -flat_namespace
+  endif
   export MACOSX_DEPLOYMENT_TARGET := 10.2
  endif
 endif
@@ -99,25 +87,26 @@ LIBS_P = $(LIBS)
 LDFLAGS_P = $(LDFLAGS)
 
 CONFIG_$(SCC_ARCH) = yes
-NATIVE_DEFINES_$(CONFIG_i386) += -DSCC_TARGET_I386
-NATIVE_DEFINES_$(CONFIG_X86-64) += -DSCC_TARGET_X86_64
 
-NATIVE_DEFINES_$(CONFIG_WIN32) += -DSCC_TARGET_PE
-NATIVE_DEFINES_$(CONFIG_OSX) += -DSCC_TARGET_MACHO
-NATIVE_DEFINES_$(CONFIG_uClibc) += -DSCC_UCLIBC
+##NATIVE_DEFINES_$(CONFIG_i386) += -DSCC_TARGET_I386
+##NATIVE_DEFINES_$(CONFIG_X86-64) += -DSCC_TARGET_X86_64
+##NATIVE_DEFINES_$(CONFIG_WIN32) += -DSCC_TARGET_PE
+##NATIVE_DEFINES_$(CONFIG_OSX) += -DSCC_TARGET_MACHO
+
+##NATIVE_DEFINES_$(CONFIG_uClibc) += -DSCC_UCLIBC
+#TODO
 NATIVE_DEFINES_$(CONFIG_musl) += -DSCC_MUSL
-NATIVE_DEFINES_$(CONFIG_libgcc) += -DCONFIG_USE_LIBGCC
-NATIVE_DEFINES_$(CONFIG_selinux) += -DHAVE_SELINUX
+##NATIVE_DEFINES_$(CONFIG_libgcc) += -DCONFIG_USE_LIBGCC
+##NATIVE_DEFINES_$(CONFIG_selinux) += -DHAVE_SELINUX
 
-NATIVE_DEFINES_$(CONFIG_X86-32-LNX) += -DSCC_TARGET_I386
-NATIVE_DEFINES_$(CONFIG_X86-64-LNX) += -DSCC_TARGET_X86_64
-NATIVE_DEFINES_$(CONFIG_X86-64-OSX) += -DSCC_TARGET_MACHO
-NATIVE_DEFINES_$(CONFIG_ARM-32-LNX) += -DSCC_TARGET_ARM
-NATIVE_DEFINES_$(CONFIG_ARM-32-LNX_EABIHF) += -DSCC_ARM_EABI -DSCC_ARM_HARDFLOAT
-NATIVE_DEFINES_$(CONFIG_ARM-32-LNX_EABI) += -DSCC_ARM_EABI
-NATIVE_DEFINES_$(CONFIG_ARM-32-LNX_VFP) += -DSCC_ARM_VFP
-NATIVE_DEFINES_$(CONFIG_ARM-64-LNX) += -DSCC_TARGET_ARM64
-
+##NATIVE_DEFINES_$(CONFIG_X86-32-LNX) += -DSCC_TARGET_I386
+##NATIVE_DEFINES_$(CONFIG_X86-64-LNX) += -DSCC_TARGET_X86_64
+##NATIVE_DEFINES_$(CONFIG_X86-64-OSX) += -DSCC_TARGET_MACHO
+##NATIVE_DEFINES_$(CONFIG_ARM-32-LNX) += -DSCC_TARGET_ARM
+##NATIVE_DEFINES_$(CONFIG_ARM-32-LNX_EABIHF) += -DSCC_ARM_EABI -DSCC_ARM_HARDFLOAT
+##NATIVE_DEFINES_$(CONFIG_ARM-32-LNX_EABI) += -DSCC_ARM_EABI
+##NATIVE_DEFINES_$(CONFIG_ARM-32-LNX_VFP) += -DSCC_ARM_VFP
+##NATIVE_DEFINES_$(CONFIG_ARM-64-LNX) += -DSCC_TARGET_ARM64
 NATIVE_DEFINES += $(NATIVE_DEFINES_yes)
 
 ifeq ($(INCLUDED),no)
@@ -161,16 +150,11 @@ env:
 	@echo ${SCC_OS},${SCC_ARCH}
 
 # cross compiler targets to build
-
-#SCC_X = X86-32 X86-64 X86-32-WIN X86-64-WIN X86-64-OSX ARM-32 ARM-64 ARM-32-WIN C67
-#SCC_X     = X86-32 X86-64 X86-32-WIN X86-64-WIN X86-64-OSX ARM-32 ARM-64
-SCC_X     = X86-32-LNX X86-64-LNX X86-32-WIN X86-64-WIN X86-64-OSX ARM-32-LNX ARM-64-LNX
+SCC_X     = X86-32-LNX X86-64-LNX X86-32-WIN X86-64-WIN X86-64-OSX ARM-64-LNX ARM-32-LNX
 
 # cross libscc1.a targets to build
-#LIBSCC1_X = X86-32 X86-64 X86-32-WIN X86-64-WIN X86-64-OSX ARM-32 ARM-64 ARM-32-WIN
-#LIBSCC1_X = X86-32 X86-64 X86-32-WIN X86-64-WIN X86-64-OSX ARM-32 ARM-64
-LIBSCC1_X = X86-32-LNX X86-64-LNX X86-32-WIN X86-64-WIN X86-64-OSX ARM-32-LNX ARM-64-LNX
-
+#LIBSCC1_X = X86-32-LNX X86-64-LNX X86-32-WIN X86-64-WIN X86-64-OSX ARM-64-LNX ARM-32-LNX
+LIBSCC1_X = $(SCC_X)
 PROGS_CROSS = $(foreach X,$(SCC_X),$X-scc$(EXESUF))
 LIBSCC1_CROSS = $(foreach X,$(LIBSCC1_X),$X-libscc1.a)
 
@@ -180,7 +164,8 @@ cross: $(LIBSCC1_CROSS) $(PROGS_CROSS)
 # build specific cross compiler & lib
 cross-%: %-scc$(EXESUF) %-libscc1.a ;
 
-install: ; @$(MAKE) --no-print-directory install$(CFGWIN)
+install: all
+	@$(MAKE) --no-print-directory install$(CFGWIN)
 install-strip: ; @$(MAKE) --no-print-directory install$(CFGWIN) CONFIG_strip=yes
 uninstall: ; @$(MAKE) --no-print-directory uninstall$(CFGWIN)
 
@@ -189,21 +174,27 @@ uninstall: ; @$(MAKE) --no-print-directory uninstall$(CFGWIN)
 T = $(or $(CROSS_TARGET),$(NATIVE_TARGET),unknown)
 X = $(if $(CROSS_TARGET),$(CROSS_TARGET)-)
 
-DEF-X86-32-LNX         = -DSCC_TARGET_I386
-DEF-X86-64-LNX         = -DSCC_TARGET_X86_64
-DEF-X86-32-WIN         = -DSCC_TARGET_PE -DSCC_TARGET_I386
-DEF-X86-64-WIN         = -DSCC_TARGET_PE -DSCC_TARGET_X86_64
-DEF-X86-64-OSX         = -DSCC_TARGET_MACHO -DSCC_TARGET_X86_64
-DEF-ARM-32-WIN         = -DSCC_TARGET_PE -DSCC_TARGET_ARM -DSCC_ARM_EABI -DSCC_ARM_VFP -DSCC_ARM_HARDFLOAT
-DEF-ARM-64-LNX         = -DSCC_TARGET_ARM64
-#DEF-C67         = -DSCC_TARGET_C67 -w # disable warnigs
-DEF-ARM-32-LNX-FPA     = -DSCC_TARGET_ARM
-DEF-ARM-32-LNX-FPA-LD  = -DSCC_TARGET_ARM -DLDOUBLE_SIZE=12
-DEF-ARM-32-LNX-VFP     = -DSCC_TARGET_ARM -DSCC_ARM_VFP
-DEF-ARM-32-LNX-EABI    = -DSCC_TARGET_ARM -DSCC_ARM_VFP -DSCC_ARM_EABI
-DEF-ARM-32-LNX-EABIHF  = -DSCC_TARGET_ARM -DSCC_ARM_VFP -DSCC_ARM_EABI -DSCC_ARM_HARDFLOAT
-DEF-ARM-32             = $(DEF-ARM-EABIHF)
-DEF-$(NATIVE_TARGET)   = $(NATIVE_DEFINES)
+DEF-X86-32-LNX         = -D __SCC_TARGET_OS__=LNX -D__SCC_TARGET_FORMAT__=ELF   -D __SCC_TARGET_CPU__=X86 -D __SCC_TARGET_CPU_BIT__=32
+DEF-X86-64-LNX         = -D __SCC_TARGET_OS__=LNX -D__SCC_TARGET_FORMAT__=ELF   -D __SCC_TARGET_CPU__=X86 -D __SCC_TARGET_CPU_BIT__=64
+
+DEF-X86-32-WIN         = -D __SCC_TARGET_OS__=WIN -D__SCC_TARGET_FORMAT__=PE    -D __SCC_TARGET_CPU__=X86 -D __SCC_TARGET_CPU_BIT__=32
+DEF-X86-64-WIN         = -D __SCC_TARGET_OS__=WIN -D__SCC_TARGET_FORMAT__=PE    -D __SCC_TARGET_CPU__=X86 -D __SCC_TARGET_CPU_BIT__=64
+
+DEF-X86-64-OSX         = -D __SCC_TARGET_OS__=OSX -D__SCC_TARGET_FORMAT__=MACHO -D __SCC_TARGET_CPU__=X86 -D __SCC_TARGET_CPU_BIT__=64
+
+DEF-ARM-64-LNX         = -D __SCC_TARGET_OS__=LNX -D__SCC_TARGET_FORMAT__=ELF   -D __SCC_TARGET_CPU__=ARM -D __SCC_TARGET_CPU_BIT__=64
+DEF-ARM-32-LNX-FPA     = -D __SCC_TARGET_OS__=LNX -D__SCC_TARGET_FORMAT__=ELF   -D __SCC_TARGET_CPU__=ARM -D __SCC_TARGET_CPU_BIT__=32
+DEF-ARM-32-LNX-FPA-LD  = -D __SCC_TARGET_OS__=LNX -D__SCC_TARGET_FORMAT__=ELF   -D __SCC_TARGET_CPU__=ARM -D __SCC_TARGET_CPU_BIT__=32 -DLDOUBLE_SIZE=12
+DEF-ARM-32-LNX-VFP     = -D __SCC_TARGET_OS__=LNX -D__SCC_TARGET_FORMAT__=ELF   -D __SCC_TARGET_CPU__=ARM -D __SCC_TARGET_CPU_BIT__=32 -DSCC_ARM_VFP
+DEF-ARM-32-LNX-EABI    = -D __SCC_TARGET_OS__=LNX -D__SCC_TARGET_FORMAT__=ELF   -D __SCC_TARGET_CPU__=ARM -D __SCC_TARGET_CPU_BIT__=32 -DSCC_ARM_VFP -DSCC_ARM_EABI
+DEF-ARM-32-LNX-EABIHF  = -D __SCC_TARGET_OS__=LNX -D__SCC_TARGET_FORMAT__=ELF   -D __SCC_TARGET_CPU__=ARM -D __SCC_TARGET_CPU_BIT__=32 -DSCC_ARM_VFP -DSCC_ARM_EABI -DSCC_ARM_HARDFLOAT
+
+DEF-ARM-32-WIN         = -D __SCC_TARGET_OS__=WIN -D__SCC_TARGET_FORMAT__=PE    -D __SCC_TARGET_CPU__=ARM -D __SCC_TARGET_CPU_BIT__=32 -DSCC_ARM_VFP -DSCC_ARM_EABI -DSCC_ARM_HARDFLOAT
+
+#//default arm 32:
+DEF-ARM-32-LNX         = $(DEF-ARM-32-LNX-EABIHF)
+#DEF-$(NATIVE_TARGET)   = $(NATIVE_DEFINES)
+DEF-$(NATIVE_TARGET)   += $(NATIVE_DEFINES)
 
 DEFINES += $(DEF-$T) $(DEF-all)
 DEFINES += $(if $(ROOT-$T),-DCONFIG_SYSROOT="\"$(ROOT-$T)\"")
@@ -212,32 +203,27 @@ DEFINES += $(if $(LIB-$T),-DCONFIG_SCC_LIBPATHS="\"$(LIB-$T)\"")
 DEFINES += $(if $(INC-$T),-DCONFIG_SCC_SYSINCLUDEPATHS="\"$(INC-$T)\"")
 DEFINES += $(DEF-$(or $(findstring win,$T),unx))
 
-ifneq ($(X),)
-ifeq ($(CONFIG_WIN32),yes)
-DEF-win += -DSCC_LIBSCC1="\"$(X)libscc1.a\""
-DEF-unx += -DSCC_LIBSCC1="\"$(X)libscc1.a\""
-else
-DEF-all += -DSCC_LIBSCC1="\"$(X)libscc1.a\""
-#DEF-win += -DCONFIG_SCCDIR="\"$(sccdir)\""
-endif
-endif
-
 # include custom configuration (see make help)
 -include config-extra.mak
 
-CORE_FILES = scc.c scctools.c libscc.c sccpp.c sccgen.c sccasm.c sccrun.c
+CORE_FILES = scc.c scctools.c libscc.c sccpp.c sccgen.c sccasm.c sccrun.c libsao.c
 CORE_FILES += scc.h config.h libscc.h scctok.h
 
-X86-32-LNX_FILES = $(CORE_FILES) scc-ELF.c   gen-X86-32.c link-X86.c asm-X86.c asm-X86-32.h tok-X86.h
-X86-32-WIN_FILES = $(CORE_FILES) scc-PE.c    gen-X86-32.c link-X86.c asm-X86.c asm-X86-32.h tok-X86.h
-X86-64-LNX_FILES = $(CORE_FILES) scc-ELF.c   gen-X86-64.c link-X86-64.c asm-X86.c asm-X86-64.h
-X86-64-WIN_FILES = $(CORE_FILES) scc-PE.c    gen-X86-64.c link-X86-64.c asm-X86.c asm-X86-64.h
-X86-64-OSX_FILES = $(CORE_FILES) scc-MACHO.c gen-X86-64.c link-X86-64.c asm-X86.c asm-X86-64.h
+#X86-32-LNX_FILES = $(CORE_FILES) scc-ELF.c   gen-X86-32.c link-X86.c    asm-X86.c asm-X86-32.h tok-X86.h
+#X86-32-WIN_FILES = $(CORE_FILES) scc-PE.c    gen-X86-32.c link-X86.c    asm-X86.c asm-X86-32.h tok-X86.h
+#X86-32-LNX_FILES = $(CORE_FILES) scc-ELF.c   gen-X86-32.c link-X86.c    asm-X86.c asm-X86-32.h
+#X86-32-WIN_FILES = $(CORE_FILES) scc-PE.c    gen-X86-32.c link-X86.c    asm-X86.c asm-X86-32.h
+#X86-64-LNX_FILES = $(CORE_FILES) scc-ELF.c   gen-X86-64.c link-X86-64.c asm-X86.c asm-X86-64.h
+#X86-64-WIN_FILES = $(CORE_FILES) scc-PE.c    gen-X86-64.c link-X86-64.c asm-X86.c asm-X86-64.h
+#X86-64-OSX_FILES = $(CORE_FILES) scc-MACHO.c gen-X86-64.c link-X86-64.c asm-X86.c asm-X86-64.h
+X86-32-LNX_FILES = $(CORE_FILES) scc-ELF.c   gen-X86-32.c link-X86.c    asm-X86.c
+X86-32-WIN_FILES = $(CORE_FILES) scc-PE.c    gen-X86-32.c link-X86.c    asm-X86.c
+X86-64-LNX_FILES = $(CORE_FILES) scc-ELF.c   gen-X86-64.c link-X86-64.c asm-X86.c
+X86-64-WIN_FILES = $(CORE_FILES) scc-PE.c    gen-X86-64.c link-X86-64.c asm-X86.c
+X86-64-OSX_FILES = $(CORE_FILES) scc-MACHO.c gen-X86-64.c link-X86-64.c asm-X86.c
 ARM-32-LNX_FILES = $(CORE_FILES) scc-ELF.c   gen-ARM-32.c link-ARM-32.c asm-ARM-32.c
 ARM-32-WIN_FILES = $(CORE_FILES) scc-PE.c    gen-ARM-32.c link-ARM-32.c asm-ARM-32.c
 ARM-64-LNX_FILES = $(CORE_FILES) scc-ELF.c   gen-ARM-64.c link-ARM-64.c
-
-#C67_FILES = $(CORE_FILES) gen-C67.c link-C67.c scccoff.c
 
 # libscc sources
 LIBSCC_SRC = $(filter-out scc.c scctools.c,$(filter %.c,$($T_FILES)))
@@ -305,28 +291,11 @@ XSCC ?= ./scc$(EXESUF)
 libscc1.a : scc$(EXESUF) FORCE
 	@echo libscc1.a =: $(MAKE) -C lib DEFINES='$(DEF-$T)'
 	@$(MAKE) -C lib DEFINES='$(DEF-$T)'
-
 # Cross libscc1.a
 %-libscc1.a : %-scc$(EXESUF) FORCE
 	@echo *-libscc1.a =: $(MAKE) -C lib DEFINES='$(DEF-$*)' CROSS_TARGET=$*
 	@$(MAKE) -C lib DEFINES='$(DEF-$*)' CROSS_TARGET=$*
-
-.PRECIOUS: %-libscc1.a
 FORCE:
-
-# --------------------------------------------------------------------------
-# documentation and man page
-#scc-doc.html: scc-doc.texi
-#	makeinfo --no-split --html --number-sections -o $@ $< || true
-
-#scc.1: scc-doc.texi
-#	$(TOPSRC)/texi2pod.pl $< scc.pod \
-#	&& pod2man --section=1 --center="Sao C Compiler" --release="$(VERSION)" scc.pod >tmp.1 \
-#	&& mv tmp.1 $@ || rm -f tmp.1
-
-#scc-doc.info: scc-doc.texi
-#	makeinfo $< || true
-
 # --------------------------------------------------------------------------
 # install
 
@@ -334,8 +303,6 @@ INSTALL = install -m644
 INSTALLBIN = install -m755 $(STRIP_$(CONFIG_strip))
 STRIP_yes = -s
 
-LIBSCC1_W = $(filter %-win32-libscc1.a %-wince-libscc1.a,$(LIBSCC1_CROSS))
-LIBSCC1_U = $(filter-out $(LIBSCC1_W),$(LIBSCC1_CROSS))
 IB = $(if $1,mkdir -p $2 && $(INSTALLBIN) $1 $2)
 IBw = $(call IB,$(wildcard $1),$2)
 IF = $(if $1,mkdir -p $2 && $(INSTALL) $1 $2)
@@ -345,15 +312,11 @@ IR = mkdir -p $2 && cp -r $1/. $2
 # install progs & libs
 install-unx:
 	$(call IBw,$(PROGS) $(PROGS_CROSS),"$(bindir)")
-	$(call IFw,$(LIBSCC1) $(LIBSCC1_U),"$(sccdir)")
 	#$(call IF,$(TOPSRC)/include/*.h,"$(sccdir)/include")
 	$(call $(if $(findstring .so,$(LIBSCC)),IBw,IFw),$(LIBSCC),"$(libdir)")
 	$(call IF,$(TOPSRC)/libscc.h,"$(includedir)")
 	#$(call IFw,scc-doc.info,"$(infodir)")
 	#$(call IFw,scc-doc.html,"$(docdir)")
-ifneq "$(wildcard $(LIBSCC1_W))" ""
-	$(call IFw,$(TOPSRC)/lib/*.def $(LIBSCC1_W),"$(sccdir)")
-endif
 
 # uninstall
 uninstall-unx:
@@ -365,11 +328,7 @@ uninstall-unx:
 install-win:
 	$(call IBw,$(PROGS) $(PROGS_CROSS) $(subst libscc.a,,$(LIBSCC)),"$(bindir)")
 	$(call IF,$(TOPSRC)/lib/*.def,"$(sccdir)")
-	$(call IFw,libscc1.a $(LIBSCC1_W),"$(sccdir)")
 	$(call IFw,$(TOPSRC)/libscc.h $(subst .dll,.def,$(LIBSCC)),"$(libdir)")
-ifneq "$(wildcard $(LIBSCC1_U))" ""
-	$(call IFw,$(LIBSCC1_U),"$(sccdir)")
-endif
 
 # the msys-git shell works to configure && make except it does not have install
 ifeq "$(and $(CONFIG_WIN32),$(shell which install >/dev/null 2>&1 || echo no))" "no"
@@ -385,26 +344,7 @@ uninstall-win:
 	rm -r "$(sccdir)"
 
 # --------------------------------------------------------------------------
-# other stuff
-
-#TAGFILES = *.[ch] include/*.h lib/*.[chS]
-#tags : ; ctags $(TAGFILES)
-## cannot have both tags and TAGS on windows
-#ETAGS : ; etags $(TAGFILES)
-
-# create release tarball from *current* git branch (including scc-doc.html
-# and converting two files to CRLF)
 SCC-VERSION = scc-$(VERSION)
-#tar:    scc-doc.html
-#	mkdir $(SCC-VERSION)
-#	( cd $(SCC-VERSION) && git --git-dir ../.git checkout -f )
-#	cp scc-doc.html $(SCC-VERSION)
-#	for f in scc-win32.txt build-scc.bat ; do \
-#	    cat win32/$$f | sed 's,\(.*\),\1\r,g' > $(SCC-VERSION)/win32/$$f ; \
-#	done
-#	tar cjf $(SCC-VERSION).tar.bz2 $(SCC-VERSION)
-#	rm -rf $(SCC-VERSION)
-#	git reset
 
 config.mak:
 	$(if $(wildcard $@),,@echo "Please run ./configure." && exit 1)
@@ -412,7 +352,6 @@ config.mak:
 # run all tests
 test:
 	$(MAKE) -C tests
-# run test(s) from tests2 subdir (see make help)
 tests2.%:
 	$(MAKE) -C tests/tests2 $@
 
@@ -423,7 +362,6 @@ clean:
 	rm -f scc$(EXESUF) scc_p$(EXESUF) *-scc$(EXESUF) scc.pod
 	rm -f  *~ *.o *.a *.so* *.out *.log lib*.def *.exe *.dll a.out tags TAGS
 	@$(MAKE) -C lib $@
-#@$(MAKE) -C tests $@
 	cd ..
 	rm -f  *~ *.o *.a *.so* *.out *.log lib*.def *.exe *.dll a.out tags TAGS
 

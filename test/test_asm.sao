@@ -1,0 +1,11 @@
+//HERE DOCUMENT
+<<DOCUMENT
+DOCUMENT
+
+@(asm)(
+//expression between 
+)
+
+{
+//expressions
+}

@@ -1,8 +1,5 @@
 #include "scc.h"
 
-//#define ARMAG  "!<arch>\n"
-#define ARFMAG "`\n"
-
 typedef struct {
     char ar_name[16];
     char ar_date[12];
@@ -45,7 +42,7 @@ ST_FUNC int scc_tool_ar(SCCState *s1, int argc, char **argv)
         "0     ",
         "0       ",
         "          ",
-        ARFMAG
+        ARFMAGIC
         };
 
     static ArHdr arhdro = {
@@ -55,7 +52,7 @@ ST_FUNC int scc_tool_ar(SCCState *s1, int argc, char **argv)
         "0     ",
         "0       ",
         "          ",
-        ARFMAG
+        ARFMAGIC
         };
 
     FILE *fi, *fh = NULL, *fo = NULL;
@@ -271,7 +268,7 @@ the_end:
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 
 ST_FUNC int scc_tool_impdef(SCCState *s1, int argc, char **argv)
 {
@@ -375,7 +372,7 @@ the_end:
     return ret;
 }
 
-#endif /* SCC_TARGET_PE */
+#endif// #if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
 
 /* -------------------------------------------------------------- */
 /*
@@ -400,7 +397,7 @@ the_end:
 
 /* re-execute the i386/x86_64 cross-compilers with scc -m32/-m64: */
 
-#if !defined SCC_TARGET_I386 && !defined SCC_TARGET_X86_64
+#if __SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ //{
 
 ST_FUNC void scc_tool_cross(SCCState *s, char **argv, int option)
 {
@@ -461,7 +458,7 @@ ST_FUNC void scc_tool_cross(SCCState *s, char **argv, int target)
 
     SCC(snprintf)(program, sizeof program,
         "%.*s%s"
-#ifdef SCC_TARGET_PE
+#if __SCC_TARGET_FORMAT_ID__==__SCC_TARGET_FORMAT_PE__
         "-win32"
 #endif
         "-scc"
@@ -475,7 +472,7 @@ ST_FUNC void scc_tool_cross(SCCState *s, char **argv, int target)
     scc_error("could not run '%s'", program);
 }
 
-#endif /* SCC_TARGET_I386 && SCC_TARGET_X86_64 */
+#endif //}__SCC_TARGET_CPU_ID__==__SCC_CPU_X86__ 
 /* -------------------------------------------------------------- */
 /* enable commandline wildcard expansion (scc -o x.exe *.c) */
 

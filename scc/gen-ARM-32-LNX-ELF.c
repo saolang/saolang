@@ -1,1 +1,1 @@
-# include "arm-gen.c"
+# include "gen-ARM-32.c"
