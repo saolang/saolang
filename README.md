@@ -100,7 +100,7 @@ Phrase III
 
 | sao | pseudo | remember-helper |
 |---|---|---|
-| x||z | (tmp=x)?tmp:z | binary operator |
+| x\|\|z | (tmp=x)?tmp:z | binary operator |
 | @:? | elseif | elif/elseif [TODO] |
 | XXX()<type>{} | type XXX(){} |
 | @\_{}; | do{}while(0) | doonce{} |
