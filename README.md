@@ -71,8 +71,8 @@ Phrase III
 | ()?():() | ()?():() | classic ternary operator |
 | (x)?:(z) | (tmp=x)?tmp:z | binary operator |
 | @? | if | ask => if |
-| @: | 'else' for if or 'default' for switch | ?: => : => else |
-| @:? | else if | elif/elseif |
+| @: | else |  |
+| @:@? | else if |  |
 | @?(){} | if(){} |
 | @?(){}@:{} | if(){}else{} |
 | @?(){}@:?(){}@:{} | if(){}else if(){}else{} |
@@ -80,15 +80,15 @@ Phrase III
 | @~ | break | ~ => escape => break |
 | @% | continue | % => percent => continue |
 | @\_ | do| bottom line => just do it |
-| @#(x){1:@\~;2:x+2;@\~;@:x-1;} | switch(x) {case 1:break;case 2:x+2;break;default:x-1;} | eg switch |
-| @(;;){} | for(;;){} |
+| @= | case |  |
+| @#(x){@=1:@\~;@=2:x+2;@\~;@=:x-1;} | switch(x) {case 1:break;case 2:x+2;break;default:x-1;} | eg switch |
+|  | for(;;){} |
 | @(i=1;i<x;i++){@?(i%3==0)@%;} | for(i=1;i<x;i++) {if(i%3==0)continue;} | eg for |
 | @$(){} | while(){} | money => loop |
 | @$()@\_{} | while(){}  | while()do{} |
 | @\_{}@$() | do{}while() | 
 | @\_{}; | do{}while(0) | doonce{} |
-| @(); | return; | return void |
-| @(42); | return 42; | 
+| @- | return |  |
 | XXX(){} | XXX(){} |
 | XXX()<type>{} | type XXX(){} |
 
@@ -100,6 +100,7 @@ Phrase III
 
 | sao | pseudo | remember-helper |
 |---|---|---|
+| @:? | elseif | elif/elseif |
 | @\<c\>; | N/A | import c; |
 | @\<cmath\>; | N/A | import cmath; |
 | @{main}; | N/A | export {main}; |
