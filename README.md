@@ -44,6 +44,7 @@ dMd /Nm` ~`   sMMN.    .NMMMMMMh.``Md:
 Phrase Zero
 
 * core syntax sugar
+* keyword-less - removed all english keywording
 * ext syntax sugar
 
 Phrase I
@@ -71,13 +72,12 @@ Phrase III
 | sao | c | remember-helper |
 |---|---|---|
 | ()?():() | ()?():() | classic ternary operator |
-| (x)?:(z) | (tmp=x)?tmp:z | binary operator |
 | @? | if | ask => if |
 | @: | else |  |
 | @:@? | else if |  |
 | @?(){} | if(){} |
 | @?(){}@:{} | if(){}else{} |
-| @?(){}@:?(){}@:{} | if(){}else if(){}else{} |
+| @?(){}@:@?(){}@:{} | if(){}else if(){}else{} |
 | @# | switch | #=>hash=>hasing=>switch |
 | @! | break | ! => astonished => break |
 | @% | continue | % => percent => continue |
@@ -93,7 +93,6 @@ Phrase III
 | @^ | function | ^ => function block |
 | @^XXX(){} | XXX(){} |
 
-* keyword-less - removed all english keywording
 * delimiter(;) is strongly recommented, but somehow/sometime it works when omited
 * parentheses {} is very important for matching
 
@@ -101,6 +100,7 @@ Phrase III
 
 | sao | pseudo | remember-helper |
 |---|---|---|
+| (x)?:(z) | (tmp=x)?tmp:z | binary operator |
 | @:? | elseif | elif/elseif |
 | XXX()<type>{} | type XXX(){} |
 | @\_{}; | do{}while(0) | doonce{} |
