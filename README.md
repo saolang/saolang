@@ -41,29 +41,31 @@ dMd /Nm` ~`   sMMN.    .NMMMMMMh.``Md:
 
 # Feature
 
+Phrase Zero
+
+* core syntax sugar
+* ext syntax sugar
+
 Phrase I
 
-* bootstrap         - self-hosting
-* keyword-less      - there is no (natual language) keywords
 * FFI/DL            - dynamically load libraries
-* import/export     - file is module when compile
-* keep tiny         - size does matter
-* keep elegant      - meaningless if not so
 
 Phrase II
 
-* free syntax sugar
-* JSON/BSON built-in support
+* bootstrap         - self-hosting
+* more syntax sugar
+* BSON built-in support
 
 Phrase III
 
+* OS mode
 * multi-processing/multi-threading/coroutines
 * hardware abstracted binary codes + vm interpretor
-* sao-vm like qemu
-* promise/q     - inner promise pattern support
+* sao-vm with qemu
+* promise/q     - built-in promise support
 * await/async
 
-# Sao Syntactic-Sugar
+# Syntactic-Sugar
 ## Core 
 
 | sao | c | remember-helper |
@@ -89,20 +91,19 @@ Phrase III
 | @\_{}@$() | do{}while() | 
 | @~ | return |  |
 | @^ | function | ^ => function block |
-| XXX(){} | XXX(){} |
-| XXX()<type>{} | type XXX(){} |
+| @^XXX(){} | XXX(){} |
 
 * keyword-less - removed all english keywording
 * delimiter(;) is strongly recommented, but somehow/sometime it works when omited
 * parentheses {} is very important for matching
 
-## Ext 
+## Ext Syntactic Sugar
 
 | sao | pseudo | remember-helper |
 |---|---|---|
 | @:? | elseif | elif/elseif |
+| XXX()<type>{} | type XXX(){} |
 | @\_{}; | do{}while(0) | doonce{} |
-| @+ | | import |
 | @\<c\>; | N/A | import c; |
 | @\<cmath\>; | N/A | import cmath; |
 | @{main}; | N/A | export {main}; |
@@ -118,34 +119,15 @@ Phrase III
 | @\*\<SLJIT\>{..} | using SLJIT (StackLessJIT) handler to process .. |
 | {..} @\|\<handler> | | piping .. to handler |
 
-* like ES6; function default return <SaoType*>, and do calc by guessing...
-* like golang, a return type is support?
+# TODO
 
-## OS Mode
-
-stdin/stdout/stderr is controlled/assigned by caller(the OS or intepreter)
-
-#
-
-# StackLess JIT
-
-# misc TODO 
-
+* stdin/stdout/stderr is controlled/assigned by caller(the OS or intepreter)
+* StackLess JIT
 * stdin/stdout/stderr => std stream/pipe in/out
 * piping
-
-## JSON
-
-```JSON
-[x,y]=[1,2];
-{x,y}={};
-```
-
-## DLFCN/FFI
-```DL/FFI
-<dlfcn>
-dlfcn.dlsym()
-```
+* dlfcn/ffi
+* windows
+* SaoOS
 
 # FAQ
 

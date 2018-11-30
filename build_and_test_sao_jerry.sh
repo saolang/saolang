@@ -1,6 +1,6 @@
 python implement_jerry/tools/build.py --profile=es2015-subset --all-in-one=ON --snapshot-exec=ON --snapshot-save=ON --jerry-cmdline-snapshot=ON --saolang=ON --saolang-only=ON --error-messages=ON $*
 
-ls -al implement_jerry/build/bin/
+ls -aln implement_jerry/build/bin/
 
 implement_jerry/build/bin/jerry test/test_base.sao
 
