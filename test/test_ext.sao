@@ -10,6 +10,11 @@
 
 ttt = (x, y)=>1.0*Math.pow(x+y,0.5);//sqrt
 
+//kk = (x,z) => ( x?:z );
+kk = (x,z) => ( x || z );
+
+print( "kk="+ kk(@0,-1) );
+
 s = (sw)=>{
 	@#(sw){
 		@=1:
