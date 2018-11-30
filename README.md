@@ -77,17 +77,18 @@ Phrase III
 | @?(){}@:{} | if(){}else{} |
 | @?(){}@:?(){}@:{} | if(){}else if(){}else{} |
 | @# | switch | #=>hash=>hasing=>switch |
-| @~ | break | ~ => escape => break |
+| @! | break | ! => astonished => break |
 | @% | continue | % => percent => continue |
 | @\_ | do| bottom line => just do it |
 | @= | case | case => equals |
-| @#(x){@=1:@\~;@=2:x+2;@\~;@=:x-1;} | switch(x) {case 1:break;case 2:x+2;break;default:x-1;} | eg switch |
+| @#(x){@=1:@!;@=2:x+2;@!;@=:x-1;} | switch(x) {case 1:break;case 2:x+2;break;default:x-1;} | eg switch |
 | @\*(;;){} | for(;;){} | \* => all => for loop |
 | @(i=1;i<x;i++){@?(i%3==0)@%;} | for(i=1;i<x;i++) {if(i%3==0)continue;} | eg for |
 | @$(){} | while(){} | money => loop |
 | @$()@\_{} | while(){}  | while()do{} |
 | @\_{}@$() | do{}while() | 
-| @^ | return | ^ => go up => return |
+| @~ | return |  |
+| @^ | function | ^ => function block |
 | XXX(){} | XXX(){} |
 | XXX()<type>{} | type XXX(){} |
 
