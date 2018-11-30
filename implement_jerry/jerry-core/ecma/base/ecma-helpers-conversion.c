@@ -13,11 +13,8 @@
  * limitations under the License.
  */
 
-//#include <math.h>
-
 #include "ecma-globals.h"
 #include "ecma-helpers.h"
-#include "jrt-libc-includes.h"
 #include "lit-char-helpers.h"
 #include "lit-magic-strings.h"
 

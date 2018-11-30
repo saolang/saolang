@@ -17,7 +17,6 @@
 #define JRT_H
 
 #include "jerryscript-port.h"
-#include "jrt-types.h"
 
 /*
  * Normally compilers store const(ant)s in ROM. Thus saving RAM.
