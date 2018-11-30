@@ -96,12 +96,12 @@ Phrase III
 * delimiter(;) is strongly recommented, but somehow/sometime it works when omited
 * parentheses {} is very important for matching
 
-## Ext Syntactic Sugar
+## Ext Syntactic Sugar (W.I.P.)
 
 | sao | pseudo | remember-helper |
 |---|---|---|
-| (x)?:(z) | (tmp=x)?tmp:z | binary operator |
-| @:? | elseif | elif/elseif |
+| x||z | (tmp=x)?tmp:z | binary operator |
+| @:? | elseif | elif/elseif [TODO] |
 | XXX()<type>{} | type XXX(){} |
 | @\_{}; | do{}while(0) | doonce{} |
 | @\<c\>; | N/A | import c; |

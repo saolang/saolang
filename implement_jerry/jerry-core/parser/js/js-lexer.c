@@ -1203,6 +1203,14 @@ lexer_next_token (parser_context_t *context_p) /**< context */
 						length = 2;
 						break;
 					}
+				}else if(context_p->source_p[1]==LIT_CHAR_1){//@1 => TRUE
+					context_p->token.type = LEXER_LIT_TRUE;
+					length = 2;
+					break;
+				}else if(context_p->source_p[1]==LIT_CHAR_0){//@0 => FALSE
+					context_p->token.type = LEXER_LIT_FALSE;
+					length = 2;
+					break;
 				}
 				//default as "this"
 				context_p->token.type = LEXER_KEYW_THIS;
@@ -1386,7 +1394,22 @@ lexer_next_token (parser_context_t *context_p) /**< context */
                         LEXER_ASSIGN_BIT_XOR)
 
     LEXER_TYPE_A_TOKEN (LIT_CHAR_TILDE, LEXER_BIT_NOT);
-    LEXER_TYPE_A_TOKEN (LIT_CHAR_QUESTION, LEXER_QUESTION_MARK);
+#ifdef JERRY_SAOLANG//{
+		case (uint8_t) LIT_CHAR_QUESTION : 
+		{
+			//TODO ...
+			//if(context_p->source_p[1] == LIT_CHAR_COLON){// ?: => binary operator
+			//	context_p->token.type = LEXER_KEYW_FOR;
+			//	length = 2;
+			//	break;
+			//}
+			context_p->token.type = LEXER_QUESTION_MARK;
+			length = 1;
+			break;
+		}
+#else//}:{//else !JERRY_SAOLANG
+		LEXER_TYPE_A_TOKEN (LIT_CHAR_QUESTION, LEXER_QUESTION_MARK);
+#endif //}!JERRY_SAOLANG
     LEXER_TYPE_A_TOKEN (LIT_CHAR_COLON, LEXER_COLON);
 
     case LIT_CHAR_SINGLE_QUOTE:
