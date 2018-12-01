@@ -67,9 +67,7 @@ Phrase III
 # Syntactic-Sugar
 ## Core 
 
-<font size=7>
-
-| sao | c | remember-helper |
+| sao | c/js/php | remember-helper |
 |---|---|---|
 | ()?():() | ()?():() | classic ternary operator |
 | @? | if | ask => if |
@@ -83,20 +81,22 @@ Phrase III
 | @% | continue | % => percent => continue |
 | @\_ | do| bottom line => just do it |
 | @= | case | case => equals |
-| @#(x){@=1:@!;@=2:x+2;@!;@=:x-1;} | switch(x) {case 1:break;case 2:x+2;break;default:x-1;} | eg switch |
 | @\*(;;){} | for(;;){} | \* => all => for loop |
-| @\*(i=1;i<x;i++){@?(i%3==0)@%;} | for(i=1;i<x;i++) {if(i%3==0)continue;} | eg for |
 | @$(){} | while(){} | money => loop |
-| @$()@\_{} | while(){}  | while()do{} |
 | @\_{}@$() | do{}while() | 
-| @~ | return |  |
-| @^ | function | ^ => function block |
-| @^XXX(){} | XXX(){} |
-
-</font>
+| @~ | return | |
+| @^ | function | |
+| @^XXX(){} | function XXX(){} |
 
 * delimiter(;) is strongly recommented, but somehow/sometime it works when omited
 * parentheses {} is very important for matching
+
+### e.g. core
+| sao | pseudo | 
+|---|---|
+| @#(x){@=1:@!;@=2:x+2;@!;@=:x-1;} | switch(x){case 1:break;case 2:x+2;break;default:x-1;} | 
+| @\*(i=1;i<x;i++){@?(i%3==0)@%;} | for(i=1;i<x;i++){if(i%3==0)continue;} | 
+
 
 ## Ext Syntactic Sugar (W.I.P.)
 
@@ -113,9 +113,9 @@ Phrase III
 | ()=>{} | function(){} | closure |
 | ()\<type\>=>{} | function()\<type\>{} | declare return type |
 | XXX = x => (x^2) | function XXX(x){ return x^2} | assign closure to var |
-| XXX(x)\<SaoType*\>{@(x^2)} | function XXX()\<SaoType*\>{return \<SaoType*\>x^2;} |  |
+| XXX(x)returnType{@~(x^2)} | function XXX()returnType{return (returnType)x^2;} |  |
 | XXX = (x)\<SaoType*\> => (x^2) | function XXX()\<SaoType*\>{return \<SaoType*\>x^2;} |  |
-| XXX(x)\<c.byte8\>{@(x^2)} | function XXX()\<c.byte8\>{return (\<c.byte8\>) x^2;} | ... |
+| XXX(x)\<c.byte8\>{@~(x^2)} | function XXX()\<c.byte8\>{return (\<c.byte8\>) x^2;} | ... |
 | @\*\<language-handler\>{..} | | eating .. with prefer language handler, * =\> mouth =\> eat |
 | @\*\<SAO\>{..} | using SAO handler (default) to process .. |
 | @\*\<SLJIT\>{..} | using SLJIT (StackLessJIT) handler to process .. |
