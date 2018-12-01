@@ -1,11 +1,36 @@
 # Plan
 
 ```
+# syntax
+test_base.sao
+test_ext.sao
+test_c.sao
+
+# low level
+vm
+binary
+jit
+asm
+macro
+
+# high (script)
+js
+php
+python
+sao-runtime
+
 sao - the SAO console command
 	sljit - using stack-less-JIT for the lowlevel
 libsao so/dll - shared lib
 libsao.a - static lib
 libsaoext so/dll - using external cc to get better performance, elf/macho/pe
+
+latex - maths
+here document
+<<<SSS
+SSS
+
+
 ```
 
 libc-dync mode 

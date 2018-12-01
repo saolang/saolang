@@ -1,22 +1,13 @@
-@^ uu(x,y){
-	@~ x*y;
-}
+//<< >> >>> & | 
+// ~ bot bit is meaning less, that's why using @~ as return is perfect
 
-ttt = (x, y)=>1.0*Math.pow(x+y,0.5);
+@^uu(x,y){@~x*y}
 
-s = (sw)=>{
-	@#(sw){
-		@=1:
-			@~("case1");
-		@=2:
-			@~("case2");
-		@=:
-			@~ "default";
-	}
-	@~ -1;
-}
+ttt=(x, y)=>1.0*Math.pow(x+y,0.5);
 
-f = (c)=>{
+s=(sw)=>{@#(sw){@=1:@~("case1");@=2:@~("case2");@=:@~"default";}@~ -1;}
+
+f=(c)=>{
 	print("c="+c+":");
 	@?(c==1){
 		print ("IF BR");
@@ -33,7 +24,7 @@ f(2);
 f(3);
 
 print(ttt(3.0*3.0,4.0*4.0));
-print(uu(3.0,4.0));
+print("uu(3,4)="+uu(3.0,4.0));
 
 @*(i=1;i<=3;i++){
 	print(s(i));

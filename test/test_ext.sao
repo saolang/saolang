@@ -1,5 +1,12 @@
 //TODO make Math with import later...
 
+@^lp(x){
+	@*(i=1;i<x;i++)@?(i%3==0)@!;
+	@~i
+}
+
+print("lp="+lp(5));
+
 //TODO import
 //@<Math>;
 //@<print>;
