@@ -1,5 +1,3 @@
-![](https://github.com/wanjochan/saolang/blob/master/LOGO.png)
-
 # SAO
 
 A Very "Sao" Computer Language
@@ -45,11 +43,11 @@ Phrase Zero
 
 * core syntax sugar
 * keyword-less - removed all english keywording
-* ext syntax sugar
 
 Phrase I
 
 * FFI/DL            - dynamically load libraries
+* ext syntax sugar
 
 Phrase II
 
