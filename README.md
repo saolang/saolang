@@ -102,22 +102,22 @@ Phrase III
 |---|---|---|
 | x\|\|z | (tmp=x)?tmp:z | binary operator |
 | @:? | elseif | elif/elseif [TODO] |
-| XXX()<type>{} | type XXX(){} |
+| XXX()\<type\>{} | type XXX(){} |
 | @\_{}; | do{}while(0) | doonce{} |
 | @\<c\>; | N/A | import c; |
 | @\<cmath\>; | N/A | import cmath; |
 | @{main}; | N/A | export {main}; |
 | @[func1,func2]; | N/A | export [func1,func2]; |
 | ()=>{} | function(){} | closure |
-| ()<type>=>{} | function()<type>{} | declare return type |
+| ()\<type\>=>{} | function()\<type\>{} | declare return type |
 | XXX = x => (x^2) | function XXX(x){ return x^2} | assign closure to var |
-| XXX(x)<SaoType*>{@(x^2)} | function XXX()<SaoType*>{return <SaoType*>x^2;} |  |
-| XXX = (x)<SaoType*> => (x^2) | function XXX()<SaoType*>{return <SaoType*>x^2;} |  |
-| XXX(x)<c.byte8>{@(x^2)} | function XXX()<c.byte8>{return (<c.byte8>) x^2;} | ... |
-| @\*\<language-handler>{..} | | eating .. with prefer language handler, * => mouth => eat |
+| XXX(x)\<SaoType*\>{@(x^2)} | function XXX()\<SaoType*\>{return \<SaoType*\>x^2;} |  |
+| XXX = (x)\<SaoType*\> => (x^2) | function XXX()\<SaoType*\>{return \<SaoType*\>x^2;} |  |
+| XXX(x)\<c.byte8\>{@(x^2)} | function XXX()\<c.byte8\>{return (\<c.byte8\>) x^2;} | ... |
+| @\*\<language-handler\>{..} | | eating .. with prefer language handler, * =\> mouth =\> eat |
 | @\*\<SAO\>{..} | using SAO handler (default) to process .. |
 | @\*\<SLJIT\>{..} | using SLJIT (StackLessJIT) handler to process .. |
-| {..} @\|\<handler> | | piping .. to handler |
+| {..} @\|\<handler\> | | piping .. to handler |
 
 # TODO
 
