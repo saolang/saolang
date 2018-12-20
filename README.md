@@ -65,6 +65,7 @@ Phrase III
 * await/async
 
 # Syntactic-Sugar
+
 ## Core 
 
 | sao | c/js/php | remember-helper |
@@ -91,12 +92,15 @@ Phrase III
 * delimiter(;) is strongly recommented, but somehow/sometime it works when omited
 * parentheses {} is very important for matching
 
-### e.g. core
-| sao | pseudo | 
-|---|---|
-| @#(x){@=1:@!;@=2:x+2;@!;@=:x-1;} | switch(x){case 1:break;case 2:x+2;break;default:x-1;} | 
-| @\*(i=1;i<x;i++){@?(i%3==0)@%;} | for(i=1;i<x;i++){if(i%3==0)continue;} | 
+e.g.
 
+```
+@#(x){@=1:@!;@=2:x+2;@!;@=:x-1;}
+	switch(x){case 1:break;case 2:x+2;break;default:x-1;}
+
+@*(i=1;i<x;i++){@?(i%3==0)@%}
+	for(i=1;i<x;i++){if(i%3==0)continue;}
+```
 
 ## Ext Syntactic Sugar (W.I.P.)
 
@@ -111,7 +115,7 @@ Phrase III
 | @{main}; | N/A | export {main}; |
 | @[func1,func2]; | N/A | export [func1,func2]; |
 | ()=>{} | function(){} | closure |
-| ()\<type\>=>{} | function()\<type\>{} | declare return type |
+| ()type=>{} | function()type{} | declare return type |
 | XXX = x => (x^2) | function XXX(x){ return x^2} | assign closure to var |
 | XXX(x)returnType{@~(x^2)} | function XXX()returnType{return (returnType)x^2;} |  |
 | XXX = (x)\<SaoType*\> => (x^2) | function XXX()\<SaoType*\>{return \<SaoType*\>x^2;} |  |
