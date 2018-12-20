@@ -1,5 +1,3 @@
-![](https://github.com/wanjochan/saolang/blob/master/LOGO.png)
-
 # SAO
 
 A Very "Sao" Computer Language
@@ -45,11 +43,11 @@ Phrase Zero
 
 * core syntax sugar
 * keyword-less - removed all english keywording
-* ext syntax sugar
 
 Phrase I
 
 * FFI/DL            - dynamically load libraries
+* ext syntax sugar
 
 Phrase II
 
@@ -67,9 +65,10 @@ Phrase III
 * await/async
 
 # Syntactic-Sugar
+
 ## Core 
 
-| sao | c | remember-helper |
+| sao | c/js/php | remember-helper |
 |---|---|---|
 | ()?():() | ()?():() | classic ternary operator |
 | @? | if | ask => if |
@@ -83,18 +82,25 @@ Phrase III
 | @% | continue | % => percent => continue |
 | @\_ | do| bottom line => just do it |
 | @= | case | case => equals |
-| @#(x){@=1:@!;@=2:x+2;@!;@=:x-1;} | switch(x) {case 1:break;case 2:x+2;break;default:x-1;} | eg switch |
 | @\*(;;){} | for(;;){} | \* => all => for loop |
-| @(i=1;i<x;i++){@?(i%3==0)@%;} | for(i=1;i<x;i++) {if(i%3==0)continue;} | eg for |
 | @$(){} | while(){} | money => loop |
-| @$()@\_{} | while(){}  | while()do{} |
 | @\_{}@$() | do{}while() | 
-| @~ | return |  |
-| @^ | function | ^ => function block |
-| @^XXX(){} | XXX(){} |
+| @~ | return | |
+| @^ | function | |
+| @^XXX(){} | function XXX(){} |
 
 * delimiter(;) is strongly recommented, but somehow/sometime it works when omited
 * parentheses {} is very important for matching
+
+e.g.
+
+```
+@#(x){@=1:@!;@=2:x+2;@!;@=:x-1;}
+	switch(x){case 1:break;case 2:x+2;break;default:x-1;}
+
+@*(i=1;i<x;i++){@?(i%3==0)@%}
+	for(i=1;i<x;i++){if(i%3==0)continue;}
+```
 
 ## Ext Syntactic Sugar (W.I.P.)
 
@@ -102,22 +108,22 @@ Phrase III
 |---|---|---|
 | x\|\|z | (tmp=x)?tmp:z | binary operator |
 | @:? | elseif | elif/elseif [TODO] |
-| XXX()<type>{} | type XXX(){} |
+| XXX()\<type\>{} | type XXX(){} |
 | @\_{}; | do{}while(0) | doonce{} |
 | @\<c\>; | N/A | import c; |
 | @\<cmath\>; | N/A | import cmath; |
 | @{main}; | N/A | export {main}; |
 | @[func1,func2]; | N/A | export [func1,func2]; |
 | ()=>{} | function(){} | closure |
-| ()<type>=>{} | function()<type>{} | declare return type |
+| ()type=>{} | function()type{} | declare return type |
 | XXX = x => (x^2) | function XXX(x){ return x^2} | assign closure to var |
-| XXX(x)<SaoType*>{@(x^2)} | function XXX()<SaoType*>{return <SaoType*>x^2;} |  |
-| XXX = (x)<SaoType*> => (x^2) | function XXX()<SaoType*>{return <SaoType*>x^2;} |  |
-| XXX(x)<c.byte8>{@(x^2)} | function XXX()<c.byte8>{return (<c.byte8>) x^2;} | ... |
-| @\*\<language-handler>{..} | | eating .. with prefer language handler, * => mouth => eat |
+| XXX(x)returnType{@~(x^2)} | function XXX()returnType{return (returnType)x^2;} |  |
+| XXX = (x)\<SaoType*\> => (x^2) | function XXX()\<SaoType*\>{return \<SaoType*\>x^2;} |  |
+| XXX(x)\<c.byte8\>{@~(x^2)} | function XXX()\<c.byte8\>{return (\<c.byte8\>) x^2;} | ... |
+| @\*\<language-handler\>{..} | | eating .. with prefer language handler, * =\> mouth =\> eat |
 | @\*\<SAO\>{..} | using SAO handler (default) to process .. |
 | @\*\<SLJIT\>{..} | using SLJIT (StackLessJIT) handler to process .. |
-| {..} @\|\<handler> | | piping .. to handler |
+| {..} @\|\<handler\> | | piping .. to handler |
 
 # TODO
 

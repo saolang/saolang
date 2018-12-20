@@ -1,16 +1,68 @@
 # Plan
 
 ```
+# syntax
+test_base.sao
+test_ext.sao
+test_c.sao
+
+* void/null/undefined/typeof/typedef/sizeof etc..
+
+//how is this ok? break the kw rules?
+* @void,@null,@undefined,@typedef,@sizeof,@this ...
+
+# low level
+jit
+asm
+c/macro
+=>
+vm
+binary
+
+# high (script)
+vm=>
+js php python
+sao-runtime
+
 sao - the SAO console command
 	sljit - using stack-less-JIT for the lowlevel
 libsao so/dll - shared lib
 libsao.a - static lib
 libsaoext so/dll - using external cc to get better performance, elf/macho/pe
+
+latex - maths
+here document
+<<<SSS
+SSS
+
+
 ```
 
 libc-dync mode 
 nostdc os mode
 .sao => (sljit) => binary
+
+# TODO - VM and JIT improve
+
+jerryscript/jerry-core/parser/js/byte-code.h
+ Compact byte code (CBC) is a byte code representation
+ of EcmaScript which is designed for low memory
+ environments. Most opcodes are only one or sometimes
+ two byte long so the CBC provides a small binary size.
+
+ The execution engine of CBC is a stack machine, where
+ the maximum stack size is known in advance for each
+ function.
+
+
+SLJIT - http://sljit.sourceforge.net/
+sljitLir.h
+SL-JIT Disadvantages
+Limited (3 machine words) number of arguments for ABI compatible function calls.
+
+
+https://en.wikipedia.org/wiki/Java_bytecode_instruction_listings
+https://en.wikipedia.org/wiki/Java_bytecode
 
 # Sao C Compiler
 
