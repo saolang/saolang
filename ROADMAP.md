@@ -1,3 +1,32 @@
+# Want
+
+LIR => binary => sljit self...bootstrap
+
+scc => c
+
+saolang => sljit + vm(like jerryscript)
+  => design spec first?
+	and then, build scc => pure c version of scc(sljit)
+	then LIR => vm(like jerryscript)
+
+const/let,var => optimized the oper field of var
+
+low
+high leval
+
+how about
+using special syntax to oper in low level code?
+
+low: JIT / VM / BYTECODE / ASM etc
+
+/*
+*/
+@<ASM-X86>{
+
+	INSTRUCTIVE
+
+}
+
 # Plan
 
 ```
@@ -41,6 +70,11 @@ SSS
 libc-dync mode 
 nostdc os mode
 .sao => (sljit) => binary
+
+
+## docker
+
+cmptech/saolang-dev
 
 # TODO - VM and JIT improve
 

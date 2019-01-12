@@ -1,28 +1,29 @@
+//./build/bin/jerry sao/sao.sao
+
+//TODO var @<> ?
+
 //TODO make Math with import later...
 
 //TODO import
 //@<Math>;
 //@<print>;
 
-@^ uu(x,y){
+@^uu(x,y){
 	@~ x*y;
 }
 
-ttt = (x, y)=>1.0*Math.pow(x+y,0.5);//sqrt
+//ttt = (x, y)=>(x+y ** 0.5);//TODO ** => Math.pow()
+ttt = (x, y)=>1.0*Math.pow(x+y,0.5);// ^0.5 <=> sqrt()
 
-s = (sw)=>{
-	@#(sw){
-		@=1:
-			@~("case1");
-		@=2:
-			@~("case2");
-		@=:
-			@~ "default";
+@ s = (sw)=>{@#(sw){
+		@=1:@~("case1");
+		@=2:@~("case2");
+		@=:@~ "default";
 	}
 	@~ -1;
 }
 
-f = (c)=>{
+@ f = (c)=>{
 	print("c="+c+":");
 	@?(c==1){
 		print ("IF BR");
@@ -33,6 +34,9 @@ f = (c)=>{
 	}
 	@~;
 };
+
+//((c=0)=>{@$(@1){print(c++);@?(c>10)@!}})();//NOT YET
+(()=>{c=0;@$(@1){print(c++);@?(c>10)@!}})();
 
 f(1);
 f(2);
@@ -45,9 +49,7 @@ print(uu(3.0,4.0));
 //print(s(2));
 //print(s(3));
 
-@*(i=1;i<=3;i++){
-	print(s(i));
-}
+@*(i=1;i<=3;i++){print(s(i))}
 
 //TODO export
 //@();

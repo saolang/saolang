@@ -1,0 +1,109 @@
+#define SLJIT_MEM		0x80 //\b1110000
+#define SLJIT_MEM0()		(SLJIT_MEM)
+#define SLJIT_MEM1(r1)		(SLJIT_MEM | (r1))
+#define SLJIT_MEM2(r1, r2)	(SLJIT_MEM | (r1) | ((r2) << 8))
+#define SLJIT_IMM		0x40
+
+//size of signed word
+#define SIZE_SW sizeof(sljit_sw)
+//size of unsigned word
+#define SIZE_UW sizeof(sljit_uw)
+union executable_code {
+	void* code;
+	sljit_sw (SLJIT_CALL *func0)(void);
+	sljit_sw (SLJIT_CALL *func1)(sljit_sw a);
+	sljit_sw (SLJIT_CALL *func2)(sljit_sw a, sljit_sw b);
+	sljit_sw (SLJIT_CALL *func3)(sljit_sw a, sljit_sw b, sljit_sw c);
+};
+
+#test1
+
+#ENTER 0,3,3,3,0,0,0
+ETR 0,3,3,3,0,0,0
+MOV S1 0
+#RETURN MOV S1 0
+MOV S1 0
+RET
+
+/*
+(0,3,3,3,0,0,0){
+	0=>S1
+}
+*/
+
+/*test
+func3(3,-21,86),-21
+func3(4789,47890,997),47890
+*/
+
+# test2 - base
+
+ENTER 0,1,3,2,0,0,0
+MOV UNUSED,0,MEM0,&buf
+MOV R0,0,IMM,9999
+MOV S1,0,S0,0
+MOV (S1),SW,R0,0
+MOV R1,IMM,SW
+MOV R2,0,(S1+R1),0
+MOV S0,0,IMM,2
+MOV (S1+S0),WORD_SHIFT,S1+R1,0
+MOV S0,0,IMM,3
+MOV (S1,S0),WORD_SHIFT,MEM0,(buf)
+MOV R0,0,IMM,SW
+MOV R0,0,(R0),(data)
+MOV (S1),4*SW,R0,0
+MOV R0,0,IMM,(buf)-0x12345678
+MOV R0,0,(R0),0x12345678
+MOV (S1),5*SW,R0,0
+MOV R0,0,IMM,3456
+MOV R1,0,IMM,(buf)-0xff890+6*SW
+MOV (R1),0xff890,R0,0
+MOV R1,0,IMM,(buf)+0xff890+7*SW
+MOV (R1),-0xff890,R0,0
+RETURN MOV R2,0
+
+func1(buf),9999
+buf[1],9999
+buf[2],9999
+buf[3],5678
+buf[4],-9876
+buf[5],5678
+buf[6],3456
+buf[7],3456
+
+(0,1,3,2,0,0,0){
+MOV 0,0,0x80,&buf
+}
+
+# test3
+ENTER 0,1,3,1,0,0,0
+NOT UNUSED,0,MEM0,(buf)
+MOV (S0),SW,(S0),0
+NOT MEM0,(buf[1]),MEM0,(buf[1])
+NOT REG,0,(S0),0
+NOT (S0),3*SW,(S0),2*SW
+MOV R1,0,IMM,(buf[4])-0xff0000-0x20
+MOV R2,0,IMM,(buf[4])-0xff0000
+NOT (R1),0xff0000+0x20,(R2),0xff0000
+RETURN MOV REG,0
+
+buf={1234,0,9876,0,0x12345678}
+func1(&buf)
+buf[1],~1234
+buf[3],~9876
+buf[4],~0x12345678
+
+# test4 - NEG
+ENTER 0,2,3,2,0,0,0
+NEG UNUSED,0,(S0),0
+NEG (S0),2*SW,S1,0
+NET MEM0,(buf[0]),MEM0,(buf[1])
+NET REG,0,S1,0
+NET (S0),3*SW,IMM,299
+RETURN MOV REG,0
+
+buf={0,1234,0,0};
+func2(buf,4567)
+buf[0],-1234
+buf[2],-4567
+buf[3],-299

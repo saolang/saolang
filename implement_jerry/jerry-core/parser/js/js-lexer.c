@@ -1139,12 +1139,93 @@ lexer_next_token (parser_context_t *context_p) /**< context */
     return;
   }
 
+	//https://github.com/pando-project/jerryscript/blob/master/docs/12.EXT-REFERENCE-MODULE.md
+	//typedef struct
+	//{
+	//	jerryx_module_get_canonical_name_t get_canonical_name_p;
+	//	jerryx_module_resolve_t resolve_p;
+	//} jerryx_module_resolver_t;
+	//static bool
+	//load_and_evaluate_js_file (const jerry_value_t name, jerry_value_t *result)
+	//{
+	//	bool return_value = false;
+	//	char *js_file_contents = NULL;
+	//	int file_size = 0;
+
+	//	jerry_size_t name_size = jerry_get_utf8_string_size (name);
+	//	jerry_char_t name_string[name_size + 1];
+	//	jerry_string_to_utf8_char_buffer (name, name_string, name_size);
+	//	name_string[name_size] = 0;
+
+	//	FILE *js_file = fopen (name_string, "r");
+
+	//	if (js_file)
+	//	{
+	//		/* We have successfully opened the file. Now, we establish its size. */
+	//		file_size = fseek (js_file, 0, SEEK_END);
+	//		fseek (js_file, 0, SEEK_SET);
+
+	//		/* We allocate enough memory to store the contents of the file. */
+	//		js_file_contents = malloc (file_size);
+	//		if (js_file_contents)
+	//		{
+	//			/* We read the file into memory and call jerry_eval (), assigning the result to the out-parameter. */
+	//			fread (js_file_contents, file_size, 1, js_file);
+	//			(*result) = jerry_eval (js_file_contents, file_size, JERRY_PARSE_NO_OPTS);
+
+	//			/* We release the memory holding the contents of the file. */
+	//			free (js_file_contents);
+	//			return_value = true;
+	//		}
+
+	//		/* We close the file. */
+	//		fclose (js_file);
+	//	}
+
+	//	return return_value;
+	//}
+
+	//static jerry_value_t
+	//	canonicalize_file_path (const jerry_value_t name)
+	//	{
+	//		jerry_value_t absolute_path;
+
+	//		/**
+	//		 * Since a file on the file system can be referred to by multiple relative paths, but only by one absolute path, the
+	//		 * absolute path becomes the canonical name for the module. Thus, to establish this canonical name, we must search
+	//		 * name for "./" and "../", follow symlinks, etc., then create absolute_path via jerry_create_string () and return
+	//		 * it, because it is the canonical name for this module. Thus, we avoid loading the same JavaScript file twice.
+	//		 */
+
+	//		return absolute_path;
+	//	}
+
+	//static jerryx_module_resolver_t js_file_loader
+	//{
+	//	canonicalize_file_path,
+	//		load_and_evaluate_js_file
+	//};
+	//static const jerryx_module_resolver_t *resolvers[] =
+	//{
+	//	/*
+	//	 * Consult the resolver for native JerryScript modules first, in case the requested module is a native JerryScript
+	//	 * module.
+	//	 */
+	//	&jerryx_module_native_resolver,
+
+	//	/*
+	//	 * If the requested module is not a native JerryScript module, assume it is a JavaScript file on disk and use the
+	//	 * above-defined JavaScript file loader to load it.
+	//	 */
+	//	&js_file_loader
+	//};
+
   switch (context_p->source_p[0])
   {
 #ifdef JERRY_SAOLANG//{
 		case (uint8_t) LIT_CHAR_AT:
 			{
-				//
+				//TODO NOTES using regexp in SLJIT later
 				if(context_p->source_p[1] == LIT_CHAR_CIRCUMFLEX){//@^ => function
 					context_p->token.type = LEXER_KEYW_FUNCTION;
 					length = 2;
@@ -1211,12 +1292,20 @@ lexer_next_token (parser_context_t *context_p) /**< context */
 					context_p->token.type = LEXER_LIT_FALSE;
 					length = 2;
 					break;
+				}else if(context_p->source_p[1]==LIT_CHAR_LEFT_PAREN){
+					//@(...) => require(...)
+					//TODO 
+					//jerry_value_t js_module = jerryx_module_resolve (requested_module, resolvers, 2);
+					//length = 1;
+					//break;
 				}
-				//default as "this"
-				context_p->token.type = LEXER_KEYW_THIS;
+				//default as "var"
+				length = 1;
+				context_p->token.type = LEXER_KEYW_VAR;
 				break;
 			}
 #endif //}JERRY_SAOLANG
+
     LEXER_TYPE_A_TOKEN (LIT_CHAR_LEFT_BRACE, LEXER_LEFT_BRACE);
     LEXER_TYPE_A_TOKEN (LIT_CHAR_LEFT_PAREN, LEXER_LEFT_PAREN);
     LEXER_TYPE_A_TOKEN (LIT_CHAR_LEFT_SQUARE, LEXER_LEFT_SQUARE);
