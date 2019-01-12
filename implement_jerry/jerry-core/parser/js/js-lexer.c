@@ -1338,15 +1338,17 @@ lexer_next_token (parser_context_t *context_p) /**< context */
 					context_p->token.type = LEXER_LIT_FALSE;
 					length = 2;
 					break;
-				}else if(context_p->source_p[1]==LIT_CHAR_LEFT_PAREN){
-					//@(...) => require(...)
-					//TODO map to require()
+				}else if(context_p->source_p[1]==LIT_CHAR_LEFT_PAREN){ //TODO map to require()
 					//jerry_value_t js_module = jerryx_module_resolve (requested_module, resolvers, 2);
 					//length = 1;
 					//break;
 				}
-				else if( context_p->source_p[1] == LIT_CHAR_AT ){
-					//@@=>this
+				else if( context_p->source_p[1] == LIT_CHAR_AMPERSAND ){ //@& => null
+					length = 2;
+					context_p->token.type = LEXER_LIT_NULL;
+					break;
+				}
+				else if( context_p->source_p[1] == LIT_CHAR_AT ){ //@@ => this
 					length = 2;
 					context_p->token.type = LEXER_KEYW_THIS;
 					break;

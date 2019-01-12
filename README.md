@@ -88,7 +88,13 @@ Phrase III
 | @~ | return | |
 | @^ | function | |
 | @^XXX(){} | function XXX(){} |
+| @1 | true | |
+| @0 | false | |
+| @& | null | |
 | @ | var | |
+| @[] | var[] | |
+| @{} | var{} | |
+| @@ | this | |
 
 * delimiter(;) is strongly recommented, but somehow/sometime it works when omited
 * parentheses {} is very important for matching
@@ -107,6 +113,7 @@ e.g.
 
 | sao | pseudo | remember-helper |
 |---|---|---|
+| @() | require() | module handling |
 | x\|\|z | (tmp=x)?tmp:z | binary operator |
 | @:? | elseif | elif/elseif [TODO] |
 | XXX()\<type\>{} | type XXX(){} |
