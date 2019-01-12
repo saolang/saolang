@@ -37,6 +37,8 @@ dMd /Nm` ~`   sMMN.    .NMMMMMMh.``Md:
                    `ohs               -                 
 ```
 
+![eg](eg.png)
+
 # Feature
 
 Phrase Zero
