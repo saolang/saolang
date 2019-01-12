@@ -1106,6 +1106,52 @@ lexer_parse_number (parser_context_t *context_p) /**< context */
     break; \
   }
 
+//#ifdef JERRY_SAOLANG//{
+//#include "jerryscript-ext/module.h"
+//
+//extern jerryx_module_resolver_t jerryx_module_native_resolver;
+//jerry_value_t jerryx_module_resolve (const jerry_value_t name,
+//                                     const jerryx_module_resolver_t **resolvers,
+//                                     size_t count);
+//
+//#define ARRAY_SIZE(array) ((unsigned long) (sizeof (array) / sizeof ((array)[0])))
+//
+//#define TEST_ASSERT(x) \
+//  do \
+//  { \
+//    if (!(x)) \
+//    { \
+//      jerry_port_log (JERRY_LOG_LEVEL_ERROR, \
+//                      "TEST: Assertion '%s' failed at %s(%s):%lu.\n", \
+//                      #x, \
+//                      __FILE__, \
+//                      __func__, \
+//                      (unsigned long) __LINE__); \
+//      jerry_port_fatal (ERR_FAILED_INTERNAL_ASSERTION); \
+//    } \
+//  } while (0)
+//
+//#define TEST_STRING_LITERAL(x) x
+//
+//static jerry_value_t
+//handle_require (const jerry_value_t js_function,
+//                const jerry_value_t this_val,
+//                const jerry_value_t args_p[],
+//                const jerry_length_t args_count)
+//{
+//  (void) js_function;
+//  (void) this_val;
+//  (void) args_count;
+//
+//  jerry_value_t return_value = 0;
+//
+//  TEST_ASSERT (args_count == 1);
+//  return_value = jerryx_module_resolve (args_p[0], resolvers, 3);
+//
+//  return return_value;
+//} /* handle_require */
+//#endif //}JERRY_SAOLANG
+
 /**
  * Get next token.
  */
@@ -1294,7 +1340,7 @@ lexer_next_token (parser_context_t *context_p) /**< context */
 					break;
 				}else if(context_p->source_p[1]==LIT_CHAR_LEFT_PAREN){
 					//@(...) => require(...)
-					//TODO 
+					//TODO map to require()
 					//jerry_value_t js_module = jerryx_module_resolve (requested_module, resolvers, 2);
 					//length = 1;
 					//break;
@@ -1303,14 +1349,8 @@ lexer_next_token (parser_context_t *context_p) /**< context */
 					//@@=>this
 					length = 2;
 					context_p->token.type = LEXER_KEYW_THIS;
+					break;
 				}
-				//else if( lit_char_is_word_char(context_p->source_p[1])
-				//		|| context_p->source_p[1] == LIT_CHAR_LEFT_SQUARE
-				//		|| context_p->source_p[1] == LIT_CHAR_LEFT_BRACE
-				//		){ // => var 
-				//	context_p->token.type = LEXER_KEYW_VAR;
-				//	break;
-				//}
 				//default as "var"
 				length = 1;
 				context_p->token.type = LEXER_KEYW_VAR;
