@@ -1,12 +1,14 @@
 //./build/bin/jerry sao/sao.sao
 
-//TODO var @<> ?
+//TODO @() => require()
 
 //TODO make Math with import later...
+//@(Math)
+//@(console)
 
-//TODO import
+//TODO build in Math/console etc
 //@<Math>;
-//@<print>;
+//@<console>;
 
 @^uu(x,y){
 	@~ x*y;
@@ -51,7 +53,3 @@ print(uu(3.0,4.0));
 
 @*(i=1;i<=3;i++){print(s(i))}
 
-//TODO export
-//@();
-//@{};
-//@[];
