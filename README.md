@@ -88,6 +88,7 @@ Phrase III
 | @~ | return | |
 | @^ | function | |
 | @^XXX(){} | function XXX(){} |
+| @ | var | |
 
 * delimiter(;) is strongly recommented, but somehow/sometime it works when omited
 * parentheses {} is very important for matching

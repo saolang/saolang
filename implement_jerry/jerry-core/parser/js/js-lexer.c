@@ -1299,6 +1299,18 @@ lexer_next_token (parser_context_t *context_p) /**< context */
 					//length = 1;
 					//break;
 				}
+				else if( context_p->source_p[1] == LIT_CHAR_AT ){
+					//@@=>this
+					length = 2;
+					context_p->token.type = LEXER_KEYW_THIS;
+				}
+				//else if( lit_char_is_word_char(context_p->source_p[1])
+				//		|| context_p->source_p[1] == LIT_CHAR_LEFT_SQUARE
+				//		|| context_p->source_p[1] == LIT_CHAR_LEFT_BRACE
+				//		){ // => var 
+				//	context_p->token.type = LEXER_KEYW_VAR;
+				//	break;
+				//}
 				//default as "var"
 				length = 1;
 				context_p->token.type = LEXER_KEYW_VAR;
