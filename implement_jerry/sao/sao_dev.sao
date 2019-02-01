@@ -1,0 +1,16 @@
+//../build/bin/jerry sao_dev.sao
+print('000');
+//not working for typeof instanceof
+//print(typeof console);
+
+@f=(s)=>s*s;
+//@f2=(...a)=>a;
+
+//@^f2(x=0, y=0, ...a) {
+//	@sum = x + y;
+//	a.forEach(a => sum += a);
+//	@~ sum;
+//}
+
+@print
+print(print);

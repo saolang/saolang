@@ -43,7 +43,7 @@ dMd /Nm` ~`   sMMN.    .NMMMMMMh.``Md:
 
 Phrase Zero
 
-* core syntax sugar
+* core syntax sugar [proven]
 * keyword-less - removed all english keywording
 
 Phrase I
@@ -70,7 +70,7 @@ Phrase III
 
 ## Core 
 
-| sao | c/js/php | remember-helper |
+| sao | c/js/php | brain-helper |
 |---|---|---|
 | ()?():() | ()?():() | classic ternary operator |
 | @? | if | ask => if |
@@ -90,14 +90,19 @@ Phrase III
 | @~ | return | |
 | @^ | function | |
 | @^XXX(){} | function XXX(){} |
+
+designing...
+
+| sao | c/js/php | remember-helper |
+|---|---|---|
+| json | | core structure like lua-table ? |
+| lbl: |  | label for jumping |
 | @1 | true | |
 | @0 | false | |
 | @& | null | |
 | @ | var | |
-| @[] | var[] | |
-| @{} | var{} | |
-| @@ | this | |
 
+* use the Core level to build the vm runner
 * delimiter(;) is strongly recommented, but somehow/sometime it works when omited
 * parentheses {} is very important for matching
 
@@ -111,31 +116,49 @@ e.g.
 	for(i=1;i<x;i++){if(i%3==0)continue;}
 ```
 
+## Not support syntax sugar...
+
+Abandom feature from ES (which should be using sao runtime)
+```
+@sao=@('sao')
+```
+|    | this | |
+|    | new | |
+|    | typeof | |
+|    | instanceof | |
+
 ## Ext Syntactic Sugar (W.I.P.)
+
+* make parse into two levels ( default buildin .core and then .ext )
 
 | sao | pseudo | remember-helper |
 |---|---|---|
-| @() | require() | module handling |
+| @<?()@?!(ex){}@?!>{}@\>!{} | try/catch/finally | |
+| @() | require() | module import |
 | x\|\|z | (tmp=x)?tmp:z | binary operator |
-| @:? | elseif | elif/elseif [TODO] |
-| XXX()\<type\>{} | type XXX(){} |
+| @[] | var[] | destructuring |
+| @{} | var{} | destructuring |
+| ()=>{} | function(){} | closure |
+| XXX = x => (x^2) | function XXX(x){ return x^2} | assign closure func to var |
+| (...aaa)=>aaa | get the args |
+| @:? | elseif | elif/elseif |
 | @\_{}; | do{}while(0) | doonce{} |
+| @\<\> | require() | buildin module import, @<c>,@<math>,@<console> |
 | @\<c\>; | N/A | import c; |
 | @\<cmath\>; | N/A | import cmath; |
-| @{main}; | N/A | export {main}; |
-| @[func1,func2]; | N/A | export [func1,func2]; |
-| ()=>{} | function(){} | closure |
+|  | may give up typeing |
+| XXX()\<type\>{} | type XXX(){} |
 | ()type=>{} | function()type{} | declare return type |
-| XXX = x => (x^2) | function XXX(x){ return x^2} | assign closure to var |
 | XXX(x)returnType{@~(x^2)} | function XXX()returnType{return (returnType)x^2;} |  |
-| XXX = (x)\<SaoType*\> => (x^2) | function XXX()\<SaoType*\>{return \<SaoType*\>x^2;} |  |
+| XXX = (x)\<SaoType*\> => (x^2) | function XXX()\<SaoType*\>{return \<SaoType\>x^2;} |  |
 | XXX(x)\<c.byte8\>{@~(x^2)} | function XXX()\<c.byte8\>{return (\<c.byte8\>) x^2;} | ... |
+|  | lang handler |
 | @\*\<language-handler\>{..} | | eating .. with prefer language handler, * =\> mouth =\> eat |
 | @\*\<SAO\>{..} | using SAO handler (default) to process .. |
 | @\*\<SLJIT\>{..} | using SLJIT (StackLessJIT) handler to process .. |
 | {..} @\|\<handler\> | | piping .. to handler |
 
-# TODO
+# More TODO
 
 * stdin/stdout/stderr is controlled/assigned by caller(the OS or intepreter)
 * StackLess JIT

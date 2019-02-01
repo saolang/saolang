@@ -12,3 +12,17 @@
 
 //for syntax JIT-ASM, using regexp is much eaier to compiler then, right?
 
+```
+
+function addNumber(total, value){
+  return total + value;
+}
+function sum(...args){
+  return args.reduce(addNumber, 0);
+}
+sum(1,2,3); //6
+
+^sum(...args){ @~ args.reduce(addNumber,0) }
+@sum=(...args)=>args.reduce(addNumber,0)
+
+```
