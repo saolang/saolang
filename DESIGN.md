@@ -26,3 +26,18 @@ sum(1,2,3); //6
 @sum=(...args)=>args.reduce(addNumber,0)
 
 ```
+
+```
+@ref ECMA-262 3rd
+https://www.ecma-international.org/publications/files/ECMA-ST-ARCH/ECMA-262,%203rd%20edition,%20December%201999.pdf
+https://en.wikipedia.org/wiki/JSON
+
+Literal
+::
+NullLiteral
+BooleanLiteral
+NumericLiteral
+StringLiteral
+```
+
+to get compliance with JSON, seem true/false/null is un-avoidable to use in SAO Lang...

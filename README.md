@@ -95,6 +95,7 @@ designing...
 
 | sao | c/js/php | remember-helper |
 |---|---|---|
+| stdin/stdout/stderr | | |
 | json | | core structure like lua-table ? |
 | lbl: |  | label for jumping |
 | @1 | true | |
