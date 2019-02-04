@@ -76,22 +76,19 @@ Phrase III
 | @? | if | ask => if |
 | @: | else |  |
 | @:@? | else if |  |
-| @?(){} | if(){} |
-| @?(){}@:{} | if(){}else{} |
-| @?(){}@:@?(){}@:{} | if(){}else if(){}else{} |
 | @# | switch | #=>hash=>hasing=>switch |
 | @! | break | ! => astonished => break |
 | @% | continue | % => percent => continue |
 | @\_ | do| bottom line => just do it |
 | @= | case | case => equals |
-| @\*(;;){} | for(;;){} | \* => all => for loop |
-| @$(){} | while(){} | money => loop |
-| @\_{}@$() | do{}while() | 
+| @=: | default | case nothing |
+| @\* | for | \* => all => for loop |
+| @$ | while | money => loop |
 | @~ | return | |
 | @^ | function | |
-| @^XXX(){} | function XXX(){} |
+| @(lib) | import/require lib | |
 
-designing...
+Designing...
 
 | sao | c/js/php | remember-helper |
 |---|---|---|
@@ -110,6 +107,27 @@ designing...
 e.g.
 
 ```
+@?(){}
+	if(){}
+
+@?(){}@:{}
+	if(){}else{}
+
+@?(){}@:@?(){}@:{}
+	if(){}else if(){}else{}
+
+@\_{}@$()
+	do{}while()
+
+@\*(;;){}
+	for(;;){}
+
+@^XXX(){}
+	function XXX(){}
+
+$(){}
+	hile(){}
+
 @#(x){@=1:@!;@=2:x+2;@!;@=:x-1;}
 	switch(x){case 1:break;case 2:x+2;break;default:x-1;}
 

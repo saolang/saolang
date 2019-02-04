@@ -1,5 +1,15 @@
 # Want
 
+
+```
+sao-core
+	=> vm(loader and runner) //build by c first, in future, using sao-build to build
+
+sao.ext
+	=> vm will check the ext to see if parser for more extended js feature.
+
+```
+
 LIR => binary => sljit self...bootstrap
 
 scc => c
