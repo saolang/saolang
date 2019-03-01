@@ -1,6 +1,11 @@
 # Syntactic-Sugar
 
-## Core 
+## Very Core 
+
+NOTES:
+
+* English keywords removed;
+* Suitable for pseudocode also
 
 | sao | c/js/php | brain-helper |
 |---|---|---|
@@ -8,7 +13,6 @@
 | @? | if | ask => if |
 | @: | else |  |
 | @:@? | else if |  |
-| @:? | elseif |  |
 | @# | switch | #=>hash=>hashing=>switch |
 | @! | break | ! => astonished => break |
 | @% | continue | % => percent => continue |
@@ -20,9 +24,10 @@
 | @~ | return | |
 | @^ | function | |
 | @(lib) | import/require lib | |
-| @:? | elseif |  |
+| --- | --- | --- |
+| @:? | elseif | shorthand of else if |
 
-Designing...
+Designing (not stable yet):
 
 | sao | c/js/php | remember-helper |
 |---|---|---|
