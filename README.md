@@ -49,22 +49,22 @@ Phrase Zero
 Phrase I
 
 * FFI/DL            - dynamically load libraries
-* ext syntax sugar
+* partial ext syntax sugar
 
 Phrase II
 
 * bootstrap         - self-hosting
 * more syntax sugar
-* BSON built-in support
+* JSON/BSON built-in support
 
 Phrase III
 
-* OS mode
 * multi-processing/multi-threading/coroutines
 * hardware abstracted binary codes + vm interpretor
 * sao-vm with qemu
 * promise/q     - built-in promise support
 * await/async
+* OS mode
 
 # [Specification](SPECIFICATION.md)
 
