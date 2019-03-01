@@ -1,0 +1,50 @@
+/*
+../build/bin/jerry sao_core.sao
+*/
+
+//print(print);
+
+//problem in json, true and false is keyword.... how about sao ??
+
+@^assert(c1,c2){
+	@~ (c1===c2)
+};
+
+//TODO try @T and @F better? or @true, @false? @null
+
+print(assert( (1.001>1) ? @1 : @0 , @1 ));
+
+@^ testcase_if_elseif_else(c){
+	@?(c>1){
+		@~ @1
+	}@:@?(c<-1){
+		@~ @0
+	}@:{
+		@~ @&
+	}
+}
+
+print(testcase_if_elseif_else(1.001))
+print(testcase_if_elseif_else(-1.001))
+print(testcase_if_elseif_else(0.333))
+
+@^ testcase_break(c){
+	@$(@1){
+		@? (++c>2) @!
+	}
+	@~ c
+}
+
+print(testcase_break(1))
+print(testcase_break(5))
+
+//why label seg fault
+//@^ testcase_label(c){
+//lbl:
+//	@$(@1){
+//		@? (c++>3) @! lbl;
+//	}
+//	@~ c
+//}
+//print(testcase_label(1))
+
