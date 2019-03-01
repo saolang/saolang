@@ -1,5 +1,8 @@
 # Want
 
+* baseHAL (like Lua/Python/JerryScript VM), define opcode;
+* create interpreter to build base binary (for running on VM)
+
 
 ```
 sao-core
