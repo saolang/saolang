@@ -1,5 +1,7 @@
 # Syntactic-Sugar
 
+* Sao is trademark registered and shared to human race for free forever, hoping this shows respect to Musk ;)
+
 ## Core V1.0 
 
 NOTES:
@@ -16,7 +18,7 @@ NOTES:
 | @:@? | else if |  |
 | @# | switch | #=>hash=>hashing=>switch |
 | @= | case | case => equals |
-| @=: | default | case nothing |
+| @=: | default | case default |
 |  |  |  |
 | @\* | for | \* => all => for loop |
 | @$ | while | money => loop |
