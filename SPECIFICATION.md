@@ -30,6 +30,44 @@ NOTES:
 | @(lib) | import/require lib | |
 | @:? | elseif | shorthand of else if |
 
+e.g.
+
+```
+@?(){}
+if(){}
+
+@?(){}@:{}
+if(){}else{}
+
+@?(){}@:@?(){}@:{}
+if(){}else if(){}else{}
+
+@?(){}@:?(){}@:{}
+if(){}elseif(){}else{}
+
+@\_{}@$()
+do{}while()
+
+@\*(;;){}
+for(;;){}
+
+@^XXX(){}
+function XXX(){}
+
+$(){}
+while(){}
+
+@#(x){@=1:@!;@=2:x+2;@!;@=:x-1;}
+switch(x){case 1:break;case 2:x+2;break;default:x-1;}
+
+@*(i=1;i<x;i++){@?(i%3==0)@%}
+for(i=1;i<x;i++){if(i%3==0)continue;}
+
+@lib=@(libname);
+var lib=require(libname);
+
+```
+
 ## Designing (not stable yet):
 
 | sao | c/js/php | remember-helper |
@@ -50,37 +88,8 @@ NOTES:
 * stdin/stdout/stderr => std stream/pipe in/out
 
 e.g.
-
 ```
-@?(){}
-	if(){}
-
-@?(){}@:{}
-	if(){}else{}
-
-@?(){}@:@?(){}@:{}
-	if(){}else if(){}else{}
-
-@\_{}@$()
-	do{}while()
-
-@\*(;;){}
-	for(;;){}
-
-@^XXX(){}
-	function XXX(){}
-
-$(){}
-	hile(){}
-
-@#(x){@=1:@!;@=2:x+2;@!;@=:x-1;}
-	switch(x){case 1:break;case 2:x+2;break;default:x-1;}
-
-@*(i=1;i<x;i++){@?(i%3==0)@%}
-	for(i=1;i<x;i++){if(i%3==0)continue;}
-
 @[lib1,lib2]=@(lib1name,lib2name);
-
 ```
 
 ## Not support syntax sugar...
