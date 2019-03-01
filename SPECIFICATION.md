@@ -1,6 +1,6 @@
 # Syntactic-Sugar
 
-* Sao is trademark registered and shared to human race for free forever, hoping this shows respect to Musk ;)
+* Sao™ is trademark-registered and shared to human race for free forever, hoping this shows respect to Musk ;)
 
 ## Core V1.0 
 
