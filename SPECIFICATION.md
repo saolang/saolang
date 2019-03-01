@@ -1,6 +1,6 @@
 # Syntactic-Sugar
 
-## Very Core 
+## Core V1.0 
 
 NOTES:
 
@@ -9,25 +9,28 @@ NOTES:
 
 | sao | c/js/php | brain-helper |
 |---|---|---|
+|  |  |  |
 | ()?():() | ()?():() | classic ternary operator |
 | @? | if | ask => if |
 | @: | else |  |
 | @:@? | else if |  |
 | @# | switch | #=>hash=>hashing=>switch |
-| @! | break | ! => astonished => break |
-| @% | continue | % => percent => continue |
-| @\_ | do| bottom line => just do it |
 | @= | case | case => equals |
 | @=: | default | case nothing |
+|  |  |  |
 | @\* | for | \* => all => for loop |
 | @$ | while | money => loop |
-| @~ | return | |
+| @\_ | do| bottom line => just do it |
+| @! | break | ! => astonished => break |
+| @% | continue | % => percent => continue |
+|  |  |  |
 | @^ | function | |
+| @~ | return | |
+|  |  |  |
 | @(lib) | import/require lib | |
-| --- | --- | --- |
 | @:? | elseif | shorthand of else if |
 
-Designing (not stable yet):
+## Designing (not stable yet):
 
 | sao | c/js/php | remember-helper |
 |---|---|---|
