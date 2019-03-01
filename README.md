@@ -84,11 +84,12 @@ https://en.wiktionary.org/wiki/%E9%A8%B7
 
 ## Why new lang?
 
-cool and func
+For cool and fun, for faith.
 
 * english-keyword-less is cool
-* mini vm binary is cool
-* just for fun
+* mini vm/snapshot is cool and universal
+* tiny base HAL is awesome
+
 
 
 
