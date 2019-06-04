@@ -31,6 +31,11 @@ NOTES:
 |  |  |  |
 | @(lib) | import/require lib | |
 | @:? | elseif | shorthand of else if |
+|  |  |  |
+| @@() | async() | |
+| @@^() | async function() | |
+| @@= | await | |
+
 
 e.g.
 
